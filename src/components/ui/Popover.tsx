@@ -110,6 +110,17 @@ export function Popover({
                       ? { duration: 0.12 }
                       : { type: "spring", stiffness: 320, damping: 34 }
                   }
+                  // Drag-to-dismiss: si trascina il pannello verso il BASSO per chiudere
+                  // (il grabber in alto lo segnala). Su = bloccato (dragElastic top 0);
+                  // giù = rubber-band. Al rilascio, oltre soglia o flick veloce → close,
+                  // altrimenti spring-back a y:0 (constraints top/bottom = 0).
+                  drag="y"
+                  dragConstraints={{ top: 0, bottom: 0 }}
+                  dragElastic={{ top: 0, bottom: 0.5 }}
+                  dragMomentum={false}
+                  onDragEnd={(_event, info) => {
+                    if (info.offset.y > 120 || info.velocity.y > 600) close();
+                  }}
                 >
                   {children({ close })}
                 </motion.div>

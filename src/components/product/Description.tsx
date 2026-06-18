@@ -10,7 +10,7 @@ export function Description({ text, dict }: { text: string; dict: Dictionary }) 
 
   return (
     <section className="flex flex-col gap-2">
-      <h2 className="text-xl font-bold text-ink sm:text-2xl">{dict.product.descriptionTitle}</h2>
+      <h2 className="text-xl font-extrabold text-ink sm:text-2xl">{dict.product.descriptionTitle}</h2>
       <p className={`text-base text-ink/80 ${open ? "" : "line-clamp-3"}`}>{text}</p>
       <button
         type="button"

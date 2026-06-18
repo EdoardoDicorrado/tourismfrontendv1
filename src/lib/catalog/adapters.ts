@@ -34,6 +34,21 @@ const FALLBACK_AVATARS = [
   "/images/avatar-review-3.png",
 ];
 
+/**
+ * Demo gallery shots used to PAD a product's gallery up to {@link MIN_GALLERY}
+ * images. The live storefront API returns `gallery: []` (only a cover) for the
+ * seeded tours, so the gallery slider (dots/swipe) and the "Mostra galleria"
+ * lightbox have nothing to show. We top it up with these local demo images so
+ * both are testable. Remove once the backend serves real gallery media.
+ */
+const DEMO_GALLERY: { src: string }[] = [
+  { src: "/images/card-colosseo.png" },
+  { src: "/images/card-musei-vaticani.png" },
+  { src: "/images/card-tour-guidato.png" },
+  { src: "/images/hero-colosseo.png" },
+];
+const MIN_GALLERY = 5;
+
 /** ISO 4217 → display symbol for storefront price labels. */
 const CURRENCY_SYMBOL: Record<string, string> = { EUR: "€", USD: "$", GBP: "£" };
 
@@ -243,6 +258,12 @@ export function adaptProductDetail(api: ApiProductDetail, citta: string): Produc
   if (api.coverUrl) gallery.push({ src: api.coverUrl, alt: api.title });
   for (const g of api.gallery) gallery.push({ src: g.src, alt: g.alt });
   if (gallery.length === 0) gallery.push({ src: FALLBACK_IMAGE, alt: api.title });
+  // Top up with demo shots when the API gallery is thin (seeded tours ship just a
+  // cover) so the slider/dots + "Mostra galleria" lightbox have something to show.
+  for (const demo of DEMO_GALLERY) {
+    if (gallery.length >= MIN_GALLERY) break;
+    if (!gallery.some((g) => g.src === demo.src)) gallery.push({ src: demo.src, alt: api.title });
+  }
 
   // Participants: real OCTO units → labelled rows; keys align with option prices.
   let participants: ParticipantType[] = api.participants.map((p) => {

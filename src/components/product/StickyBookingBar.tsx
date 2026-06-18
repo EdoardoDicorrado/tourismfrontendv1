@@ -1,7 +1,7 @@
 import Image from "next/image";
 
 import type { ProductDetail } from "@/data/product";
-import { buttonVariants } from "@/components/ui/Button";
+import { buttonVariants } from "@/components/ui/buttonVariants";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
 /**

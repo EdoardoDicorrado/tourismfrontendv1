@@ -56,42 +56,61 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
       <Header lang={lang} dict={dict} />
       <main className="flex-1">
         <Container className="py-6">
-          <ProductGallery images={product.gallery} dict={dict} />
+          <ProductGallery
+            images={product.gallery}
+            dict={dict}
+            fallbackHref={`/${lang}/attivita/${citta}`}
+          />
           <div className="mt-6">
             <ProductHeader product={product} lang={lang} dict={dict} />
           </div>
 
-          <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_380px]">
-            <aside className="lg:col-start-2 lg:row-start-1 lg:self-start lg:sticky lg:top-4">
+          {/* Figma 64:9402 (mobile) order: Informazioni Generali → BookingBox →
+              Perché piace → Descrizione. DOM order already matches the mobile flow;
+              from lg the grid pulls the booking box into the sticky right column. */}
+          <div className="mt-8 flex flex-col gap-8 lg:grid lg:grid-cols-[1fr_380px] lg:items-start">
+            {product.info.length > 0 && (
+              <div className="min-w-0 lg:col-start-1 lg:row-start-1">
+                <InfoGenerali rows={product.info} dict={dict} />
+              </div>
+            )}
+
+            <aside className="min-w-0 lg:col-start-2 lg:row-start-1 lg:self-start lg:sticky lg:top-4">
               <BookingBox product={product} lang={lang} dict={dict} />
             </aside>
 
-            <div className="flex flex-col gap-10 lg:col-start-1 lg:row-start-1">
-              {product.info.length > 0 && <InfoGenerali rows={product.info} dict={dict} />}
+            <div className="flex min-w-0 flex-col gap-10 lg:col-start-1 lg:row-start-2">
               <ProductTrust dict={dict} />
               {product.description && <Description text={product.description} dict={dict} />}
-              {product.thingsToKnow && (
-                <TextSection title={dict.product.thingsToKnow} text={product.thingsToKnow} />
-              )}
-              {(product.included || product.notIncluded) && (
-                <div className="grid gap-8 sm:grid-cols-2">
-                  {product.included && (
-                    <IncludedList data={product.included} included title={dict.product.included} />
-                  )}
-                  {product.notIncluded && (
-                    <IncludedList data={product.notIncluded} included={false} title={dict.product.notIncluded} />
-                  )}
-                </div>
-              )}
-              {product.meetingPoint && <MeetingPoint data={product.meetingPoint} dict={dict} />}
-              {product.accessibility && (
-                <TextSection title={dict.product.accessibility} text={product.accessibility} />
-              )}
             </div>
           </div>
         </Container>
 
+        {/* Recensioni: a metà pagina, subito dopo la Descrizione (Figma). Full-bleed. */}
         <Reviews lang={lang} dict={dict} />
+
+        <Container className="py-6">
+          <div className="flex flex-col gap-10">
+            {product.thingsToKnow && (
+              <TextSection title={dict.product.thingsToKnow} text={product.thingsToKnow} />
+            )}
+            {(product.included || product.notIncluded) && (
+              <div className="grid gap-8 sm:grid-cols-2">
+                {product.included && (
+                  <IncludedList data={product.included} included title={dict.product.included} />
+                )}
+                {product.notIncluded && (
+                  <IncludedList data={product.notIncluded} included={false} title={dict.product.notIncluded} />
+                )}
+              </div>
+            )}
+            {product.meetingPoint && <MeetingPoint data={product.meetingPoint} dict={dict} />}
+            {product.accessibility && (
+              <TextSection title={dict.product.accessibility} text={product.accessibility} />
+            )}
+          </div>
+        </Container>
+
         <Faq dict={dict} />
         <RelatedActivities cityName={product.cityName} lang={lang} dict={dict} />
         <SupportBanner dict={dict} />

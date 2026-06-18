@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-import { buttonVariants } from "@/components/ui/Button";
+import { buttonVariants } from "@/components/ui/buttonVariants";
 import { Container } from "@/components/ui/Container";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 

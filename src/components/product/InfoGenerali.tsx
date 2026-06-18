@@ -7,10 +7,10 @@ import type { Dictionary } from "@/lib/i18n/dictionaries";
 export function InfoGenerali({ rows, dict }: { rows: InfoRow[]; dict: Dictionary }) {
   return (
     <section className="flex flex-col gap-4">
-      <h2 className="text-xl font-bold text-ink sm:text-2xl">{dict.product.infoTitle}</h2>
-      <ul className="flex flex-col gap-5">
+      <h2 className="text-xl font-extrabold text-ink sm:text-2xl">{dict.product.infoTitle}</h2>
+      <ul className="flex flex-col gap-4">
         {rows.map((row) => (
-          <li key={row.title} className="flex items-start gap-4">
+          <li key={row.title} className="flex items-start gap-2">
             <Image
               src={row.icon}
               alt=""
@@ -18,9 +18,9 @@ export function InfoGenerali({ rows, dict }: { rows: InfoRow[]; dict: Dictionary
               height={30}
               className="mt-0.5 shrink-0"
             />
-            <div>
+            <div className="flex flex-col gap-2">
               <p className="font-bold text-ink">{row.title}</p>
-              <p className="text-sm text-ink/70">{row.text}</p>
+              <p className="text-sm font-medium leading-[22px] text-ink">{row.text}</p>
             </div>
           </li>
         ))}

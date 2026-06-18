@@ -2,6 +2,8 @@
 
 import type { ReactNode } from "react";
 
+import { buttonVariants, cx } from "@/components/ui/buttonVariants";
+
 /**
  * Primary submit button with a pending state.
  *
@@ -11,8 +13,11 @@ import type { ReactNode } from "react";
  * pending Server Action. When `loading` is true the button is disabled and shows
  * `loadingLabel`.
  *
- * Styling matches the design-system primary button (`bg-cta text-white`,
- * `disabled:opacity-60`). Pass `variant="destructive"` for a red action button.
+ * Styling comes from the Design System `buttonVariants` (single source of truth):
+ * `variant="primary"` (cta) or `variant="destructive"` (badge red), size `md`,
+ * full-width. This wrapper only adds the loading/disabled logic on top — the
+ * tactile press-scale lives in the `Button` primitive (animations) and is
+ * intentionally omitted here.
  */
 export interface SubmitButtonProps {
   children: ReactNode;
@@ -27,11 +32,6 @@ export interface SubmitButtonProps {
   onClick?: () => void;
   className?: string;
 }
-
-const VARIANT: Record<NonNullable<SubmitButtonProps["variant"]>, string> = {
-  primary: "bg-cta text-white hover:bg-[color-mix(in_oklab,var(--color-cta),white_15%)] active:bg-[color-mix(in_oklab,var(--color-cta),black_12%)]",
-  destructive: "bg-badge text-white hover:bg-[color-mix(in_oklab,var(--color-badge),white_15%)] active:bg-[color-mix(in_oklab,var(--color-badge),black_12%)]",
-};
 
 export function SubmitButton({
   children,
@@ -49,7 +49,7 @@ export function SubmitButton({
       onClick={onClick}
       disabled={loading || disabled}
       aria-busy={loading || undefined}
-      className={`flex w-full items-center justify-center gap-2 rounded-[10px] px-6 py-3 font-extrabold transition-colors disabled:opacity-60 ${VARIANT[variant]} ${className}`.trim()}
+      className={cx(buttonVariants({ variant, size: "md", fullWidth: true }), "gap-2", className)}
     >
       {loading ? (loadingLabel ?? children) : children}
     </button>

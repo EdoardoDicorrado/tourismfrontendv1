@@ -14,7 +14,52 @@
   --color-stroke: #91a0b7; /* Stroke/Stroke 1     */
   --color-stroke-2: #aed5e3; /* Stroke/storke 2     */
 
+  /* Semantic status colors — the REAL green/yellow used for availability and
+   * "included/excluded" lists. Distinct from the teal CTA: status pills and
+   * flashes intentionally reuse `cta` for "confirmed/success", so these are only
+   * for availability/inclusion semantics. */
+  --color-success: #238d00; /* availability alta, "incluso" */
+  --color-warning: #cbc829; /* availability bassa           */
+  --color-danger-deep: #8d0000; /* "non incluso" (rosso scuro) */
+
+  /* Derived interactive states — promoted from the inline `color-mix` that was
+   * copied across buttons. ONE definition here → utilities `bg-cta-hover`,
+   * `bg-cta-active`, `bg-badge-hover`, `bg-badge-active`. hover = lighter,
+   * active = darker (in oklab, like the original). */
+  --color-cta-hover: color-mix(in oklab, var(--color-cta), white 15%);
+  --color-cta-active: color-mix(in oklab, var(--color-cta), black 12%);
+  --color-badge-hover: color-mix(in oklab, var(--color-badge), white 15%);
+  --color-badge-active: color-mix(in oklab, var(--color-badge), black 12%);
+  --color-soft-active: color-mix(in oklab, var(--color-soft), black 8%); /* ghost button press */
+
+  /* Radius scale (custom names → don't override Tailwind's rounded-sm/md/lg).
+   * badge = 5px · card/control = 10px · panel = 15px · sheet = 20px. */
+  --radius-badge: 5px;
+  --radius-card: 10px;
+  --radius-panel: 15px;
+  --radius-sheet: 20px;
+
+  /* Extra tiny type step for meta text (10px) — replaces text-[10px]. */
+  --text-2xs: 0.625rem;
+  --text-2xs--line-height: 1rem;
+
+  /* Elevation — replaces ad-hoc shadow-* / arbitrary shadows. */
+  --shadow-card: 0 1px 3px rgb(54 81 92 / 0.08);
+  --shadow-popover: 0 8px 24px rgb(54 81 92 / 0.12);
+  --shadow-sheet: 0 -8px 32px rgb(54 81 92 / 0.16);
+
   --font-sans: var(--font-raleway), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Z-index scale. Tailwind 4 has no `--z-*` theme namespace, so these are plain
+ * custom properties — use via arbitrary values: `className="z-[var(--z-sheet)]"`.
+ * Single source for the layering order across header / sticky bars / overlays. */
+:root {
+  --z-sticky: 30; /* sticky filter bars, sticky booking bar */
+  --z-header: 40; /* site header */
+  --z-overlay: 100; /* modal backdrops, search overlay */
+  --z-sheet: 110; /* bottom-sheet panel above its backdrop */
+  --z-toast: 200; /* toasts above everything */
 }
 
 /* Hide the scrollbar on horizontal sliders (TrustBar, Offers) while keeping scroll/swipe. */

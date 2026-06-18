@@ -1,22 +1,16 @@
 import type { ReactNode } from "react";
 
+import { Alert } from "@/components/ui/Alert";
+
 /**
- * Inline flash / alert message. Maps onto existing design tokens (there is no
- * "success" green — success reuses `cta`):
- *   - success → `bg-cta/10 text-cta`        (role="status")
- *   - error   → `bg-badge/10 text-badge`    (role="alert")
- *   - info    → `bg-soft text-ink/70`       (role="status")
- *
- * No interactivity — safe as a server component, but importable from client
- * components too. Render conditionally from the caller (`{error && <Flash …/>}`).
+ * Inline flash / alert message — now a thin wrapper over the Design System
+ * `Alert` (single source of truth). Kept so existing imports
+ * (`import { Flash } from "@/components/account/ui"`) keep working. Same look:
+ *   - success → cta tint (role="status")
+ *   - error   → badge tint (role="alert")
+ *   - info    → soft (role="status")
  */
 export type FlashVariant = "success" | "error" | "info";
-
-const VARIANT: Record<FlashVariant, { className: string; role: "status" | "alert" }> = {
-  success: { className: "bg-cta/10 text-cta", role: "status" },
-  error: { className: "bg-badge/10 text-badge", role: "alert" },
-  info: { className: "bg-soft text-ink/70", role: "status" },
-};
 
 export function Flash({
   children,
@@ -27,13 +21,9 @@ export function Flash({
   variant?: FlashVariant;
   className?: string;
 }) {
-  const v = VARIANT[variant];
   return (
-    <p
-      role={v.role}
-      className={`rounded-[10px] px-4 py-3 text-sm font-semibold ${v.className} ${className}`.trim()}
-    >
+    <Alert variant={variant} className={className}>
       {children}
-    </p>
+    </Alert>
   );
 }

@@ -8,6 +8,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ListingHero } from "@/components/listing/ListingHero";
 import { ListingResults } from "@/components/listing/ListingResults";
+import { ListingFiltersProvider } from "@/components/listing/ListingFiltersProvider";
 import { Attractions } from "@/components/listing/Attractions";
 import { Faq } from "@/components/listing/Faq";
 import { Reviews } from "@/components/home/Reviews";
@@ -51,15 +52,16 @@ export default async function ListingPage({ params }: { params: Promise<Params> 
     <>
       <Header lang={lang} dict={dict} />
       <main className="flex-1">
-        <ListingHero city={city} lang={lang} dict={dict} />
-        <ListingResults lang={lang} dict={dict} products={products} />
-        <Attractions dict={dict} attractions={attractions} />
+        <ListingFiltersProvider>
+          <ListingHero city={city} lang={lang} dict={dict} />
+          <ListingResults lang={lang} dict={dict} products={products} />
+        </ListingFiltersProvider>
+        <Attractions lang={lang} citta={citta} dict={dict} attractions={attractions} />
         <Faq dict={dict} />
         <Reviews
           lang={lang}
           dict={dict}
           title={fill(dict.reviews.listingTitle, { city: city.name })}
-          cta={dict.reviews.listingCta}
         />
         <SupportBanner dict={dict} />
       </main>

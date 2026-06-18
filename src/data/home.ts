@@ -41,6 +41,13 @@ export interface Product {
   meta: string[];
   /** Facet ids the product matches (see `filterFacets`); drives listing filters. */
   tags?: string[];
+  /**
+   * ISO `YYYY-MM-DD` days the tour is bookable, driving the listing's date-range
+   * filter. Populated with mock availability in `@/lib/catalog` until the CRM
+   * availability API exists (see `@/data/availability`); `undefined` on cards
+   * that don't need it (home offers).
+   */
+  availableDates?: string[];
   badge?: string;
   urgency?: string;
   priceFrom: number;

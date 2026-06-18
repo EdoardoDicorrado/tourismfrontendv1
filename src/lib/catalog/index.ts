@@ -6,6 +6,8 @@ import {
   type Destination,
   type Product,
 } from "@/data/home";
+import { availabilityForSlug } from "@/data/availability";
+import { discountBadge, oldPriceFor, promoForSlug, urgencyLabel } from "@/data/promo";
 import { attractions as mockAttractions, listingProducts, type Attraction } from "@/data/listing";
 import { getProduct, type ProductDetail } from "@/data/product";
 import { fetchDestination, fetchDestinations, fetchMonuments, fetchProduct } from "@/lib/api/storefront";
@@ -56,8 +58,26 @@ export async function getHomeOffers(lang: Locale): Promise<Product[]> {
 /** Catalog grid for a city listing. Empty array when the city has no tours. */
 export async function getListingProducts(citta: string, lang: Locale): Promise<Product[]> {
   const detail = await fetchDestination(citta, lang);
-  if (!detail) return listingProducts.filter((p) => p.city === citta);
-  return detail.products.map((p) => adaptProduct(p, citta));
+  const products = detail
+    ? detail.products.map((p) => adaptProduct(p, citta))
+    : listingProducts.filter((p) => p.city === citta);
+  // Attach mock per-tour availability + promo (no availability/pricing API yet),
+  // keyed off the slug so each tour is stable across renders. Availability drives
+  // the date-range filter; the promo MIXES the discount so not every card carries
+  // the same "20% sulle Attività" badge — only some tours are on offer, the % and
+  // computed old price vary, and the urgency flag is spread. Drop both once the
+  // CRM exposes real availability/pricing (see `@/data/availability`, `@/data/promo`).
+  return products.map((p) => {
+    const key = p.slug ?? p.id;
+    const { discountPercent, urgent } = promoForSlug(key);
+    return {
+      ...p,
+      availableDates: availabilityForSlug(key),
+      badge: discountBadge(discountPercent, lang),
+      oldPrice: oldPriceFor(p.priceFrom, discountPercent),
+      urgency: urgent ? urgencyLabel(lang) : undefined,
+    };
+  });
 }
 
 /**

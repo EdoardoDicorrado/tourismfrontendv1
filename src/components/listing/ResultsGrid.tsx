@@ -5,7 +5,8 @@ import { useState } from "react";
 
 import { Container } from "@/components/ui/Container";
 import { Button } from "@/components/ui/Button";
-import { ProductCard } from "@/components/home/ProductCard";
+import { Popover } from "@/components/ui/Popover";
+import { ListingResultCard } from "@/components/listing/ListingResultCard";
 import type { Product } from "@/data/home";
 import { fill, type Locale } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
@@ -33,32 +34,52 @@ export function ResultsGrid({
   const hasMore = visible < products.length;
 
   return (
-    <section className="py-8 sm:py-10">
+    <section className="pb-8 pt-3 sm:pb-10 sm:pt-4">
       <Container>
         <div className="flex items-center gap-2">
-          <Image src="/images/icon-info-circle.svg" alt="" width={24} height={24} />
-          <h2 className="text-lg font-semibold text-cta sm:text-xl">
+          <h2 className="text-xs font-semibold text-cta">
             {fill(dict.results.found, { count: count.toLocaleString(lang) })}
           </h2>
+          <Popover
+            animated
+            align="start"
+            className="relative inline-flex shrink-0"
+            panelClassName="w-64 max-w-[calc(100vw-2rem)] rounded-[10px] border border-stroke-2 bg-white p-4 text-sm font-medium leading-snug text-ink shadow-lg"
+            trigger={({ open, toggle, id }) => (
+              <button
+                type="button"
+                onClick={toggle}
+                aria-label={dict.results.infoLabel}
+                aria-expanded={open}
+                aria-controls={id}
+                className="inline-flex h-6 w-6 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta"
+              >
+                <Image src="/images/icon-info-circle.svg" alt="" width={14} height={14} className="shrink-0" />
+              </button>
+            )}
+          >
+            {() => <p>{dict.results.infoTooltip}</p>}
+          </Popover>
         </div>
 
         {products.length > 0 ? (
           <>
-            <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
               {shown.map((p) => (
-                <ProductCard key={p.id} product={p} lang={lang} dict={dict} />
+                <ListingResultCard key={p.id} product={p} lang={lang} dict={dict} />
               ))}
             </div>
 
             {hasMore && (
-              <div className="mt-8 flex justify-center">
-                <button
+              <div className="mt-8">
+                <Button
                   type="button"
+                  size="md"
+                  fullWidth
                   onClick={() => setVisible((v) => v + PAGE)}
-                  className="rounded-[10px] border border-cta px-6 py-3 text-sm font-extrabold text-cta transition-colors hover:bg-cta hover:text-white"
                 >
                   {dict.results.showMore}
-                </button>
+                </Button>
               </div>
             )}
           </>

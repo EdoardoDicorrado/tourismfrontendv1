@@ -64,6 +64,69 @@ export const filterFacets: FilterFacet[] = [
   { id: "private" },
 ];
 
+export interface FilterOption {
+  /** A `Product.tags` value; label/hint come from `dict.filters.options[id]`. */
+  id: string;
+  /** Render a one-line hint under the label (dict `options[id].hint`). */
+  hasHint?: boolean;
+}
+
+export interface FilterGroup {
+  /** Section id; title from `dict.filters.groups[id]`. */
+  id: string;
+  options: FilterOption[];
+  /** Collapse to the first N options behind a "Mostra altro" toggle. */
+  collapseAfter?: number;
+}
+
+/**
+ * Advanced-filter groups for the bottom-sheet — Viator-style sections with
+ * checkboxes, distinct from the quick `filterFacets` chips. Matching is OR
+ * **within** a group and AND **across** groups (see `ListingResults`):
+ * e.g. "Italiano OR Inglese", then AND "Mattina".
+ */
+export const filterGroups: FilterGroup[] = [
+  {
+    id: "timeOfDay",
+    options: [
+      { id: "morning", hasHint: true },
+      { id: "afternoon", hasHint: true },
+      { id: "evening", hasHint: true },
+    ],
+  },
+  {
+    id: "language",
+    collapseAfter: 4,
+    options: [
+      { id: "italian" },
+      { id: "english" },
+      { id: "spanish" },
+      { id: "french" },
+      { id: "german" },
+      { id: "chinese" },
+      { id: "japanese" },
+    ],
+  },
+  {
+    id: "duration",
+    options: [
+      { id: "dur-1h" },
+      { id: "dur-1-4h" },
+      { id: "dur-4h-1d" },
+      { id: "dur-1d" },
+    ],
+  },
+  {
+    id: "specials",
+    options: [{ id: "special-offer" }, { id: "free-cancellation" }],
+  },
+];
+
+/** tag id → group id, for OR-within / AND-across matching in the listing. */
+export const tagToGroup: Record<string, string> = Object.fromEntries(
+  filterGroups.flatMap((g) => g.options.map((o) => [o.id, g.id])),
+);
+
 const cardAvatars = [
   "/images/avatar-review-1.png",
   "/images/avatar-review-2.png",
@@ -83,7 +146,7 @@ export const listingProducts: Product[] = [
     avatars: cardAvatars,
     rating: 4.7,
     meta: ["4 ore", "Salta la coda", "Navetta"],
-    tags: ["english", "italian", "skip-line", "shuttle", "free-cancellation", "half-day"],
+    tags: ["english", "italian", "spanish", "french", "skip-line", "shuttle", "free-cancellation", "half-day", "special-offer", "morning", "dur-1-4h", "attr-musei-vaticani"],
     badge: "20% sulle Attività",
     urgency: "Si esaurisce in fretta",
     priceFrom: 32,
@@ -99,7 +162,7 @@ export const listingProducts: Product[] = [
     avatars: cardAvatars,
     rating: 4.7,
     meta: ["4 ore", "Salta la coda"],
-    tags: ["english", "italian", "skip-line", "free-cancellation", "half-day", "private"],
+    tags: ["english", "italian", "german", "skip-line", "free-cancellation", "half-day", "private", "special-offer", "afternoon", "dur-1-4h", "attr-colosseo"],
     badge: "20% sulle Attività",
     urgency: "Si esaurisce in fretta",
     priceFrom: 32,
@@ -115,7 +178,7 @@ export const listingProducts: Product[] = [
     avatars: cardAvatars,
     rating: 4.7,
     meta: ["4 ore", "Salta la coda", "Navetta"],
-    tags: ["english", "skip-line", "shuttle", "free-cancellation", "half-day"],
+    tags: ["english", "french", "skip-line", "shuttle", "free-cancellation", "half-day", "special-offer", "morning", "dur-1-4h"],
     badge: "20% sulle Attività",
     urgency: "Si esaurisce in fretta",
     priceFrom: 32,
@@ -131,7 +194,7 @@ export const listingProducts: Product[] = [
     avatars: cardAvatars,
     rating: 4.7,
     meta: ["4 ore", "Salta la coda"],
-    tags: ["english", "italian", "skip-line", "shuttle", "free-cancellation", "half-day", "private"],
+    tags: ["english", "italian", "spanish", "skip-line", "shuttle", "free-cancellation", "half-day", "private", "special-offer", "afternoon", "dur-1-4h", "attr-colosseo"],
     badge: "20% sulle Attività",
     urgency: "Si esaurisce in fretta",
     priceFrom: 32,
@@ -147,7 +210,7 @@ export const listingProducts: Product[] = [
     avatars: cardAvatars,
     rating: 4.7,
     meta: ["3 ore", "Salta la coda"],
-    tags: ["english", "italian", "skip-line", "free-cancellation", "short", "half-day"],
+    tags: ["english", "italian", "chinese", "skip-line", "free-cancellation", "short", "half-day", "special-offer", "morning", "dur-1-4h", "attr-musei-vaticani"],
     badge: "20% sulle Attività",
     urgency: "Si esaurisce in fretta",
     priceFrom: 32,
@@ -163,7 +226,7 @@ export const listingProducts: Product[] = [
     avatars: cardAvatars,
     rating: 4.7,
     meta: ["5 ore", "Salta la coda", "Navetta"],
-    tags: ["english", "skip-line", "shuttle", "free-cancellation"],
+    tags: ["english", "spanish", "german", "skip-line", "shuttle", "free-cancellation", "special-offer", "morning", "dur-4h-1d", "attr-musei-vaticani"],
     badge: "20% sulle Attività",
     urgency: "Si esaurisce in fretta",
     priceFrom: 32,
@@ -179,7 +242,7 @@ export const listingProducts: Product[] = [
     avatars: cardAvatars,
     rating: 4.7,
     meta: ["4 ore", "Salta la coda"],
-    tags: ["english", "italian", "skip-line", "shuttle", "free-cancellation", "half-day"],
+    tags: ["english", "italian", "japanese", "skip-line", "shuttle", "free-cancellation", "half-day", "special-offer", "afternoon", "dur-1-4h", "attr-colosseo"],
     badge: "20% sulle Attività",
     urgency: "Si esaurisce in fretta",
     priceFrom: 32,
@@ -195,7 +258,7 @@ export const listingProducts: Product[] = [
     avatars: cardAvatars,
     rating: 4.7,
     meta: ["3 ore", "Salta la coda", "Navetta"],
-    tags: ["english", "skip-line", "shuttle", "free-cancellation", "short", "half-day"],
+    tags: ["english", "italian", "french", "skip-line", "shuttle", "free-cancellation", "short", "half-day", "special-offer", "morning", "dur-1-4h", "attr-musei-vaticani"],
     badge: "20% sulle Attività",
     urgency: "Si esaurisce in fretta",
     priceFrom: 32,
@@ -211,7 +274,7 @@ export const listingProducts: Product[] = [
     avatars: cardAvatars,
     rating: 4.7,
     meta: ["2 ore", "Salta la coda"],
-    tags: ["english", "italian", "skip-line", "free-cancellation", "short", "private"],
+    tags: ["english", "italian", "spanish", "skip-line", "free-cancellation", "short", "private", "special-offer", "evening", "dur-1-4h", "attr-colosseo"],
     badge: "20% sulle Attività",
     urgency: "Si esaurisce in fretta",
     priceFrom: 32,

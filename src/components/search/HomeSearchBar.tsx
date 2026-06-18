@@ -1,8 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+
+import { useHydrated } from "@/lib/useHydrated";
 
 import { SearchOverlay } from "@/components/search/SearchOverlay";
 import type { Destination, Product } from "@/data/home";
@@ -26,13 +29,27 @@ type Props = {
  */
 export function HomeSearchBar({ lang, dict, destinations, attractions, products }: Props) {
   const [open, setOpen] = useState(false);
+  // Durante il morph-back (la pill che rivola in posizione, ~0.7s) blocchiamo ogni
+  // interazione, coerente col lock d'apertura: niente tap finché l'animazione non finisce.
+  const [closing, setClosing] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const reduceMotion = useReducedMotion();
+  const hydrated = useHydrated();
 
   const close = () => {
     setOpen(false);
     triggerRef.current?.focus();
+    // reduced-motion → morph istantaneo, nessun blocco necessario.
+    if (!reduceMotion) setClosing(true);
   };
+
+  // Failsafe: se onLayoutAnimationComplete non scattasse, sblocca comunque entro
+  // ~0.9s (poco oltre la durata del morph) così l'UI non resta mai congelata.
+  useEffect(() => {
+    if (!closing) return;
+    const t = setTimeout(() => setClosing(false), 900);
+    return () => clearTimeout(t);
+  }, [closing]);
 
   return (
     <>
@@ -52,6 +69,8 @@ export function HomeSearchBar({ lang, dict, destinations, attractions, products 
             ? { duration: 0 }
             : { layout: { type: "spring", duration: 0.7, bounce: 0.2 }, opacity: { duration: 0.3 } }
         }
+        // Fine del morph-back (chiusura) → sblocca l'interazione.
+        onLayoutAnimationComplete={() => setClosing(false)}
         style={{ pointerEvents: open ? "none" : "auto" }}
         className="flex h-11 w-full items-center gap-2.5 rounded-full border border-stroke bg-white px-4 text-left shadow-lg"
       >
@@ -81,6 +100,16 @@ export function HomeSearchBar({ lang, dict, destinations, attractions, products 
           />
         )}
       </AnimatePresence>
+
+      {/* Interaction-lock di CHIUSURA: copre l'intero schermo e intercetta tap/click
+          mentre la pill fa il morph-back → niente si tocca finché non è finita.
+          (L'overlay è già smontato; questo gira sopra la home in portal.) */}
+      {hydrated &&
+        closing &&
+        createPortal(
+          <div aria-hidden className="fixed inset-0 z-[130] cursor-wait" />,
+          document.body,
+        )}
     </>
   );
 }

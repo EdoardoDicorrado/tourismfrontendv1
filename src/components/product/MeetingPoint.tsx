@@ -7,7 +7,7 @@ import type { Dictionary } from "@/lib/i18n/dictionaries";
 export function MeetingPoint({ data, dict }: { data: MeetingPointData; dict: Dictionary }) {
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="text-xl font-bold text-ink sm:text-2xl">{dict.product.meetingPoint}</h2>
+      <h2 className="text-xl font-extrabold text-ink sm:text-2xl">{dict.product.meetingPoint}</h2>
       <p className="text-base text-ink/80">{data.text}</p>
 
       <div className="relative aspect-[16/9] w-full overflow-hidden rounded-[15px] border border-stroke-2">

@@ -1,12 +1,15 @@
 import type { ReactNode } from "react";
 
+import { Badge, type BadgeTone as UIBadgeTone } from "@/components/ui/Badge";
+
 /**
- * Pill badge for booking / item status. There is no generic Badge in the repo,
- * so this replicates the design-system pill pattern mapped onto existing tokens
- * (no dedicated "success" green — confirmed/current uses `cta`):
- *   - confirmed / current / paid → `bg-cta/10 text-cta`
- *   - travelled / pending       → `bg-soft-grey/40 text-ink/70`
- *   - cancelled                 → `bg-badge/10 text-badge`
+ * Pill badge for booking / item status — a thin wrapper over the Design System
+ * `Badge` (`variant="soft"`). Keeps its semantic tone names + mapping helpers;
+ * the colors come from the single Badge primitive (no dedicated "success" green
+ * — confirmed/current intentionally uses `cta`):
+ *   - confirmed / current / paid → `cta`     → `bg-cta/10 text-cta`
+ *   - travelled / pending        → `neutral` → `bg-soft-grey/40 text-ink/70`
+ *   - cancelled                  → `danger`  → `bg-badge/10 text-badge`
  *
  * The label text is passed in (already localized via `dict.account.status.*`);
  * `tone` controls the colors. Map a value to a tone with `bookingStatusTone`
@@ -15,10 +18,11 @@ import type { ReactNode } from "react";
  */
 export type BadgeTone = "current" | "neutral" | "danger";
 
-const TONE: Record<BadgeTone, string> = {
-  current: "bg-cta/10 text-cta",
-  neutral: "bg-soft-grey/40 text-ink/70",
-  danger: "bg-badge/10 text-badge",
+/** Maps the semantic status tone onto the generic Badge tone. */
+const TO_UI_TONE: Record<BadgeTone, UIBadgeTone> = {
+  current: "cta",
+  neutral: "neutral",
+  danger: "badge",
 };
 
 export function StatusBadge({
@@ -31,11 +35,9 @@ export function StatusBadge({
   className?: string;
 }) {
   return (
-    <span
-      className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold ${TONE[tone]} ${className}`.trim()}
-    >
+    <Badge variant="soft" tone={TO_UI_TONE[tone]} className={className}>
       {children}
-    </span>
+    </Badge>
   );
 }
 

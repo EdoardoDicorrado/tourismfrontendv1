@@ -31,13 +31,15 @@ export function ListingHero({
         className="absolute inset-0 -z-10 bg-gradient-to-t from-black/80 via-black/55 to-black/45"
       />
 
-      <Container className="flex flex-col gap-7 py-14 sm:py-16 lg:py-20">
+      <Container className="flex flex-col gap-6 py-10 sm:gap-7 sm:py-16 lg:py-20">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
           <h1 className="text-4xl font-extrabold leading-tight text-white drop-shadow-sm sm:text-5xl lg:text-6xl">
             {fill(dict.listing.heading, { city: city.name })}
           </h1>
 
-          <div className="flex flex-col gap-1.5 text-white">
+          {/* Rating block: hidden on mobile (per Figma 64:2887 — the mobile hero
+              shows only heading + search + tours line). Visible from sm up. */}
+          <div className="hidden gap-1.5 text-white sm:flex sm:flex-col">
             <div className="flex items-center gap-3">
               <span className="text-4xl font-extrabold sm:text-5xl">
                 {city.rating.toFixed(1)}

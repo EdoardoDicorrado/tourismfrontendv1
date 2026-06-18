@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { Badge } from "@/components/ui/Badge";
 import type { Product } from "@/data/home";
 import type { Locale } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
@@ -64,16 +65,8 @@ export function ProductCard({
           className="object-cover"
         />
         <div className="absolute left-4 top-4 flex flex-col items-start gap-1.5">
-          {product.badge && (
-            <span className="rounded-[5px] bg-badge px-2 py-1 text-sm font-extrabold leading-none text-white">
-              {product.badge}
-            </span>
-          )}
-          {product.urgency && (
-            <span className="rounded-[5px] bg-ink px-2 py-1 text-sm font-extrabold leading-none text-white">
-              {product.urgency}
-            </span>
-          )}
+          {product.badge && <Badge tone="badge">{product.badge}</Badge>}
+          {product.urgency && <Badge tone="ink">{product.urgency}</Badge>}
         </div>
       </div>
 

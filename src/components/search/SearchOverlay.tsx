@@ -23,6 +23,13 @@ type Props = {
   /** Searchable catalog, filtered client-side as the user types. */
   products: Product[];
   onClose: () => void;
+  /**
+   * Motion preset for the entrance:
+   * - `"hero"` (default): morph dalla pill della home (`layoutId`, spring ~0.7s).
+   * - `"header"`: aperto dall'header interno (nessuna pill sorgente) → entrata
+   *   più veloce, dura ~0.5s (niente morph), backdrop/lista accelerati.
+   */
+  variant?: "hero" | "header";
 };
 
 /** Tokenised AND match over a product's searchable fields — mirrors `/[lang]/cerca`. */
@@ -46,12 +53,27 @@ function productHref(lang: Locale, p: Product): string {
  * or "Esplora tutte" hands off to the `/[lang]/cerca` results page.
  * Figma node 221:587 (empty) / 221:645 (typing).
  */
-export function SearchOverlay({ lang, dict, destinations, attractions, products, onClose }: Props) {
+export function SearchOverlay({
+  lang,
+  dict,
+  destinations,
+  attractions,
+  products,
+  onClose,
+  variant = "hero",
+}: Props) {
   const router = useRouter();
   const hydrated = useHydrated();
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const reduceMotion = useReducedMotion();
+  // Aperto dall'header interno: nessuna pill condivide il layoutId → niente morph,
+  // entrata propria più rapida (~0.5s) invece dello spring 0.7s della home.
+  const isHeader = variant === "header";
+  // Mentre il morph d'apertura (searchbar → overlay) è in corso blocchiamo OGNI
+  // interazione: l'utente non può toccare nulla finché l'animazione non è finita.
+  // reduced-motion = nessun morph → parte già "done" (nessun blocco).
+  const [morphDone, setMorphDone] = useState(Boolean(reduceMotion));
 
   // Lock body scroll, close on Esc and focus the input while mounted; the cleanup
   // restores scroll on close (unmount).
@@ -68,6 +90,14 @@ export function SearchOverlay({ lang, dict, destinations, attractions, products,
       window.removeEventListener("keydown", onKey);
     };
   }, [onClose]);
+
+  // Failsafe: se onLayoutAnimationComplete non scattasse, sblocchiamo comunque
+  // entro 1s così l'interfaccia non resta mai congelata.
+  useEffect(() => {
+    if (morphDone) return;
+    const t = setTimeout(() => setMorphDone(true), 1000);
+    return () => clearTimeout(t);
+  }, [morphDone]);
 
   // Portal target (document.body) only exists after hydration.
   if (!hydrated) return null;
@@ -97,16 +127,30 @@ export function SearchOverlay({ lang, dict, destinations, attractions, products,
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0, transition: { duration: 0 } }}
-        transition={{ duration: reduceMotion ? 0 : 0.6 }}
+        transition={{ duration: reduceMotion ? 0 : isHeader ? 0.3 : 0.6 }}
       />
 
       {/* Search bar + close */}
       <div className="flex items-center gap-3 px-4 pb-2 pt-6 sm:gap-4 sm:px-6">
         <motion.form
-          layoutId="home-search-field"
-          // Morph spring a durata esplicita (~0.7s, bounce 0.2). Tienilo allineato
-          // col morph-back della pill in HomeSearchBar.tsx. reduced-motion → istantaneo.
-          transition={reduceMotion ? { duration: 0 } : { type: "spring", duration: 0.7, bounce: 0.2 }}
+          // hero → morph condiviso con la pill della home (layoutId). header → niente
+          // morph (nessuna pill sorgente): entrata propria fade+slide in 0.5s.
+          layoutId={isHeader ? undefined : "home-search-field"}
+          initial={isHeader && !reduceMotion ? { opacity: 0, y: -12 } : undefined}
+          animate={isHeader && !reduceMotion ? { opacity: 1, y: 0 } : undefined}
+          // hero: morph spring ~0.7s (allineato al morph-back della pill in
+          // HomeSearchBar.tsx). header: entrata 0.5s easeOut. reduced-motion → istantaneo.
+          transition={
+            reduceMotion
+              ? { duration: 0 }
+              : isHeader
+                ? { duration: 0.5, ease: [0.22, 1, 0.36, 1] }
+                : { type: "spring", duration: 0.7, bounce: 0.2 }
+          }
+          // Sblocco dell'interaction-lock: hero alla fine del morph (layout),
+          // header alla fine dell'entrata (animate opacity/y, ~0.5s).
+          onLayoutAnimationComplete={isHeader ? undefined : () => setMorphDone(true)}
+          onAnimationComplete={isHeader ? () => setMorphDone(true) : undefined}
           onSubmit={(e) => {
             e.preventDefault();
             goToResults();
@@ -154,10 +198,17 @@ export function SearchOverlay({ lang, dict, destinations, attractions, products,
         className="mx-auto w-full max-w-[760px] flex-1 overflow-y-auto px-4 pb-12 pt-4 sm:px-6"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        // In apertura compare dopo il morph (delay 0.55); in chiusura sparisce subito (exit duration 0).
+        // In apertura compare dopo l'entrata (hero: delay 0.55 dopo il morph; header:
+        // delay 0.15, più rapido per stare nei ~0.5s); in chiusura sparisce subito.
         // reduced-motion → appare subito senza delay.
         exit={{ opacity: 0, transition: { duration: 0 } }}
-        transition={reduceMotion ? { duration: 0 } : { duration: 0.35, delay: 0.55 }}
+        transition={
+          reduceMotion
+            ? { duration: 0 }
+            : isHeader
+              ? { duration: 0.3, delay: 0.15 }
+              : { duration: 0.35, delay: 0.55 }
+        }
       >
         {trimmed ? (
           <section className="flex flex-col gap-4">
@@ -236,6 +287,10 @@ export function SearchOverlay({ lang, dict, destinations, attractions, products,
           </div>
         )}
       </motion.div>
+
+      {/* Interaction-lock: copre l'intero schermo e intercetta tap/click finché il
+          morph d'apertura non è finito → durante l'animazione non si tocca nulla. */}
+      {!morphDone && <div aria-hidden className="absolute inset-0 z-[130] cursor-wait" />}
     </div>,
     document.body,
   );

@@ -4,9 +4,9 @@ import { useState } from "react";
 
 import { formatDateLong } from "@/lib/format";
 import { Popover } from "@/components/ui/Popover";
-import { Button } from "@/components/ui/Button";
-import { Calendar } from "@/components/selectors/Calendar";
+import { RangeCalendar } from "@/components/selectors/RangeCalendar";
 import { CalendarGlyph } from "@/components/selectors/glyphs";
+import { useListingFilters, type DateRange } from "@/components/listing/ListingFiltersProvider";
 import { fill, type Locale } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
@@ -15,8 +15,10 @@ const SEARCH_PRICING = { basePrice: 34, lowPrice: 22, discountPercent: 20 };
 const TODAY_ISO = "2026-06-08";
 
 /**
- * Listing hero search: the date pill ("Quanto tempo sarai a {city}?") opens the
- * shared {@link Calendar} overlay. Submits the chosen date to /{lang}/cerca.
+ * Listing hero search: the date pill opens the {@link RangeCalendar} (taller,
+ * range-aware — Figma 64:5906). Confirming a range does NOT navigate to /cerca —
+ * it commits the range to the shared {@link useListingFilters} state so the
+ * results below filter in place. The pill reflects the committed range.
  */
 export function ListingSearch({
   cityName,
@@ -27,22 +29,31 @@ export function ListingSearch({
   lang: Locale;
   dict: Dictionary;
 }) {
-  const [date, setDate] = useState<string | null>(null);
+  const { range, setRange } = useListingFilters();
+  // Draft edited inside the open calendar; committed to the shared state only on
+  // "Conferma" (so the results don't churn while the user is still picking).
+  const [draft, setDraft] = useState<DateRange>(range);
+
+  const { start, end } = range;
+  const pillLabel = start
+    ? end && end !== start
+      ? `${formatDateLong(start, lang)} – ${formatDateLong(end, lang)}`
+      : formatDateLong(start, lang)
+    : fill(dict.search.cityPlaceholder, { city: cityName });
 
   return (
-    <form
-      action={`/${lang}/cerca`}
-      className="flex w-full max-w-[760px] items-center gap-3 rounded-full border border-stroke bg-white py-2 pl-5 pr-2 shadow-lg"
-    >
-      <input type="hidden" name="date" value={date ?? ""} />
+    <div className="flex w-full max-w-[760px] items-center rounded-full border border-stroke bg-white px-5 py-2.5 shadow-lg">
       <Popover
         align="start"
         sheet
-        className="relative flex-1"
+        className="relative w-full"
         trigger={({ open, toggle, id }) => (
           <button
             type="button"
-            onClick={toggle}
+            onClick={() => {
+              setDraft(range); // seed the calendar with the committed range
+              toggle();
+            }}
             aria-haspopup="dialog"
             aria-expanded={open}
             aria-controls={id}
@@ -51,23 +62,31 @@ export function ListingSearch({
             <span className="shrink-0">
               <CalendarGlyph />
             </span>
-            <span className={`truncate text-base sm:text-lg ${date ? "text-ink" : "text-stroke"}`}>
-              {date ? formatDateLong(date, lang) : fill(dict.search.cityPlaceholder, { city: cityName })}
+            <span className={`truncate text-base sm:text-lg ${start ? "text-ink" : "text-stroke"}`}>
+              {pillLabel}
             </span>
           </button>
         )}
       >
         {({ close }) => (
-          <Calendar
+          <RangeCalendar
             startYear={2026}
             startMonth={5}
             pricing={SEARCH_PRICING}
             minIso={TODAY_ISO}
-            showPrices={false}
-            selected={date}
-            onSelect={setDate}
-            onConfirm={close}
-            onClose={close}
+            start={draft.start}
+            end={draft.end}
+            onChange={(s, e) => setDraft({ start: s, end: e })}
+            // Confirm applies the range IN PAGE (no navigation): commit + close.
+            onConfirm={() => {
+              setRange(draft);
+              close();
+            }}
+            // Dismissing without confirming discards the draft.
+            onClose={() => {
+              setDraft(range);
+              close();
+            }}
             lang={lang}
             labels={dict.booking.calendar}
             confirmLabel={dict.booking.confirm}
@@ -75,9 +94,6 @@ export function ListingSearch({
           />
         )}
       </Popover>
-      <Button type="submit" pill size="md" className="shrink-0 sm:px-7 sm:text-lg">
-        {dict.search.button}
-      </Button>
-    </form>
+    </div>
   );
 }
