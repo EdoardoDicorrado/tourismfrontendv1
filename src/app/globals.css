@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+/*
+ * TourisMotion design tokens — sourced from the Figma "01 Homepage" variables.
+ * Tailwind 4: these become utilities (e.g. text-ink, bg-cta, border-stroke).
+ */
+@theme {
+  --color-ink: #36515c; /* Primari/body and text */
+  --color-cta: #007ca2; /* Primari/CTA e Icon  */
+  --color-badge: #dc0037; /* Primari/Badge       */
+  --color-rate: #e3ba40; /* Primari/Rate        */
+  --color-soft: #def3fb; /* soft background     */
+  --color-soft-grey: #d9d9d9; /* Soft grey           */
+  --color-stroke: #91a0b7; /* Stroke/Stroke 1     */
+  --color-stroke-2: #aed5e3; /* Stroke/storke 2     */
+
+  --font-sans: var(--font-raleway), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Hide the scrollbar on horizontal sliders (TrustBar, Offers) while keeping scroll/swipe. */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: #ffffff;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}

@@ -1,0 +1,8 @@
+<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="date-forward_svgrepo.com">
+<path id="secondary" d="M7.5 22.5H52.5V50C52.5 50.663 52.2366 51.2989 51.7678 51.7678C51.2989 52.2366 50.663 52.5 50 52.5H10C9.33696 52.5 8.70107 52.2366 8.23223 51.7678C7.76339 51.2989 7.5 50.663 7.5 50V22.5Z" fill="var(--fill-0, #007CA2)"/>
+<path id="primary" d="M7.5 22.5V50C7.5 50.663 7.76339 51.2989 8.23223 51.7678C8.70107 52.2366 9.33696 52.5 10 52.5H50C50.663 52.5 51.2989 52.2366 51.7678 51.7678C52.2366 51.2989 52.5 50.663 52.5 50V22.5M7.5 22.5H52.5M7.5 22.5V12.5C7.5 11.837 7.76339 11.2011 8.23223 10.7322C8.70107 10.2634 9.33696 10 10 10H50C50.663 10 51.2989 10.2634 51.7678 10.7322C52.2366 11.2011 52.5 11.837 52.5 12.5V22.5M40 7.5V15M20 7.5V15" stroke="var(--stroke-0, #36515C)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="primary_2" d="M37.5 42.5C37.5 39.8478 36.4464 37.3043 34.5711 35.4289C32.6957 33.5536 30.1522 32.5 27.5 32.5C24.8478 32.5 22.3043 33.5536 20.4289 35.4289C18.5536 37.3043 17.5 39.8478 17.5 42.5" stroke="var(--stroke-0, #DEF3FB)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="primary_3" d="M42.5 35L37.5 42.5L30 40" stroke="var(--stroke-0, #DEF3FB)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</svg>

@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Redsys InSite — sandbox idOper harness</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font: 15px/1.5 system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
+    h1 { font-size: 1.25rem; }
+    fieldset { border: 1px solid #8884; border-radius: 8px; margin: 1rem 0; padding: 1rem; }
+    legend { font-weight: 600; padding: 0 .4rem; }
+    label { display: block; font-weight: 600; margin: .6rem 0 .2rem; }
+    input[type=text] { width: 100%; padding: .5rem; box-sizing: border-box; font: inherit; }
+    button { font: inherit; padding: .55rem 1rem; border-radius: 8px; border: 1px solid #8886; cursor: pointer; }
+    .hint { color: #888; font-size: .85rem; margin-top: .2rem; }
+    #card-form { margin-top: 1rem; min-height: 60px; }
+    #result { white-space: pre-wrap; word-break: break-all; padding: 1rem; border-radius: 8px; background: #8881; margin-top: 1rem; }
+    #idoper { font-weight: 700; font-size: 1.05rem; }
+    .ok { color: #1a8a1a; } .err { color: #c0392b; }
+    code { background: #8882; padding: .1rem .3rem; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Redsys InSite — sandbox idOper harness</h1>
+  <p class="hint">
+    Genera un <strong>idOper</strong> (token di sessione carta, PCI SAQ-A) col JS SDK V3 sandbox.
+    Le chiamate <code>start</code>/<code>authorize</code> NON passano da qui: si fanno via tinker
+    sul backend (vedi <code>redsys-insite-sandbox-runbook.md</code>). Questa pagina è solo l'anello
+    che <em>deve</em> stare nel browser. Servila da <code>http://localhost</code> (non da
+    <code>file://</code>, il postMessage del SDK richiede un'origine http).
+  </p>
+
+  <fieldset>
+    <legend>1 · Config InSite (output di <code>start</code>)</legend>
+    <label for="sdk">SDK URL (sandbox)</label>
+    <input type="text" id="sdk" value="https://sis-t.redsys.es:25443/sis/NC/sandbox/redsysV3.js" />
+
+    <label for="fuc">FUC / merchant_code</label>
+    <input type="text" id="fuc" placeholder="es. 154217244" />
+
+    <label for="terminal">Terminal</label>
+    <input type="text" id="terminal" placeholder="es. 100" />
+
+    <label for="order">merchant_order (12 char, dal config di start)</label>
+    <input type="text" id="order" placeholder="es. 1234ABCD1234" />
+    <p class="hint">Prefill rapido: apri la pagina con
+      <code>?fuc=…&amp;terminal=…&amp;order=…</code></p>
+
+    <p style="margin-top:1rem">
+      <button id="mount" type="button">Monta form carta</button>
+    </p>
+  </fieldset>
+
+  <fieldset>
+    <legend>2 · Form carta sicuro (iframe Redsys)</legend>
+    <div id="card-form"></div>
+    <p class="hint">
+      Carta test sandbox: <code>4548 8120 4940 0004</code> · scad. <code>12/34</code> (qualsiasi
+      futura) · CVV <code>123</code>. Questa carta richiede challenge 3DS2 (password ACS tipica
+      <code>123456</code>). Clicca il bottone di pagamento dentro l'iframe per generare l'idOper.
+    </p>
+    <!-- storeIdOper scrive qui: idOper in #token, eventuale errore in #errorCode -->
+    <input type="hidden" id="token" />
+    <input type="hidden" id="errorCode" />
+  </fieldset>
+
+  <fieldset>
+    <legend>3 · Risultato</legend>
+    <div id="result">In attesa dell'idOper…</div>
+  </fieldset>
+
+  <script>
+    const qs = new URLSearchParams(location.search);
+    for (const k of ["fuc", "terminal", "order"]) {
+      if (qs.get(k)) document.getElementById(k).value = qs.get(k);
+    }
+
+    const $ = (id) => document.getElementById(id);
+    const result = $("result");
+
+    // Handshake "merchantValidation" del SDK InSite: al click sul bottone di pagamento
+    // l'iframe NON tokenizza subito — prima chiede al commercio di validare i PROPRI
+    // campi (storeIdOper legge il return di questo callback). true → il SDK invia
+    // {validation:'OK'} → Redsys genera l'idOper; false → {validation:'KO'} → Redsys
+    // risponde con errorCode "msg17" ("La validación por parte del comercio es
+    // incorrecta"). Qui non abbiamo campi nostri da validare → ritorniamo SEMPRE true;
+    // l'idOper arriva poi in #token (lo mostra il renderResult del listener message).
+    function merchantValidation() {
+      return true;
+    }
+
+    function renderResult() {
+      const idOper = $("token").value;
+      const err = $("errorCode").value;
+      if (err && err !== "0" && err !== "") {
+        result.className = "err";
+        result.textContent = "errorCode dal SDK: " + err +
+          "\n(dominio non whitelisted sul comercio? merchant_order/FUC errati? carta non valida?)";
+        return;
+      }
+      if (idOper) {
+        result.className = "ok";
+        result.innerHTML =
+          'idOper (copia in tinker → authorize):\n\n<span id="idoper">' + idOper + "</span>";
+      }
+    }
+
+    // Listener postMessage degli iframe Redsys → storeIdOper(ev, tokenId, errId, cb).
+    window.addEventListener("message", function receiveMessage(event) {
+      if (typeof storeIdOper === "function") {
+        storeIdOper(event, "token", "errorCode", merchantValidation);
+        // Fallback: alcune build del SDK scrivono i campi ma non invocano il cb.
+        renderResult();
+      }
+    });
+
+    let sdkLoaded = false;
+    $("mount").addEventListener("click", function () {
+      const fuc = $("fuc").value.trim();
+      const terminal = $("terminal").value.trim();
+      const order = $("order").value.trim();
+      if (!fuc || !terminal || !order) {
+        result.className = "err";
+        result.textContent = "Compila FUC, terminal e merchant_order (dall'output di start).";
+        return;
+      }
+
+      function build() {
+        $("card-form").innerHTML = "";
+        // getInSiteForm(id, estiloBoton, estiloBody, estiloCaja, estiloInputs,
+        //               textoBoton, fuc, terminal, order, idioma, mostrarLogo)
+        // L'amount NON serve qui: viene legato server-side al trataPeticion.
+        getInSiteForm("card-form", "", "", "", "", "Genera idOper", fuc, terminal, order, "ES", true);
+        result.className = "";
+        result.textContent = "Form montato. Inserisci la carta test e premi il bottone nell'iframe.";
+      }
+
+      if (sdkLoaded) { build(); return; }
+      const s = document.createElement("script");
+      s.src = $("sdk").value.trim();
+      s.onload = function () { sdkLoaded = true; build(); };
+      s.onerror = function () {
+        result.className = "err";
+        result.textContent = "Impossibile caricare il SDK da " + s.src;
+      };
+      document.head.appendChild(s);
+    });
+  </script>
+</body>
+</html>
