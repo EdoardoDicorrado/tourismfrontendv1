@@ -60,7 +60,7 @@ export default async function AgencyDashboardPage({ params }: { params: Promise<
         </div>
 
         {/* Affiliate-dashboard style: ricavo da commissione in evidenza. */}
-        <div className="rounded-[15px] bg-cta p-6 text-white">
+        <div className="rounded-panel bg-cta p-6 text-white">
           <p className="text-sm font-semibold uppercase tracking-wide text-white/80">
             Ricavo da commissioni
           </p>
@@ -83,7 +83,7 @@ export default async function AgencyDashboardPage({ params }: { params: Promise<
 /** Non-editable value, styled like the affiliate-dashboard stat cards. */
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[15px] border border-soft-grey bg-white p-5">
+    <div className="rounded-panel border border-soft-grey bg-white p-5">
       <p className="text-sm font-semibold text-ink/60">{label}</p>
       <p className="mt-1 text-2xl font-extrabold text-ink">{value}</p>
     </div>

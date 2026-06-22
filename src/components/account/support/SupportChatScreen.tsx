@@ -119,7 +119,7 @@ export function SupportChatScreen({
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Es. Modifica orario tour"
-                  className="w-full rounded-[10px] border border-stroke px-3 py-2.5 text-sm text-ink outline-none focus:border-cta"
+                  className="w-full rounded-card border border-stroke px-3 py-2.5 text-sm text-ink outline-none focus:border-cta"
                 />
               </div>
               <div>
@@ -132,7 +132,7 @@ export function SupportChatScreen({
                   value={desc}
                   onChange={(e) => setDesc(e.target.value)}
                   placeholder="Descrivi la tua richiesta…"
-                  className="w-full resize-none rounded-[10px] border border-stroke px-3 py-2.5 text-sm text-ink outline-none focus:border-cta"
+                  className="w-full resize-none rounded-card border border-stroke px-3 py-2.5 text-sm text-ink outline-none focus:border-cta"
                 />
               </div>
             </div>
@@ -142,7 +142,7 @@ export function SupportChatScreen({
               type="button"
               onClick={submitNew}
               disabled={!title.trim() || !desc.trim()}
-              className="w-full rounded-[10px] bg-cta px-5 py-3 text-sm font-extrabold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
+              className="w-full rounded-card bg-cta px-5 py-3 text-sm font-extrabold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
             >
               Invia richiesta
             </button>
@@ -158,6 +158,7 @@ export function SupportChatScreen({
             ) : (
               messages.map((m) => (
                 <div key={m.id} className={m.from === "user" ? "flex justify-end" : "flex justify-start"}>
+                  {/* ds-guard-ignore-next-line: larghezza bolla chat responsive, nessun token % */}
                   <div className="max-w-[80%]">
                     <div
                       className={
@@ -227,7 +228,7 @@ export function SupportChatScreen({
               <button
                 type="button"
                 onClick={() => endSupportConversation(audience, threadId)}
-                className="self-center rounded-[10px] border border-badge px-4 py-2 text-sm font-extrabold text-badge transition-colors hover:bg-badge hover:text-white"
+                className="self-center rounded-card border border-badge px-4 py-2 text-sm font-extrabold text-badge transition-colors hover:bg-badge hover:text-white"
               >
                 Termina conversazione
               </button>

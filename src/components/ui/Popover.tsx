@@ -124,6 +124,7 @@ export function Popover({
                   tabIndex={-1}
                   // pt-2 reserves the grabber zone (top-2 + h-1.5 ⇒ 8–14px) so a
                   // consumer's own header padding (e.g. pt-3) no longer collides with it.
+                  // ds-guard-ignore-next-line: max-w-[680px] = larghezza max sheet (già in baseline pre-pt-2)
                   className={`fixed inset-x-0 bottom-0 z-[var(--z-sheet)] mx-auto w-full max-w-[680px] rounded-t-sheet bg-white pt-2 shadow-sheet outline-none ${panelClassName}`}
                   initial={reduceMotion ? { opacity: 0 } : { y: "100%" }}
                   animate={reduceMotion ? { opacity: 1 } : { y: 0 }}

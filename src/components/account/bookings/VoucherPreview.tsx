@@ -28,7 +28,7 @@ export function VoucherPreview({ booking, lang }: { booking: Booking; lang: Loca
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 rounded-[10px] border border-stroke px-5 py-2.5 text-sm font-extrabold text-ink transition-colors hover:border-cta hover:text-cta"
+        className="inline-flex items-center gap-2 rounded-card border border-stroke px-5 py-2.5 text-sm font-extrabold text-ink transition-colors hover:border-cta hover:text-cta"
       >
         Scarica voucher
       </button>
@@ -62,8 +62,8 @@ export function VoucherPreview({ booking, lang }: { booking: Booking; lang: Loca
 
           {/* Voucher preview card. Real QR + layout come from the backend voucher.pdf;
               this is a visual placeholder until that renders inline. */}
-          <div className="rounded-[15px] border border-dashed border-stroke bg-soft/40 p-5 text-center">
-            <div className="mx-auto flex size-28 items-center justify-center rounded-[10px] border border-stroke bg-white text-xs font-bold text-ink/40">
+          <div className="rounded-panel border border-dashed border-stroke bg-soft/40 p-5 text-center">
+            <div className="mx-auto flex size-28 items-center justify-center rounded-card border border-stroke bg-white text-xs font-bold text-ink/40">
               QR
             </div>
             {line ? (
@@ -79,7 +79,7 @@ export function VoucherPreview({ booking, lang }: { booking: Booking; lang: Loca
             <button
               type="button"
               onClick={() => setWalletNote(true)}
-              className="inline-flex items-center justify-center gap-2 rounded-[10px] bg-ink px-5 py-3 text-sm font-extrabold text-white transition-opacity hover:opacity-90"
+              className="inline-flex items-center justify-center gap-2 rounded-card bg-ink px-5 py-3 text-sm font-extrabold text-white transition-opacity hover:opacity-90"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
                 <path d="M3 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2H3z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
@@ -100,7 +100,7 @@ export function VoucherPreview({ booking, lang }: { booking: Booking; lang: Loca
               href={pdfHref}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center justify-center gap-2 rounded-[10px] border border-stroke px-5 py-3 text-sm font-extrabold text-ink transition-colors hover:border-cta hover:text-cta"
+              className="inline-flex items-center justify-center gap-2 rounded-card border border-stroke px-5 py-3 text-sm font-extrabold text-ink transition-colors hover:border-cta hover:text-cta"
             >
               Scarica PDF
             </a>

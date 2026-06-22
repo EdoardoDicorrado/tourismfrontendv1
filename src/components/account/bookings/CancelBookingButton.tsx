@@ -54,7 +54,7 @@ export function CancelBookingButton({
       <button
         type="button"
         onClick={() => setConfirming(true)}
-        className="inline-flex items-center gap-2 rounded-[10px] border border-badge px-5 py-2.5 text-sm font-extrabold text-badge transition-colors hover:bg-badge hover:text-white"
+        className="inline-flex items-center gap-2 rounded-card border border-badge px-5 py-2.5 text-sm font-extrabold text-badge transition-colors hover:bg-badge hover:text-white"
       >
         {dict.bookingDetail.cancelBooking}
       </button>
@@ -68,7 +68,7 @@ export function CancelBookingButton({
         <button
           type="button"
           onClick={handleConfirm}
-          className="rounded-[10px] bg-badge px-4 py-2 text-sm font-extrabold text-white transition-colors hover:bg-badge/90"
+          className="rounded-card bg-badge px-4 py-2 text-sm font-extrabold text-white transition-colors hover:bg-badge-hover"
         >
           {dict.bookingDetail.cancelBooking}
         </button>

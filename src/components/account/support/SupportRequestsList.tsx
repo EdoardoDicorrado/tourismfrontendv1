@@ -31,7 +31,7 @@ export function SupportRequestsList({
           <h1 className="text-2xl font-extrabold text-ink sm:text-3xl">Richieste aperte</h1>
           <Link
             href={`${basePath}/chat/new`}
-            className="inline-flex items-center gap-2 rounded-[10px] bg-cta px-4 py-2.5 text-sm font-extrabold text-white transition-opacity hover:opacity-90"
+            className="inline-flex items-center gap-2 rounded-card bg-cta px-4 py-2.5 text-sm font-extrabold text-white transition-opacity hover:opacity-90"
           >
             + Nuova richiesta
           </Link>

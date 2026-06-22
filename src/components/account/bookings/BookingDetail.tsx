@@ -81,7 +81,7 @@ export function BookingDetail({
 
       {/* Acquirente (read-only): chi ha prenotato + recapiti di contatto. */}
       {hasBuyer ? (
-        <section className="rounded-[15px] border border-soft-grey bg-white p-5 sm:p-6">
+        <section className="rounded-panel border border-soft-grey bg-white p-5 sm:p-6">
           <h2 className="text-lg font-extrabold text-ink">{d.buyerTitle}</h2>
           <dl className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {buyerName ? (
@@ -107,7 +107,7 @@ export function BookingDetail({
       ) : null}
 
       {/* Riepilogo opzioni (read-only): orari prenotati con tariffe e totale. */}
-      <section className="rounded-[15px] border border-soft-grey bg-white p-5 sm:p-6">
+      <section className="rounded-panel border border-soft-grey bg-white p-5 sm:p-6">
         <h2 className="text-lg font-extrabold text-ink">{d.summaryTitle}</h2>
         <div className="mt-4 flex flex-col gap-4">
           {booking.lines.map((line) => (
