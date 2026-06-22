@@ -34,6 +34,10 @@ export function AccountMenu({
 
   const label = agency ? dict.account.agencyMenu.title : user ? dict.account.menu.title : dict.header.login;
   const name = agency ? agency.name : user ? user.name : null;
+  // Logged in (agency or demo customer; affiliate joins here once its session lands,
+  // #37): show the classic hamburger glyph in place of the avatar — the icon now
+  // opens the role menu drawer that replaced the in-page sidebar.
+  const loggedIn = Boolean(agency || user);
 
   return (
     <>
@@ -44,7 +48,13 @@ export function AccountMenu({
         aria-label={label}
         className="flex h-11 w-11 items-center justify-center gap-2 text-cta sm:w-auto sm:px-1"
       >
-        <Image src="/images/icon-avatar.svg" alt="" width={24} height={24} unoptimized />
+        {loggedIn ? (
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
+            <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        ) : (
+          <Image src="/images/icon-avatar.svg" alt="" width={24} height={24} unoptimized />
+        )}
         <span className="hidden max-w-[8rem] truncate text-sm font-semibold sm:inline">
           {name ? name.split(/\s+/)[0] : dict.header.login}
         </span>

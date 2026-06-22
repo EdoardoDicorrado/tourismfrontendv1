@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { agencyLogin } from "@/lib/account/client";
-import { setSession } from "@/lib/account/session";
+import { PREVIEW_AGENCY_TOKEN, setSession } from "@/lib/account/session";
 import { BackendError } from "@/lib/api/client";
 import { isLocale, type Locale } from "@/lib/i18n/config";
 import { isNonEmptyString } from "@/lib/validation";
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
   // storefront auth API lands. TODO(full-stack): remove once /auth/agency is real.
   if (data.email.trim().toLowerCase() === "test@test.it" && data.password === "test") {
     await setSession({
-      token: "preview-agency-token",
+      token: PREVIEW_AGENCY_TOKEN,
       token_type: "Bearer",
       expires_at: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
       role: "agency",

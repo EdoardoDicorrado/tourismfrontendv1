@@ -13,7 +13,6 @@ import {
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Hero } from "@/components/home/Hero";
-import { RecentlyViewed } from "@/components/home/RecentlyViewed";
 import { TrustBar } from "@/components/home/TrustBar";
 import { Offers } from "@/components/home/Offers";
 import { Reviews } from "@/components/home/Reviews";
@@ -48,7 +47,6 @@ export default async function Home({ params }: { params: Promise<{ lang: string 
           attractions={attractions}
           products={searchProducts}
         />
-        <RecentlyViewed lang={lang} dict={dict} />
         <TrustBar />
         <Offers lang={lang} dict={dict} offers={offers} />
         <Reviews lang={lang} dict={dict} cta={dict.reviews.listingCta} reviews={reviews} />

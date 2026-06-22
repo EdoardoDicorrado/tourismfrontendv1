@@ -14,6 +14,8 @@ import { useSyncExternalStore } from "react";
 export interface DemoUser {
   name: string;
   email: string;
+  /** Which preview area the demo flag represents. Absent = customer (legacy). */
+  role?: "customer" | "affiliate";
 }
 
 const KEY = "tm_demo_user";

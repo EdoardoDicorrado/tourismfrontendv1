@@ -2,6 +2,7 @@ import Image from "next/image";
 
 import { Container } from "@/components/ui/Container";
 import { HomeSearchBar } from "@/components/search/HomeSearchBar";
+import { RecentlyViewed } from "@/components/home/RecentlyViewed";
 import type { Destination, Product } from "@/data/home";
 import type { Attraction } from "@/data/listing";
 import type { Locale } from "@/lib/i18n/config";
@@ -66,6 +67,12 @@ export function Hero({
           />
           {dict.home.travelers}
         </p>
+
+        {/* "Sei ancora interessato a:" lives inside the hero, right below the
+            social-proof line; renders nothing unless a (demo) user is signed in.
+            `products` = il catalogo tour reale, usato per scartare voci stale dalla
+            cronologia e completare la riga con tour esistenti. */}
+        <RecentlyViewed lang={lang} dict={dict} products={products} />
       </Container>
     </section>
   );

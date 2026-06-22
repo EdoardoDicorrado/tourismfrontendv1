@@ -35,6 +35,21 @@ export function isLineEditable(line: BookingLine): boolean {
   return line.state === "active";
 }
 
+/**
+ * Whether the WHOLE booking can still be cancelled from the storefront: a
+ * non-terminal state with at least one active line whose slot is still in the
+ * future ("non ancora effettuata"). The real cancellation terms (free-cancel
+ * window) are enforced by the backend (403 on a locked booking) — this only
+ * gates whether the "Cancella prenotazione" button renders.
+ */
+export function isBookingCancellable(booking: Booking): boolean {
+  if (!EDITABLE_STATES.has(booking.state)) return false;
+  const now = Date.now();
+  return booking.lines.some(
+    (l) => l.state === "active" && l.slot_start != null && Date.parse(l.slot_start) > now,
+  );
+}
+
 /** "Mario Rossi" / email / "" — display name for the reservation customer. */
 export function customerName(customer: BookingCustomer): string {
   const full = [customer.first_name, customer.last_name].filter(Boolean).join(" ").trim();

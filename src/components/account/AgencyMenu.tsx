@@ -75,6 +75,9 @@ export function AgencyMenu({
   // Voce "Sconti" rimossa dal menu agenzia (richiesta orchestratore #61); la rotta
   // /agenzie/codici-sconto resta. "Assistenza" → pagina dedicata agenzie.
   const items = [
+    // "Dashboard agenzia" first (IT label hardcoded — preview, like the affiliate
+    // surface; i18n deposited to marketing).
+    { href: `/${lang}/agenzie/dashboard`, label: "Dashboard agenzia" },
     { href: `/${lang}/agenzie/prenotazioni`, label: m.bookings },
     { href: `/${lang}/agenzie/assistenza`, label: m.support },
   ];
@@ -187,21 +190,22 @@ function Chevron() {
 
 function GearIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden className="text-ink/70">
-      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8" />
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden className="size-[18px] shrink-0 text-ink/70">
       <path
-        d="M12 2.5l1.3 2.2 2.5-.4.6 2.5 2.3 1-.9 2.4 1.6 2-1.6 2 .9 2.4-2.3 1-.6 2.5-2.5-.4L12 21.5l-1.3-2.2-2.5.4-.6-2.5-2.3-1 .9-2.4-1.6-2 1.6-2-.9-2.4 2.3-1 .6-2.5 2.5.4z"
+        d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"
         stroke="currentColor"
-        strokeWidth="1.6"
+        strokeWidth="1.8"
+        strokeLinecap="round"
         strokeLinejoin="round"
       />
+      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8" />
     </svg>
   );
 }
 
 function LogoutIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden className="text-badge">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden className="size-[18px] shrink-0 text-badge">
       <path
         d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 12H3m0 0l3.5-3.5M3 12l3.5 3.5"
         stroke="currentColor"

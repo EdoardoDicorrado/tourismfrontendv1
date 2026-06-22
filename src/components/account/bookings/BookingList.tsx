@@ -23,6 +23,7 @@ export function BookingList({
   lang,
   dict,
   listBase,
+  voucherPreview = false,
 }: {
   result: Paginated<Booking>;
   tab: BookingTab;
@@ -31,6 +32,8 @@ export function BookingList({
   dict: Dictionary["account"];
   /** Route for this list, e.g. `/it/area/prenotazioni`. Cards link to `${listBase}/{id}`. */
   listBase: string;
+  /** Agency/affiliate: voucher button opens a preview (wallet + PDF). */
+  voucherPreview?: boolean;
 }) {
   const tabs: { value: BookingTab; label: string }[] = [
     { value: "all", label: dict.nav.all },
@@ -59,6 +62,7 @@ export function BookingList({
               lang={lang}
               dict={dict}
               detailBase={listBase}
+              voucherPreview={voucherPreview}
             />
           ))}
         </div>

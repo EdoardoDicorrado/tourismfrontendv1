@@ -155,11 +155,6 @@ export function BookingEditForm({
     front_desk_language: booking.hotel?.front_desk_language ?? "",
   }));
 
-  const [pickupRequested, setPickupRequested] = useState(booking.pickup?.pickup_requested ?? false);
-  const [pickupNotes, setPickupNotes] = useState(booking.pickup?.pickup_notes ?? "");
-  const [dropoffRequested, setDropoffRequested] = useState(booking.dropoff?.dropoff_requested ?? false);
-  const [dropoffNotes, setDropoffNotes] = useState(booking.dropoff?.dropoff_notes ?? "");
-
   const [submitting, setSubmitting] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState(false);
@@ -224,8 +219,6 @@ export function BookingEditForm({
         body: JSON.stringify({
           participants: participantPatches,
           ...(hotelEmpty ? {} : { hotel: hotelPatch }),
-          pickup: { pickup_requested: pickupRequested, pickup_notes: pickupNotes.trim() },
-          dropoff: { dropoff_requested: dropoffRequested, dropoff_notes: dropoffNotes.trim() },
           locale: lang,
         }),
       });
@@ -390,62 +383,6 @@ export function BookingEditForm({
           <Input id="hotel-room" label={d.roomNumber} value={hotel.room_number} onChange={(v) => setHotelField("room_number", v)} disabled={!editable} />
           <Input id="hotel-desk-phone" label={d.frontDeskPhone} value={hotel.front_desk_phone} onChange={(v) => setHotelField("front_desk_phone", v)} type="tel" disabled={!editable} />
           <Input id="hotel-desk-lang" label={d.frontDeskLanguage} value={hotel.front_desk_language} onChange={(v) => setHotelField("front_desk_language", v)} disabled={!editable} />
-        </div>
-      </section>
-
-      {/* Pickup */}
-      <section className="rounded-[15px] border border-soft-grey bg-white p-5 sm:p-6">
-        <h2 className="text-lg font-extrabold text-ink">{d.pickupTitle}</h2>
-        <label className="mt-4 flex items-center gap-2 text-sm font-semibold text-ink">
-          <input
-            type="checkbox"
-            checked={pickupRequested}
-            onChange={(e) => setPickupRequested(e.target.checked)}
-            disabled={!editable}
-            className="h-4 w-4 shrink-0 accent-cta"
-          />
-          {d.pickupRequested}
-        </label>
-        <div className="mt-3">
-          <label htmlFor="pickup-notes" className={labelClass}>
-            {d.pickupNotes}
-          </label>
-          <textarea
-            id="pickup-notes"
-            value={pickupNotes}
-            onChange={(e) => setPickupNotes(e.target.value)}
-            disabled={!editable}
-            rows={2}
-            className={`${fieldInputClass} resize-y`}
-          />
-        </div>
-      </section>
-
-      {/* Dropoff */}
-      <section className="rounded-[15px] border border-soft-grey bg-white p-5 sm:p-6">
-        <h2 className="text-lg font-extrabold text-ink">{d.dropoffTitle}</h2>
-        <label className="mt-4 flex items-center gap-2 text-sm font-semibold text-ink">
-          <input
-            type="checkbox"
-            checked={dropoffRequested}
-            onChange={(e) => setDropoffRequested(e.target.checked)}
-            disabled={!editable}
-            className="h-4 w-4 shrink-0 accent-cta"
-          />
-          {d.dropoffRequested}
-        </label>
-        <div className="mt-3">
-          <label htmlFor="dropoff-notes" className={labelClass}>
-            {d.dropoffNotes}
-          </label>
-          <textarea
-            id="dropoff-notes"
-            value={dropoffNotes}
-            onChange={(e) => setDropoffNotes(e.target.value)}
-            disabled={!editable}
-            rows={2}
-            className={`${fieldInputClass} resize-y`}
-          />
         </div>
       </section>
 

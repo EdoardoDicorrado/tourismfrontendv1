@@ -1,18 +1,16 @@
-import {
-  StatusBadge,
-  bookingStatusTone,
-  lineBadgeTone,
-  paymentStatusTone,
-} from "@/components/account/ui";
+import { StatusBadge, lineBadgeTone, paymentStatusTone } from "@/components/account/ui";
 import { ButtonLink } from "@/components/ui/Button";
 import { formatMoney } from "@/lib/format";
 import type { Booking } from "@/lib/account/types";
 import type { Locale } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
+import { BookingStateBadge } from "./BookingStateBadge";
+import { CancelBookingButton } from "./CancelBookingButton";
 import { VoucherLink } from "./VoucherLink";
+import { VoucherPreview } from "./VoucherPreview";
 import { formatDateShort, formatStartAt } from "./datetime";
-import { customerName, statusLabel } from "./status";
+import { customerName, isBookingCancellable, statusLabel } from "./status";
 
 /**
  * One booking summarised as a card (used by both the customer and agency
@@ -29,12 +27,15 @@ export function BookingCard({
   lang,
   dict,
   detailBase,
+  voucherPreview = false,
 }: {
   booking: Booking;
   lang: Locale;
   dict: Dictionary["account"];
   /** Detail route prefix, e.g. `/it/area/prenotazioni`. */
   detailBase: string;
+  /** Agency/affiliate: voucher button opens a preview (wallet + PDF) instead of a direct download. */
+  voucherPreview?: boolean;
 }) {
   const createdDate = formatDateShort(booking.created_at, lang);
   const totalEuros = booking.total.amount_cents / 100;
@@ -47,12 +48,13 @@ export function BookingCard({
           <p className="text-lg font-extrabold text-ink">{booking.code}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <StatusBadge tone={bookingStatusTone(booking.state)}>
-            {statusLabel(dict.status, booking.state)}
-          </StatusBadge>
-          <StatusBadge tone={paymentStatusTone(booking.payment_status)}>
-            {statusLabel(dict.status, booking.payment_status)}
-          </StatusBadge>
+          <BookingStateBadge uuid={booking.uuid} state={booking.state} statusDict={dict.status} />
+          {/* A cancelled booking has nothing to settle — hide the payment badge. */}
+          {booking.state !== "cancelled" ? (
+            <StatusBadge tone={paymentStatusTone(booking.payment_status)}>
+              {statusLabel(dict.status, booking.payment_status)}
+            </StatusBadge>
+          ) : null}
         </div>
       </div>
 
@@ -105,7 +107,15 @@ export function BookingCard({
         <ButtonLink href={`${detailBase}/${booking.uuid}`} size="sm">
           {dict.bookings.view}
         </ButtonLink>
-        <VoucherLink bookingId={booking.uuid} label={dict.bookings.voucher} />
+        {voucherPreview ? (
+          <VoucherPreview booking={booking} lang={lang} />
+        ) : (
+          <VoucherLink bookingId={booking.uuid} label={dict.bookings.voucher} />
+        )}
+        {/* Cancel only for still-open bookings (non-terminal + a future slot). */}
+        {isBookingCancellable(booking) ? (
+          <CancelBookingButton bookingId={booking.uuid} dict={dict} />
+        ) : null}
       </div>
     </article>
   );

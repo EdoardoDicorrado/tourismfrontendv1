@@ -35,10 +35,14 @@ export function ListingResultCard({
   product,
   lang,
   dict,
+  onDark = false,
 }: {
   product: Product;
   lang: Locale;
   dict: Dictionary;
+  /** Su sfondo scuro (hero "Sei interessato a:") → niente bordo chiaro che fa da
+   *  "traccia bianca" attorno alla card; resta solo l'hover cta. */
+  onDark?: boolean;
 }) {
   const href = product.slug
     ? `/${lang}/attivita/${product.city}/${product.slug}`
@@ -52,7 +56,9 @@ export function ListingResultCard({
   return (
     <Link
       href={href}
-      className="group flex items-stretch overflow-clip rounded-[10px] border border-soft bg-white transition-colors hover:border-cta focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta"
+      className={`group flex items-stretch overflow-clip rounded-card bg-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta ${
+        onDark ? "" : "border border-soft hover:border-cta"
+      }`}
     >
       <div className="relative w-[150px] shrink-0 self-stretch">
         <Image

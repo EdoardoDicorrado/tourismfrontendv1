@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { CopyButton } from "@/components/affiliate/CopyButton";
+import { OpenRequestsButton } from "@/components/account/support/OpenRequestsButton";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { Container } from "@/components/ui/Container";
@@ -102,6 +103,11 @@ export default async function AffiliateDashboardPage({ params }: { params: Promi
             >
               Contatta il supporto affiliati
             </a>
+
+            {/* Chat di assistenza interna (preview) — apre la pagina delle richieste. */}
+            <div className="mt-6 border-t border-soft-grey pt-6">
+              <OpenRequestsButton audience="affiliate" basePath={`/${lang}/affiliati/assistenza`} />
+            </div>
           </section>
         </Container>
       </main>

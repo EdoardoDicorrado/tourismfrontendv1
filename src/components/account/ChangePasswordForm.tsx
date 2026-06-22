@@ -26,10 +26,13 @@ export function ChangePasswordForm({
   lang,
   dict,
   feedback,
+  action = "/api/agency/password",
 }: {
   lang: Locale;
   dict: Dictionary["account"]["changePassword"];
   feedback: Dictionary["account"]["feedback"];
+  /** BFF endpoint to POST to. Defaults to the agency route; customer passes its own. */
+  action?: string;
 }) {
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
@@ -45,7 +48,7 @@ export function ChangePasswordForm({
     }
     setStatus("saving");
     try {
-      const res = await fetch("/api/agency/password", {
+      const res = await fetch(action, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

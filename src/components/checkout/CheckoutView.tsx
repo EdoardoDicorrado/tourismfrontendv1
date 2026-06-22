@@ -3,7 +3,6 @@
 import "flag-icons/css/flag-icons.min.css";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
@@ -11,6 +10,8 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { duration, ease } from "@/lib/motion/tokens";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
+import { Modal } from "@/components/ui/Modal";
+import { inputClass } from "@/components/ui/Input";
 import { CancellationBox, OrderSummaryCard } from "@/components/checkout/OrderSummaryCard";
 import { CountrySelect, DIAL, PhonePrefixSelect } from "@/components/checkout/CountrySelects";
 import { RedsysChallengeFrame } from "@/components/checkout/RedsysChallengeFrame";
@@ -33,7 +34,7 @@ import type {
 } from "@/lib/checkout/types";
 import { fill, type Locale } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
-import type { CheckoutAgency } from "@/lib/checkout/agency";
+import type { CheckoutAgency, SavedPaymentMethod } from "@/lib/checkout/agency";
 
 const DEFAULT_COUNTRY: Record<Locale, string> = { it: "IT", es: "ES", en: "GB" };
 
@@ -50,9 +51,6 @@ const PREVIEW_FEATURES = [
 /** Colori brand PayPal (giustificati: brand ufficiale, non token DS). */
 const PAYPAL_BG = "#ffc439"; // ds-guard-ignore brand PayPal
 const PAYPAL_FG = "#003087"; // ds-guard-ignore brand PayPal
-
-const inputClass =
-  "w-full rounded-card border border-stroke bg-white px-4 py-3 text-ink outline-none transition-colors focus:border-cta disabled:bg-soft/50 disabled:text-ink/50";
 
 /**
  * Checkout payment phase (Redsys InSite + 3DS2), independent of the wizard step:
@@ -211,12 +209,33 @@ export function CheckoutView({
         },
   );
 
+  // Agenzia: copia EDITABILE dei dati (contatto + fatturazione), modificata IN-FLOW
+  // via modale overlay invece di mandare al profilo (non interrompe il checkout).
+  // PREVIEW: l'edit aggiorna solo la vista locale; la persistenza reale resta il
+  // profilo agenzia (full-stack). `agencyDraft` = bozza del form nel modale.
+  const [agencyView, setAgencyView] = useState<CheckoutAgency | null>(agency);
+  const [editAgencyOpen, setEditAgencyOpen] = useState(false);
+  const [agencyDraft, setAgencyDraft] = useState<CheckoutAgency | null>(agency);
+  function openEditAgency() {
+    setAgencyDraft(agencyView ?? agency);
+    setEditAgencyOpen(true);
+  }
+  function saveAgencyEdit() {
+    if (agencyDraft) setAgencyView(agencyDraft);
+    setEditAgencyOpen(false);
+  }
+
   // PREVIEW: un cliente "loggato" è il demo user (name+email). L'agenzia ha la sessione
   // server (gestita sopra); l'affiliato non ha ancora auth (pendente full-stack), quindi
   // qui copre l'utente. Loggato → dati personali GIÀ salvati: card read-only + "Modifica".
   const demoUser = useDemoUser();
   const loggedInUser = agency ? null : demoUser;
   const [loginOpen, setLoginOpen] = useState(false);
+  // L'email dell'account loggato è già verificata (derivata, no effect). Se l'utente la
+  // CAMBIA nei dati personali non combacia più → riappare l'interstitial OTP; una nuova
+  // email confermata via OTP viene ricordata qui (set solo nell'handler, mai in effect).
+  const accountEmail = agency?.email ?? demoUser?.email ?? null;
+  const [otpVerifiedEmail, setOtpVerifiedEmail] = useState<string | null>(null);
   // Seed dei dati personali dal demo user, una volta sola dopo l'hydration (lo store è
   // null in SSR, e diventa disponibile al login dalla modale). Il ref evita ri-seed.
   const seededUserRef = useRef(false);
@@ -305,15 +324,34 @@ export function CheckoutView({
   };
 
   const [method, setMethod] = useState<"card" | "paypal">("card");
-  // Agency saved-method picker (Step 2): default = the agency's default method;
-  // "Cambia metodo di pagamento" expands the saved list; "Aggiungi nuovo metodo"
-  // falls back to the standard card/PayPal entry accordion.
+  // Saved-method picker (Step 2): default = the default method; "Cambia metodo di
+  // pagamento" expands the saved list; "Aggiungi nuovo metodo" falls back to the
+  // standard card/PayPal entry accordion. Agency → metodi dal profilo; utente loggato →
+  // metodi salvati preview (stesso UX). PREVIEW: l'utente non ha ancora auth/metodi reali
+  // (pendente full-stack) — fixture client-side finché non arriva l'endpoint.
+  const savedMethods = useMemo<SavedPaymentMethod[]>(
+    () =>
+      agency?.paymentMethods ??
+      (loggedInUser
+        ? [
+            { id: "pm_user_card", type: "card", label: "Visa ···· 4242", detail: "Scade 08/27", isDefault: true },
+            { id: "pm_user_paypal", type: "paypal", label: `PayPal · ${loggedInUser.email}`, isDefault: false },
+          ]
+        : []),
+    [agency, loggedInUser],
+  );
+  const hasSavedMethods = savedMethods.length > 0;
   const defaultMethodId =
-    agency?.paymentMethods.find((m) => m.isDefault)?.id ?? agency?.paymentMethods[0]?.id ?? "";
+    savedMethods.find((m) => m.isDefault)?.id ?? savedMethods[0]?.id ?? "";
   const [savedMethodId, setSavedMethodId] = useState(defaultMethodId);
   const [methodPickerOpen, setMethodPickerOpen] = useState(false);
   const [addingNewMethod, setAddingNewMethod] = useState(false);
-  const selectedSavedMethod = agency?.paymentMethods.find((m) => m.id === savedMethodId) ?? null;
+  // Demo user → null in SSR, i metodi compaiono dopo l'hydration: se la selezione non
+  // punta a un metodo disponibile, ripiega sul default (derivato, niente setState-in-effect).
+  const effectiveMethodId = savedMethods.some((m) => m.id === savedMethodId)
+    ? savedMethodId
+    : defaultMethodId;
+  const selectedSavedMethod = savedMethods.find((m) => m.id === effectiveMethodId) ?? null;
   const reduceMotion = useReducedMotion();
   // Step 2: "Modifica" apre l'editing INLINE (campi compilabili + Salva), NON torna allo step 1.
   const [editContact, setEditContact] = useState(false);
@@ -359,9 +397,13 @@ export function CheckoutView({
   /** Validate the mounted contact (+ invoice) fields, then advance to email verification. */
   function goToPayment() {
     if (formRef.current && !formRef.current.reportValidity()) return;
-    // Logged-in users (customer/agency) skip the email-verification interstitial —
-    // it only gates guests proving ownership of the contact email.
-    if (loggedIn || loggedInUser) {
+    // Logged-in users skip the email-verification interstitial — UNLESS they changed the
+    // contact email: the new address is unverified and must be confirmed via the OTP step.
+    const cur = customer.email.trim().toLowerCase();
+    const emailVerified =
+      cur === accountEmail?.trim().toLowerCase() ||
+      cur === otpVerifiedEmail?.trim().toLowerCase();
+    if ((loggedIn || loggedInUser) && emailVerified) {
       setStage("pagamento");
       if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
       return;
@@ -396,6 +438,7 @@ export function CheckoutView({
       });
       const data = (await res.json()) as VerifyCheckResponse;
       if (res.ok && data.ok && data.verified) {
+        setOtpVerifiedEmail(customer.email); // nuova email confermata → niente re-verifica
         setStage("pagamento");
         if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
         return;
@@ -673,8 +716,8 @@ export function CheckoutView({
 
   const locked = phase.step !== "form";
   const onContact = stage === "contatti";
-  // Agency "Modifica" links land on the profile (email + company data are changed there).
-  const profileHref = `/${lang}/agenzie/profilo`;
+  // Dati agenzia mostrati = copia editabile (modale in-flow); fallback alla prop.
+  const ag = agencyView ?? agency;
   const reservedTime = `${Math.floor(secondsLeft / 60)}:${String(secondsLeft % 60).padStart(2, "0")}`;
 
   // Riepilogo ordine — step 1 in cima al flusso; step 2 SOTTO la card del metodo di
@@ -687,6 +730,9 @@ export function CheckoutView({
           <OrderSummaryCard
             key={item.id}
             collapsible
+            // Step 1 only: "Modifica" (top-right) → the tour's booking box to change it.
+            editHref={onContact ? `/${lang}/attivita/${item.city}/${item.slug}#prenota` : undefined}
+            editLabel={t.edit}
             image={item.image}
             title={item.title}
             rating={item.rating ?? PREVIEW_RATING}
@@ -753,27 +799,28 @@ export function CheckoutView({
           <>
             {/* Agenzia: card "Dati agenzia" (email fissa + telefono, "Modifica" → profilo);
                 niente form dati personali, niente blocco fattura. */}
-            {agency ? (
+            {ag ? (
               <section className="flex flex-col gap-4">
                 <div className="flex flex-col gap-2">
                   <h2 className="text-2xl font-extrabold text-ink">{t.agency.contactTitle}</h2>
                   <p className="text-base text-ink">{t.agency.contactNote}</p>
                 </div>
                 <div className="flex flex-col gap-3 rounded-card border border-soft-grey bg-white p-4 text-base text-ink">
-                  <p className="font-bold">{agency.name}</p>
-                  {/* Email = campo fisso, si cambia dal profilo (Modifica). */}
+                  <p className="font-bold">{ag.name}</p>
+                  {/* "Modifica" apre il modale overlay (no redirect al profilo). */}
                   <div className="flex items-center justify-between gap-3">
-                    <span className="min-w-0 break-all">{agency.email}</span>
-                    <Link
-                      href={profileHref}
+                    <span className="min-w-0 break-all">{ag.email}</span>
+                    <button
+                      type="button"
+                      onClick={openEditAgency}
                       className="shrink-0 text-sm font-bold text-cta hover:underline"
                     >
                       {t.edit}
-                    </Link>
+                    </button>
                   </div>
-                  {agency.phone && (
+                  {ag.phone && (
                     <p>
-                      {DIAL[agency.phonePrefix] ?? ""} {agency.phone}
+                      {DIAL[ag.phonePrefix] ?? ""} {ag.phone}
                     </p>
                   )}
                 </div>
@@ -784,7 +831,8 @@ export function CheckoutView({
             <section className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
                 <h2 className="text-2xl font-extrabold text-ink">{t.contactTitle}</h2>
-                <p className="text-base text-ink">{t.contactSubtitle}</p>
+                {/* Loggato: dati già salvati → niente avviso "ti invieremo un codice". */}
+                {!loggedInUser && <p className="text-base text-ink">{t.contactSubtitle}</p>}
                 {/* Guest: magari ha un account ma non si è loggato → accesso rapido
                     (il login prefilla i dati personali). */}
                 {!loggedInUser && (
@@ -803,27 +851,26 @@ export function CheckoutView({
               {loggedInUser && !editContact ? (
                 /* Loggato (utente/affiliato): dati personali GIÀ salvati → card read-only
                    + "Modifica" inline (come l'agenzia). I partecipanti restano da inserire. */
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center justify-end">
+                <div className="flex flex-col gap-1 rounded-card border border-soft-grey bg-white p-4 text-base text-ink">
+                  {/* "Modifica" in alto a destra, stessa riga del nome (colonna a parte). */}
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="font-bold">
+                      {`${customer.firstName} ${customer.lastName}`.trim() || "—"}
+                    </p>
                     <button
                       type="button"
                       onClick={() => setEditContact(true)}
-                      className="text-sm font-bold text-cta hover:underline"
+                      className="shrink-0 text-sm font-bold text-cta hover:underline"
                     >
                       {t.edit}
                     </button>
                   </div>
-                  <div className="flex flex-col gap-1 rounded-card border border-soft-grey bg-white p-4 text-base text-ink">
-                    <p className="font-bold">
-                      {`${customer.firstName} ${customer.lastName}`.trim() || "—"}
+                  <p className="break-all">{customer.email || "—"}</p>
+                  {customer.phone && (
+                    <p>
+                      {DIAL[customer.country] ?? ""} {customer.phone}
                     </p>
-                    <p className="break-all">{customer.email || "—"}</p>
-                    {customer.phone && (
-                      <p>
-                        {DIAL[customer.country] ?? ""} {customer.phone}
-                      </p>
-                    )}
-                  </div>
+                  )}
                 </div>
               ) : (
                 <>
@@ -1058,9 +1105,9 @@ export function CheckoutView({
             <section className="flex flex-col gap-3">
               <h2 className="text-2xl font-extrabold text-ink">{t.payment.methodsTitle}</h2>
 
-              {agency && !addingNewMethod ? (
-                /* Agenzia: metodo salvato (predefinito selezionato) + "Cambia metodo
-                   di pagamento" → lista degli altri metodi salvati / "Aggiungi nuovo". */
+              {hasSavedMethods && !addingNewMethod ? (
+                /* Loggato (agenzia o utente): metodo salvato (predefinito selezionato) +
+                   "Cambia metodo di pagamento" → lista altri metodi salvati / "Aggiungi nuovo". */
                 <div className="flex flex-col gap-3">
                   <div className="flex flex-col gap-3 rounded-panel border border-soft-grey bg-white p-4">
                     <div className="flex items-center gap-3">
@@ -1089,7 +1136,7 @@ export function CheckoutView({
                     </button>
                     {methodPickerOpen && (
                       <div className="flex flex-col gap-1 border-t border-soft-grey pt-3">
-                        {agency.paymentMethods.map((m) => (
+                        {savedMethods.map((m) => (
                           <button
                             key={m.id}
                             type="button"
@@ -1099,7 +1146,7 @@ export function CheckoutView({
                             }}
                             className="flex items-center gap-3 rounded-card px-2 py-2 text-left hover:bg-soft/50"
                           >
-                            <RadioDot on={m.id === savedMethodId} />
+                            <RadioDot on={m.id === effectiveMethodId} />
                             <span className="min-w-0 flex-1">
                               <span className="block truncate font-medium text-ink">{m.label}</span>
                               {m.detail && (
@@ -1142,7 +1189,7 @@ export function CheckoutView({
                 </div>
               ) : (
               <>
-              {agency && (
+              {hasSavedMethods && (
                 <button
                   type="button"
                   onClick={() => setAddingNewMethod(false)}
@@ -1333,24 +1380,25 @@ export function CheckoutView({
 
             {/* Fatturazione (agenzia) — card stile "Dati di contatto": ragione sociale,
                 indirizzo, P. IVA. "Modifica" → profilo. */}
-            {agency && (
+            {ag && (
               <section className="flex flex-col gap-3">
                 <div className="flex items-center justify-between gap-3">
                   <h2 className="text-2xl font-extrabold text-ink">{t.agency.billingTitle}</h2>
                   {!locked && (
-                    <Link
-                      href={profileHref}
+                    <button
+                      type="button"
+                      onClick={openEditAgency}
                       className="shrink-0 text-sm font-bold text-cta hover:underline"
                     >
                       {t.edit}
-                    </Link>
+                    </button>
                   )}
                 </div>
                 <div className="flex flex-col gap-1 rounded-card border border-soft-grey bg-white p-4 text-base text-ink">
-                  <p className="font-bold">{agency.billing.legalName}</p>
-                  <p>{agency.billing.address}</p>
+                  <p className="font-bold">{ag.billing.legalName}</p>
+                  <p>{ag.billing.address}</p>
                   <p>
-                    {t.agency.vatLabel} {agency.billing.vatId}
+                    {t.agency.vatLabel} {ag.billing.vatId}
                   </p>
                 </div>
               </section>
@@ -1362,23 +1410,24 @@ export function CheckoutView({
             {/* Dati di contatto — review o editing INLINE: "Modifica" rende i campi
                 compilabili + mostra "Salva", senza tornare allo step 1 (Figma 76:16092).
                 Agenzia: card read-only "Dati agenzia", "Modifica" → profilo. */}
-            {agency ? (
+            {ag ? (
               <section className="flex flex-col gap-3">
                 <div className="flex items-center justify-between gap-3">
                   <h2 className="text-2xl font-extrabold text-ink">{t.agency.contactTitle}</h2>
                   {!locked && (
-                    <Link
-                      href={profileHref}
+                    <button
+                      type="button"
+                      onClick={openEditAgency}
                       className="shrink-0 text-sm font-bold text-cta hover:underline"
                     >
                       {t.edit}
-                    </Link>
+                    </button>
                   )}
                 </div>
                 <div className="flex flex-col gap-1 rounded-card border border-soft-grey bg-white p-4 text-base text-ink">
-                  <p className="font-bold">{agency.name}</p>
+                  <p className="font-bold">{ag.name}</p>
                   <p className="flex flex-wrap items-center gap-2">
-                    <span className="min-w-0 break-all">{agency.email}</span>
+                    <span className="min-w-0 break-all">{ag.email}</span>
                     <span className="inline-flex items-center gap-1 text-xs font-bold text-cta">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
                         <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
@@ -1393,9 +1442,9 @@ export function CheckoutView({
                       {t.emailVerified}
                     </span>
                   </p>
-                  {agency.phone && (
+                  {ag.phone && (
                     <p>
-                      {DIAL[agency.phonePrefix] ?? ""} {agency.phone}
+                      {DIAL[ag.phonePrefix] ?? ""} {ag.phone}
                     </p>
                   )}
                 </div>
@@ -1595,7 +1644,7 @@ export function CheckoutView({
                     setAppliedPromo(null);
                   }}
                   placeholder={t.promo.placeholder}
-                  className={`${inputClass} flex-1`}
+                  className={`${inputClass} border-stroke flex-1`}
                 />
                 <button
                   type="button"
@@ -1646,6 +1695,113 @@ export function CheckoutView({
       open={loginOpen}
       onClose={() => setLoginOpen(false)}
     />
+    {/* Modale overlay: modifica dati agenzia (contatto + fatturazione) IN-FLOW,
+        senza lasciare il checkout. Salva → aggiorna le card (preview, vedi agencyView). */}
+    <Modal
+      open={editAgencyOpen}
+      onClose={() => setEditAgencyOpen(false)}
+      label={t.agency.editTitle}
+      className="max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto p-6 sm:p-8"
+    >
+      {agencyDraft && (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            saveAgencyEdit();
+          }}
+          className="flex flex-col gap-6"
+        >
+          <h2 className="text-xl font-extrabold text-ink">{t.agency.editTitle}</h2>
+
+          <fieldset className="flex flex-col gap-3">
+            <legend className="mb-1 text-lg font-bold text-ink">{t.agency.contactTitle}</legend>
+            <label className="flex flex-col gap-1">
+              <span className="text-sm font-bold text-ink">{t.agency.nameLabel}</span>
+              <input
+                type="text"
+                value={agencyDraft.name}
+                onChange={(e) =>
+                  setAgencyDraft((d) => (d ? { ...d, name: e.target.value } : d))
+                }
+                className={inputClass}
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-sm font-bold text-ink">{t.email}</span>
+              <input
+                type="email"
+                value={agencyDraft.email}
+                onChange={(e) =>
+                  setAgencyDraft((d) => (d ? { ...d, email: e.target.value } : d))
+                }
+                className={inputClass}
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-sm font-bold text-ink">{t.phone}</span>
+              <input
+                type="tel"
+                value={agencyDraft.phone}
+                onChange={(e) =>
+                  setAgencyDraft((d) => (d ? { ...d, phone: e.target.value } : d))
+                }
+                className={inputClass}
+              />
+            </label>
+          </fieldset>
+
+          <fieldset className="flex flex-col gap-3">
+            <legend className="mb-1 text-lg font-bold text-ink">{t.agency.billingTitle}</legend>
+            <label className="flex flex-col gap-1">
+              <span className="text-sm font-bold text-ink">{t.agency.legalNameLabel}</span>
+              <input
+                type="text"
+                value={agencyDraft.billing.legalName}
+                onChange={(e) =>
+                  setAgencyDraft((d) =>
+                    d ? { ...d, billing: { ...d.billing, legalName: e.target.value } } : d,
+                  )
+                }
+                className={inputClass}
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-sm font-bold text-ink">{t.agency.addressLabel}</span>
+              <input
+                type="text"
+                value={agencyDraft.billing.address}
+                onChange={(e) =>
+                  setAgencyDraft((d) =>
+                    d ? { ...d, billing: { ...d.billing, address: e.target.value } } : d,
+                  )
+                }
+                className={inputClass}
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-sm font-bold text-ink">{t.agency.vatLabel}</span>
+              <input
+                type="text"
+                value={agencyDraft.billing.vatId}
+                onChange={(e) =>
+                  setAgencyDraft((d) =>
+                    d ? { ...d, billing: { ...d.billing, vatId: e.target.value } } : d,
+                  )
+                }
+                className={inputClass}
+              />
+            </label>
+          </fieldset>
+
+          <div className="flex flex-wrap gap-3">
+            <Button type="submit">{t.save}</Button>
+            <Button type="button" variant="outline" onClick={() => setEditAgencyOpen(false)}>
+              {t.agency.cancel}
+            </Button>
+          </div>
+        </form>
+      )}
+    </Modal>
     </>
   );
 }

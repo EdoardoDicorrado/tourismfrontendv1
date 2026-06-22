@@ -1,33 +1,24 @@
 "use client";
 
-import { useState } from "react";
-
-import { Button } from "@/components/ui/Button";
-import { Field } from "@/components/ui/Input";
-import { Textarea } from "@/components/ui/Textarea";
 import { Disclosure } from "@/components/ui/Disclosure";
+import { OpenRequestsButton } from "@/components/account/support/OpenRequestsButton";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
 /**
  * Agency support page body (`/[lang]/agenzie/assistenza`). Three blocks:
- *  (a) "chat with an operator" request form (preview: submit → success, no
- *      backend yet — real endpoint POST /api/agency/support = full-stack #60),
+ *  (a) chat entry — "Avvia una nuova chat" CTA + open-requests link
+ *      ({@link OpenRequestsButton}); the chat lives on its own pages,
  *  (b) FAQ via the {@link Disclosure} primitive (canonical accordion motion),
  *  (c) phone-support contacts (real numbers come from marketing #59 / Edoardo).
  */
 export function AgencySupportView({
   dict,
+  basePath,
 }: {
   dict: Dictionary["account"]["agencySupport"];
+  /** Agency support base route, e.g. `/it/agenzie/assistenza`. */
+  basePath: string;
 }) {
-  const [sent, setSent] = useState(false);
-
-  // ponytail: preview submit, no network. Swap to POST /api/agency/support when full-stack #60 lands.
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setSent(true);
-  }
-
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-10">
       <header className="flex flex-col gap-2">
@@ -35,65 +26,8 @@ export function AgencySupportView({
         <p className="text-ink/70">{dict.subtitle}</p>
       </header>
 
-      {/* (a) Chatta con un operatore / invia richiesta */}
-      <section className="flex flex-col gap-4 rounded-panel border border-soft-grey bg-white p-5 sm:p-6">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-lg font-extrabold text-ink">{dict.formTitle}</h2>
-          <p className="text-sm text-ink/70">{dict.formNote}</p>
-        </div>
-        {sent ? (
-          <div className="flex items-start gap-3 rounded-card bg-cta/10 p-4">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="mt-0.5 shrink-0 text-cta" aria-hidden>
-              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
-              <path
-                d="M8 12.5l2.5 2.5L16 9"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            <div>
-              <p className="font-bold text-ink">{dict.successTitle}</p>
-              <p className="text-sm text-ink/70">{dict.successBody}</p>
-            </div>
-          </div>
-        ) : (
-          <form onSubmit={onSubmit} className="flex flex-col gap-4">
-            <Field
-              id="support-subject"
-              name="subject"
-              required
-              label={dict.subjectLabel}
-              placeholder={dict.subjectPlaceholder}
-            />
-            <Field
-              id="support-contact"
-              name="contact"
-              type="email"
-              required
-              autoComplete="email"
-              label={dict.contactLabel}
-              placeholder={dict.contactPlaceholder}
-            />
-            <div>
-              <label htmlFor="support-message" className="mb-1 block text-sm font-bold text-ink">
-                {dict.messageLabel}
-              </label>
-              <Textarea
-                id="support-message"
-                name="message"
-                required
-                rows={5}
-                placeholder={dict.messagePlaceholder}
-              />
-            </div>
-            <Button type="submit" variant="primary" size="lg" fullWidth>
-              {dict.submit}
-            </Button>
-          </form>
-        )}
-      </section>
+      {/* (a) Chat di assistenza — avvia una nuova chat o apri le richieste. */}
+      <OpenRequestsButton audience="agency" basePath={basePath} />
 
       {/* (b) FAQ — Disclosure porta già la motion accordion canonica (no deposit animations) */}
       <section className="flex flex-col gap-3">

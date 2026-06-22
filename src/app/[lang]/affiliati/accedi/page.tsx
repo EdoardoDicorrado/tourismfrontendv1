@@ -4,6 +4,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AffiliateLoginForm } from "@/components/account/AffiliateLoginForm";
+import { LoginConflictGuard } from "@/components/account/LoginConflictGuard";
+import { getSession } from "@/lib/account/session";
 import { isLocale } from "@/lib/i18n/config";
 
 type Params = { lang: string };
@@ -20,8 +22,14 @@ export default async function AffiliateLoginPage({ params }: { params: Promise<P
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
 
+  // Already signed in under another role (agency/customer cookie, or a preview
+  // demo user client-side) → warn before logging out.
+  const session = await getSession();
+  const serverIdentity = session ? { role: session.role, name: session.name } : null;
+
   return (
     <main className="flex min-h-[100svh] items-center justify-center bg-soft px-4 py-10">
+      <LoginConflictGuard target="affiliate" lang={lang} serverIdentity={serverIdentity} />
       <div className="w-full max-w-[420px]">
         <Link href={`/${lang}`} aria-label="TourisMotion" className="mb-8 flex justify-center">
           <Image

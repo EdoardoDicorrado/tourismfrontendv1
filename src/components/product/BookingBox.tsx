@@ -42,7 +42,7 @@ const optionItem = {
 /** Cart glyph (currentColor → inherits the button's white). Figma "Prenota ora" trailing icon. */
 function CartIcon() {
   return (
-    <svg width="40" height="40" viewBox="1 2 20 20" fill="none" aria-hidden>
+    <svg width="32" height="32" viewBox="1 2 20 20" fill="none" aria-hidden>
       <path
         d="M2 3h2.3l1.7 11.3a2 2 0 0 0 2 1.7h8a2 2 0 0 0 2-1.6L19.7 7H6"
         stroke="currentColor"
@@ -59,7 +59,7 @@ function CartIcon() {
 /** Plain check — confirmation glyph the cart button shows after an item is added. */
 function Check() {
   return (
-    <svg width="40" height="40" viewBox="4 4 16 16" fill="none" aria-hidden>
+    <svg width="32" height="32" viewBox="4 4 16 16" fill="none" aria-hidden>
       <path
         d="M5 12.5l4.5 4.5L19 7"
         stroke="currentColor"
@@ -146,27 +146,42 @@ export function BookingBox({
     <div className="flex flex-col gap-4">
       <div id="prenota" className="scroll-mt-24 rounded-panel bg-soft p-5 sm:p-6">
         {isAgency ? (
-          // Agenzia loggata: badge "Sconto X% agenzia" sopra, prezzo pubblico barrato,
-          // prezzo agenzia grande in rosso. (ponytail: sconto fisso 20%, vedi agency-pricing.)
-          <div className="flex flex-col gap-1">
-            <span className="self-start rounded-badge bg-badge px-2 py-1 text-xs font-extrabold text-white">
-              {fill(dict.booking.agencyDiscount, { percent: String(AGENCY_DISCOUNT_PERCENT) })}
-            </span>
-            <p className="text-ink">
-              <span className="text-base text-ink/60">
-                {dict.booking.from}{" "}
-                <span className="line-through">
-                  {product.priceFrom}
-                  {product.currency}
-                </span>
+          // Agenzia loggata: badge "Sconto X% agenzia", prezzo pubblico barrato, prezzo
+          // agenzia grande in rosso. Centrato quando NON c'è un altro badge sconto;
+          // se c'è product.badge, layout a riga col badge prodotto a destra.
+          // (ponytail: sconto fisso 20%, vedi agency-pricing.)
+          <div
+            className={
+              product.badge
+                ? "flex items-start justify-between gap-3"
+                : "flex flex-col items-center gap-1 text-center"
+            }
+          >
+            <div className={`flex flex-col gap-1 ${product.badge ? "items-start" : "items-center"}`}>
+              <span className="rounded-badge bg-badge px-2 py-1 text-xs font-extrabold text-white">
+                {fill(dict.booking.agencyDiscount, { percent: String(AGENCY_DISCOUNT_PERCENT) })}
               </span>
-              <br />
-              <span className="text-3xl font-extrabold text-badge">
-                {agencyPrice(product.priceFrom)}
-                {product.currency}
-              </span>{" "}
-              <span className="text-sm text-ink/70">{dict.booking.perPerson}</span>
-            </p>
+              <p className="text-ink">
+                <span className="text-base text-ink/60">
+                  {dict.booking.from}{" "}
+                  <span className="line-through">
+                    {product.priceFrom}
+                    {product.currency}
+                  </span>
+                </span>
+                <br />
+                <span className="text-3xl font-extrabold text-badge">
+                  {agencyPrice(product.priceFrom)}
+                  {product.currency}
+                </span>{" "}
+                <span className="text-sm text-ink/70">{dict.booking.perPerson}</span>
+              </p>
+            </div>
+            {product.badge && (
+              <span className="shrink-0 rounded-badge bg-badge px-2 py-1 text-xs font-extrabold text-white">
+                {product.badge}
+              </span>
+            )}
           </div>
         ) : product.oldPrice ? (
           // Scontato: "Da {oldPrice}" barrato sopra, prezzo grande in rosso, badge a destra (invariato).
@@ -587,7 +602,7 @@ function OptionCard({
           variant="outline"
           size="md"
           aria-label={added ? dict.booking.addedToCart : dict.booking.addToCart}
-          className="h-14 w-14 shrink-0 px-0"
+          className="h-14 w-14 shrink-0 p-0!"
         >
           {added ? <Check /> : <CartIcon />}
         </Button>

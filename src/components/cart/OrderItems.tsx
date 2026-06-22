@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
@@ -89,6 +90,9 @@ export function OrderItems({
             const discounted = item.discountPercent > 0;
             // Pre-discount "from" price — `total` already has the discount applied.
             const original = discounted ? item.total / (1 - item.discountPercent / 100) : item.total;
+            // Product page for this tour: tapping the image/title opens it; "Modifica"
+            // lands on the booking box (#prenota) to change participants/date/slot.
+            const productHref = `/${lang}/attivita/${item.city}/${item.slug}`;
 
             return (
               <motion.li
@@ -107,16 +111,22 @@ export function OrderItems({
                 }
               >
               {item.image && (
-                <span
+                <Link
+                  href={productHref}
                   className={`relative shrink-0 overflow-hidden rounded-card ${
                     compact ? "h-16 w-16" : "h-20 w-20 sm:h-24 sm:w-24"
                   }`}
                 >
                   <Image src={item.image} alt="" fill sizes="96px" className="object-cover" />
-                </span>
+                </Link>
               )}
               <div className="min-w-0 flex-1">
-                <p className="font-bold leading-snug text-ink">{item.title}</p>
+                <Link
+                  href={productHref}
+                  className="font-bold leading-snug text-ink transition-colors hover:text-cta hover:underline"
+                >
+                  {item.title}
+                </Link>
                 {!compact && <p className="text-sm text-ink/70">{item.optionTitle}</p>}
                 <p className="mt-1 text-sm text-ink/70">
                   {t.dateLabel}:{" "}
@@ -127,6 +137,15 @@ export function OrderItems({
                 <p className="mt-1 text-sm text-ink/60">
                   {item.lines.map((l) => `${l.qty} ${l.label}`).join("  ·  ")}
                 </p>
+                {/* Modifica → booking box, to change participants/date/slot. */}
+                {onRemove && (
+                  <Link
+                    href={`${productHref}#prenota`}
+                    className="mt-2 inline-block text-sm font-bold text-cta hover:underline"
+                  >
+                    {dict.checkout.edit}
+                  </Link>
+                )}
               </div>
               {/* Right column: price on top, trash (remove) pinned bottom-right to save
                   space. When discounted, the "from" price shrinks + strikes through and

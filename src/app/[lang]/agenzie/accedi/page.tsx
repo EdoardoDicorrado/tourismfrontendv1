@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { AgencyLoginForm } from "@/components/account/AgencyLoginForm";
+import { LoginConflictGuard } from "@/components/account/LoginConflictGuard";
 import { getSession } from "@/lib/account/session";
 import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
@@ -36,11 +37,16 @@ export default async function AgencyLoginPage({ params }: { params: Promise<Para
   const session = await getSession();
   if (session?.role === "agency") redirect(`/${lang}`);
 
+  // A session under a DIFFERENT role (only "customer" survives the redirect above)
+  // → the guard warns before logging out. Preview demo users are caught client-side.
+  const serverIdentity = session ? { role: session.role, name: session.name } : null;
+
   const dict = await getDictionary(lang);
   const t = dict.account.agencyLogin;
 
   return (
     <main className="flex min-h-[100svh] items-center justify-center bg-soft px-4 py-10">
+      <LoginConflictGuard target="agency" lang={lang} serverIdentity={serverIdentity} />
       <div className="w-full max-w-[420px]">
         <Link href={`/${lang}`} aria-label="TourisMotion" className="mb-8 flex justify-center">
           <Image

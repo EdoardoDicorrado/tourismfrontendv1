@@ -39,7 +39,10 @@ export default async function AgencySupportPage({ params }: { params: Promise<Pa
       <Header lang={lang} dict={dict} />
       <main className="flex-1">
         <Container className="py-12 sm:py-16">
-          <AgencySupportView dict={dict.account.agencySupport} />
+          <AgencySupportView
+            dict={dict.account.agencySupport}
+            basePath={`/${lang}/agenzie/assistenza`}
+          />
         </Container>
       </main>
       <Footer lang={lang} dict={dict} />

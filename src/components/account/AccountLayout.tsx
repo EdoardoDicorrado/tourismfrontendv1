@@ -7,7 +7,8 @@ import type { Session } from "@/lib/account/types";
 import type { Locale } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
-import { AccountNav, type AccountNavKey } from "./AccountNav";
+import { BackLink } from "./BackLink";
+import { type AccountNavKey } from "./AccountNav";
 
 /**
  * Shell for every authenticated personal-area page (modelled on tatanka2's
@@ -34,13 +35,13 @@ import { AccountNav, type AccountNavKey } from "./AccountNav";
 export function AccountLayout({
   lang,
   dict,
-  session,
-  active,
   children,
 }: {
   lang: Locale;
   dict: Dictionary;
-  session: Session;
+  /** Optional: the layout no longer renders a role-aware sidebar, so preview
+   *  surfaces without a real server session (e.g. affiliate) can reuse it. */
+  session?: Session;
   active?: AccountNavKey;
   children: ReactNode;
 }) {
@@ -49,17 +50,14 @@ export function AccountLayout({
       <Header lang={lang} dict={dict} />
       <main className="flex-1 bg-soft/30">
         <Container className="py-10 sm:py-14">
-          <header className="mb-8">
-            <h1 className="text-2xl font-extrabold text-ink sm:text-3xl">{dict.account.nav.area}</h1>
-            {session.name ? <p className="mt-1 text-ink/70">{session.name}</p> : null}
-          </header>
+          {/* "Torna indietro" sopra il titolo della pagina (il titolo lo rende ogni
+              pagina nel proprio heading). Niente più "Area riservata / nome utente":
+              il titolo in cima è il nome della pagina corrente. */}
+          <BackLink label={dict.account.nav.back} />
 
-          <div className="grid gap-6 lg:grid-cols-[260px_1fr] lg:gap-8">
-            <aside>
-              <AccountNav lang={lang} dict={dict.account} session={session} active={active} />
-            </aside>
-            <section className="min-w-0">{children}</section>
-          </div>
+          {/* Sidebar nav removed (richiesta Edoardo): navigation now lives in the
+              header hamburger drawer (UserMenu/AgencyMenu). Single-column content. */}
+          <div className="min-w-0">{children}</div>
         </Container>
       </main>
       <Footer lang={lang} dict={dict} />

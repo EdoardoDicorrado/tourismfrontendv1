@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useRef } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 
@@ -31,15 +32,36 @@ export function UserMenu({
   const m = dict.account.menu;
   const asideRef = useRef<HTMLElement>(null);
   const reduce = useReducedMotion();
+  const router = useRouter();
 
   useFocusTrap(open, asideRef, onClose);
 
+  // Logout sends the customer back to the homepage (gated pages would otherwise
+  // keep showing until the next navigation). refresh() re-reads the server session.
+  function handleLogout() {
+    signOutDemo();
+    onClose();
+    router.push(`/${lang}`);
+    router.refresh();
+  }
+
+  // Affiliates have their own (preview) area; customers use /area. Bookings +
+  // settings are role-gated per area, so the menu points each role at its own pages
+  // (an affiliate hitting /area/* would be bounced to the customer login).
+  const isAffiliate = user?.role === "affiliate";
+  const bookingsHref = isAffiliate ? `/${lang}/affiliati/prenotazioni` : `/${lang}/area/prenotazioni`;
+  const settingsHref = isAffiliate ? `/${lang}/affiliati/impostazioni` : `/${lang}/area/impostazioni`;
+
   const items = [
-    { href: `/${lang}/area/prenotazioni`, label: m.bookings, icon: <TicketIcon /> },
+    // Affiliates get their dashboard first (preview role flag). IT label hardcoded
+    // (i18n deposited to marketing, like the rest of the affiliate surface).
+    ...(isAffiliate
+      ? [{ href: `/${lang}/affiliati/dashboard`, label: "Dashboard affiliato", icon: <DashboardIcon /> }]
+      : [{ href: `/${lang}/area/dashboard`, label: m.dashboard, icon: <DashboardIcon /> }]),
+    { href: bookingsHref, label: m.bookings, icon: <TicketIcon /> },
     { href: `/${lang}/supporto`, label: m.support, icon: <SupportIcon /> },
-    // Cancellations live in the bookings list under the "cancelled" tab — no
-    // separate page needed (avoids a dead /area/cancellazioni route).
-    { href: `/${lang}/area/prenotazioni?tab=cancelled`, label: m.cancellations, icon: <CancelIcon /> },
+    // No "Cancellazioni" entry: cancellations show in the bookings list under the
+    // "cancelled" tab, and users cancel from the booking itself.
   ];
 
   const initials = user
@@ -118,13 +140,20 @@ export function UserMenu({
           ))}
         </nav>
 
-        <footer className="border-t border-soft-grey p-3">
+        <footer className="flex flex-col gap-1 border-t border-soft-grey p-3">
+          <Link
+            href={settingsHref}
+            onClick={onClose}
+            className="flex items-center gap-3 rounded-card px-3 py-3 font-bold text-ink transition-colors hover:bg-soft"
+          >
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-soft text-cta">
+              <GearIcon />
+            </span>
+            {m.settings}
+          </Link>
           <button
             type="button"
-            onClick={() => {
-              signOutDemo();
-              onClose();
-            }}
+            onClick={handleLogout}
             className="flex w-full items-center gap-3 rounded-card px-3 py-3 font-bold text-badge transition-colors hover:bg-soft"
           >
             <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-badge/10">
@@ -135,6 +164,17 @@ export function UserMenu({
         </footer>
       </motion.aside>
     </div>
+  );
+}
+
+function DashboardIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.8" />
+      <rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.8" />
+      <rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.8" />
+      <rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.8" />
+    </svg>
   );
 }
 
@@ -165,11 +205,17 @@ function SupportIcon() {
   );
 }
 
-function CancelIcon() {
+function GearIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
-      <path d="M8.5 8.5l7 7M15.5 8.5l-7 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path
+        d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8" />
     </svg>
   );
 }

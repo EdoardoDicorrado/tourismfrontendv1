@@ -75,6 +75,7 @@ export default async function AgencyBookingsPage({
         lang={lang}
         dict={dict.account}
         listBase={`/${lang}/agenzie/prenotazioni`}
+        voucherPreview
       />
     </AccountLayout>
   );

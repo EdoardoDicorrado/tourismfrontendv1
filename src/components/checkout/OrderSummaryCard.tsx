@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 import { Stars } from "@/components/ui/Stars";
 import { Disclosure } from "@/components/ui/Disclosure";
@@ -62,6 +63,8 @@ export function OrderSummaryCard({
   savingsLabel,
   collapsible = false,
   defaultOpen = false,
+  editHref,
+  editLabel,
 }: {
   image: string;
   title: string;
@@ -75,7 +78,19 @@ export function OrderSummaryCard({
   savingsLabel?: string;
   collapsible?: boolean;
   defaultOpen?: boolean;
+  /** When set, a top-right "Modifica" link to change this booking (e.g. step 1). */
+  editHref?: string;
+  editLabel?: string;
 }) {
+  const editLink =
+    editHref && editLabel ? (
+      <Link
+        href={editHref}
+        className="text-sm font-bold text-cta hover:underline"
+      >
+        {editLabel}
+      </Link>
+    ) : null;
   const ratingRow = typeof rating === "number" && (
     <span className="flex items-center gap-1.5">
       <span className="text-xl font-extrabold text-ink">{rating.toFixed(1)}</span>
@@ -131,6 +146,7 @@ export function OrderSummaryCard({
   if (collapsible) {
     return (
       <div className="w-full rounded-card border border-stroke-2 px-4">
+        {editLink && <div className="flex justify-end pt-3">{editLink}</div>}
         <Disclosure
           divided={false}
           defaultOpen={defaultOpen}

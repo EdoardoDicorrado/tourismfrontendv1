@@ -8,6 +8,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Container } from "@/components/ui/Container";
 import { CustomerLoginForm } from "@/components/account/CustomerLoginForm";
+import { LoginConflictGuard } from "@/components/account/LoginConflictGuard";
 
 type Params = { lang: string };
 
@@ -41,12 +42,17 @@ export default async function CustomerLoginPage({ params }: { params: Promise<Pa
     redirect(`/${lang}/area/prenotazioni`);
   }
 
+  // A session under a DIFFERENT role (only "agency" survives the redirect above) →
+  // guard warns before logging out. Preview demo users are caught client-side.
+  const serverIdentity = session ? { role: session.role, name: session.name } : null;
+
   const t = dict.account.customerLogin;
 
   return (
     <>
       <Header lang={lang} dict={dict} />
       <main className="flex-1">
+        <LoginConflictGuard target="customer" lang={lang} serverIdentity={serverIdentity} />
         <Container className="py-12 sm:py-16">
           <div className="mx-auto w-full max-w-[400px]">
             <CustomerLoginForm lang={lang} dict={t} />

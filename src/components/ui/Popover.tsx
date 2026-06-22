@@ -122,7 +122,9 @@ export function Popover({
                   aria-label={label}
                   aria-labelledby={labelledBy}
                   tabIndex={-1}
-                  className={`fixed inset-x-0 bottom-0 z-[var(--z-sheet)] mx-auto w-full max-w-[680px] rounded-t-sheet bg-white shadow-sheet outline-none ${panelClassName}`}
+                  // pt-2 reserves the grabber zone (top-2 + h-1.5 ⇒ 8–14px) so a
+                  // consumer's own header padding (e.g. pt-3) no longer collides with it.
+                  className={`fixed inset-x-0 bottom-0 z-[var(--z-sheet)] mx-auto w-full max-w-[680px] rounded-t-sheet bg-white pt-2 shadow-sheet outline-none ${panelClassName}`}
                   initial={reduceMotion ? { opacity: 0 } : { y: "100%" }}
                   animate={reduceMotion ? { opacity: 1 } : { y: 0 }}
                   exit={reduceMotion ? { opacity: 0 } : { y: "100%" }}

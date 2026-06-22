@@ -321,14 +321,15 @@ export function adaptProductDetail(api: ApiProductDetail, citta: string): Produc
   const options: BookingOption[] = api.options
     .slice()
     .sort((a, b) => {
-      const rank = (l: string | null) => (l && api.defaultLanguage && l === api.defaultLanguage ? 0 : 1);
+      const dl = api.defaultLanguage?.toLowerCase();
+      const rank = (l: string | null) => (l && dl && l.toLowerCase() === dl ? 0 : 1);
       return rank(a.language) - rank(b.language);
     })
     .map((o) => {
       const lowerPrices: Record<string, number> = {};
       for (const [k, v] of Object.entries(o.prices)) lowerPrices[k.toLowerCase()] = v;
       const prices: Record<string, number> = {};
-      for (const p of participants) prices[p.key] = lowerPrices[p.key] ?? 0;
+      for (const p of participants) prices[p.key] = lowerPrices[p.key.toLowerCase()] ?? 0;
 
       const name = langName(o.language);
       const bullets = [

@@ -327,7 +327,11 @@ export async function authorizeRedsys({
   const raw = await backendFetch<RawAuthorize>({
     path: withBrand(REDSYS_AUTHORIZE_PATH),
     method: "POST",
-    headers: { "Idempotency-Key": `redsys-authorize-${transactionId}` },
+    // Key on idOper (single-use per card-form mount), NOT just transactionId: a
+    // retry-with-new-card reuses the same transactionId but mints a fresh idOper,
+    // so it must be a DISTINCT authorization — while a true network retry of the
+    // same idOper still coalesces.
+    headers: { "Idempotency-Key": `redsys-authorize-${transactionId}-${idOper}` },
     body: {
       transaction_id: transactionId,
       sdkParams: { idOper, ...(browser ? { browser } : {}) },

@@ -30,6 +30,14 @@ const SESSION_COOKIE = "tm_account";
  */
 export const PREVIEW_CUSTOMER_TOKEN = "preview-customer-token";
 
+/**
+ * PREVIEW sentinel token (full-stack). The demo agency login short-circuit in
+ * `POST /api/auth/agency` mints this instead of a real JWT; the account-client seam
+ * detects it and serves profile/payment/password from fixtures until the storefront
+ * agency API lands. Remove together with the login short-circuit.
+ */
+export const PREVIEW_AGENCY_TOKEN = "preview-agency-token";
+
 /** Fallback cookie lifetime in seconds (8h — the agency token TTL) if `expires_at` is unparseable. */
 const MAX_AGE = 60 * 60 * 8;
 

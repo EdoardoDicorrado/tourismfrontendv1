@@ -1,6 +1,7 @@
 import "server-only";
 
 import { backendFetch, BackendError } from "@/lib/api/client";
+import { PREVIEW_AGENCY_TOKEN } from "@/lib/account/session";
 import type { Locale } from "@/lib/i18n/config";
 
 import type {
@@ -133,12 +134,17 @@ export async function customerVerifyEmail(token: string, locale?: Locale): Promi
 
 /** Resend the verification email. Always resolves (anti-enumeration). */
 export async function customerResendVerification(email: string, locale?: Locale): Promise<void> {
-  await backendFetch({
-    path: `${BASE}/auth/email/resend`,
-    method: "POST",
-    body: { email },
-    locale,
-  });
+  try {
+    await backendFetch({
+      path: `${BASE}/auth/email/resend`,
+      method: "POST",
+      body: { email },
+      locale,
+    });
+  } catch {
+    // Anti-enumeration: swallow any backend error (incl. a per-email 404/422) so
+    // the caller always sees an identical success — never an existence oracle.
+  }
 }
 
 /**
@@ -191,12 +197,17 @@ export async function validateAgencyEmail(email: string, locale?: Locale): Promi
 
 /** Request a password reset email (agency + customer). Always resolves (anti-enumeration). */
 export async function requestPasswordReset(email: string, locale?: Locale): Promise<void> {
-  await backendFetch({
-    path: `${BASE}/auth/password/forgot`,
-    method: "POST",
-    body: { email },
-    locale,
-  });
+  try {
+    await backendFetch({
+      path: `${BASE}/auth/password/forgot`,
+      method: "POST",
+      body: { email },
+      locale,
+    });
+  } catch {
+    // Anti-enumeration: swallow any backend error (incl. a per-email 404/422) so
+    // the caller always sees an identical success — never an existence oracle.
+  }
 }
 
 /**
@@ -317,8 +328,73 @@ export async function cancelBookingLine(
 
 // ── Agency profile / payment / password ──────────────────────────────────────
 
+// PREVIEW (full-stack): the demo agency (PREVIEW_AGENCY_TOKEN, minted by the login
+// short-circuit) has no real backend yet (CLAUDE.md). These fixtures let the
+// profilo / pagamento / sicurezza pages work end-to-end; writes echo the patch so the
+// saved state sticks for the response (a reload re-reads the fixture). Remove with the
+// login short-circuit when the storefront agency API lands.
+const PREVIEW_AGENCY_PROFILE: AgencyProfile = {
+  user: { name: "Agenzia Demo", email: "test@test.it", phone: "612345678", locale: "es" },
+  agency: {
+    id: "preview-agency",
+    code: "AG-DEMO",
+    legal_name: "Agenzia Demo S.L.",
+    display_name: "Agenzia Demo",
+    address_street: "Calle Gran Vía",
+    address_street_number: "28",
+    postal_code: "28013",
+    city: "Madrid",
+    country_alpha2: "ES",
+    municipality_code: null,
+    phone_prefix: "+34",
+    phone: "612345678",
+    fax: null,
+    email: "agenzia@demo.com",
+    website: "https://agenziademo.example",
+    facebook_url: null,
+    twitter_url: null,
+    tripadvisor_url: null,
+    description: "Agenzia demo per l'anteprima dello storefront.",
+    collaboration_reason: "",
+    commission_percent: 8,
+    network_commission_percent: null,
+    is_active: true,
+    api_enabled: false,
+  },
+};
+
+const PREVIEW_PAYMENT_INFO: PaymentInfo = {
+  vat_id: "B12345678",
+  tax_code: null,
+  identity_document_type: null,
+  identity_document_number: null,
+  identity_document_country_alpha2: "ES",
+  paypal_email: "pagos@agenziademo.com",
+  paypal_country_alpha2: "ES",
+  bank_transfer: {
+    beneficiary: "Agenzia Demo S.L.",
+    iban: "ES•• •••• •••• •••• 4242",
+    account_number: null,
+    bank_name: "Banco Demo",
+    swift: null,
+    aba: null,
+    address: "Calle Gran Vía 28",
+    city: "Madrid",
+    country_alpha2: "ES",
+    intermediary: null,
+  },
+  guarantees: {
+    bank_transfer_guarantee: { amount_cents: 0, threshold_percent: null },
+    check_guarantee: { amount_cents: 0, threshold_percent: null },
+  },
+  deposit: { amount_cents: 0, paid: false },
+};
+
+const isPreviewAgency = (token: string): boolean => token === PREVIEW_AGENCY_TOKEN;
+
 /** Agency profile (user + company). */
 export function getAgencyProfile(token: string): Promise<AgencyProfile> {
+  if (isPreviewAgency(token)) return Promise.resolve(PREVIEW_AGENCY_PROFILE);
   return backendFetch<AgencyProfile>({ path: `${BASE}/agency/profile`, token });
 }
 
@@ -327,6 +403,12 @@ export function updateAgencyProfile(
   patch: AgencyProfilePatch,
   token: string,
 ): Promise<AgencyProfile> {
+  if (isPreviewAgency(token)) {
+    return Promise.resolve({
+      user: { ...PREVIEW_AGENCY_PROFILE.user, ...patch.user },
+      agency: { ...PREVIEW_AGENCY_PROFILE.agency, ...patch.agency },
+    });
+  }
   return backendFetch<AgencyProfile>({
     path: `${BASE}/agency/profile`,
     method: "PATCH",
@@ -338,6 +420,7 @@ export function updateAgencyProfile(
 
 /** Agency payment info (sensitive fields masked on read). */
 export function getPaymentInfo(token: string): Promise<PaymentInfo> {
+  if (isPreviewAgency(token)) return Promise.resolve(PREVIEW_PAYMENT_INFO);
   return backendFetch<PaymentInfo>({ path: `${BASE}/agency/payment`, token });
 }
 
@@ -346,6 +429,14 @@ export function updatePaymentInfo(
   patch: PaymentInfoPatch,
   token: string,
 ): Promise<PaymentInfo> {
+  if (isPreviewAgency(token)) {
+    const { bank_transfer, ...rest } = patch;
+    return Promise.resolve({
+      ...PREVIEW_PAYMENT_INFO,
+      ...rest,
+      bank_transfer: { ...PREVIEW_PAYMENT_INFO.bank_transfer, ...bank_transfer },
+    });
+  }
   return backendFetch<PaymentInfo>({
     path: `${BASE}/agency/payment`,
     method: "PATCH",
@@ -364,6 +455,8 @@ export async function changeAgencyPassword(
   next: string,
   token: string,
 ): Promise<boolean> {
+  // PREVIEW: the demo agency password is "test"; accept it so the flow completes.
+  if (isPreviewAgency(token)) return current === "test";
   try {
     await backendFetch({
       path: `${BASE}/agency/password`,

@@ -81,12 +81,6 @@ function toFormState(p: AgencyProfile): FormState {
   };
 }
 
-/** "8.0" → "8%"; null → "—". */
-function formatCommission(percent: number | null): string {
-  if (percent == null) return "—";
-  return `${percent}%`;
-}
-
 export function AgencyProfileForm({
   dict,
   feedback,
@@ -97,8 +91,6 @@ export function AgencyProfileForm({
   profile: AgencyProfile;
 }) {
   const [form, setForm] = useState<FormState>(() => toFormState(profile));
-  // Admin-managed values, shown read-only for transparency.
-  const readonly = profile.agency;
   const [status, setStatus] = useState<Status>("idle");
 
   const set =
@@ -179,15 +171,9 @@ export function AgencyProfileForm({
       <fieldset className="rounded-[15px] border border-soft-grey bg-white p-6 sm:p-8">
         <legend className="px-2 text-lg font-extrabold text-ink">{dict.companyTitle}</legend>
 
-        {/* Admin-managed values (read-only) */}
-        <div className="grid gap-4 sm:grid-cols-3">
-          <TextField id="agency_code" label={dict.agencyCode} value={readonly.code ?? "—"} disabled readOnly />
-          <TextField id="commission" label={dict.commission} value={formatCommission(readonly.commission_percent)} disabled readOnly />
-          <TextField id="api_enabled" label={dict.apiEnabled} value={readonly.api_enabled ? "✓" : "—"} disabled readOnly />
-        </div>
-        <p className="mt-2 text-xs text-ink/60">{dict.readonlyNote}</p>
-
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+        {/* Admin-managed values (agency code / commission / API access) NON sono più qui:
+            sono read-only → mostrati come card nella pagina account (/agenzie/impostazioni). */}
+        <div className="grid gap-4 sm:grid-cols-2">
           <TextField id="legal_name" label={dict.legalName} value={form.legal_name} onChange={set("legal_name")} />
           <TextField id="display_name" label={dict.displayName} value={form.display_name} onChange={set("display_name")} />
           <div className="grid gap-4 sm:col-span-2 sm:grid-cols-[1fr_120px]">

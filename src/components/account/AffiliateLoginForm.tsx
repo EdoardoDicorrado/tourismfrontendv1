@@ -5,14 +5,18 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { fieldInputClass, SubmitButton } from "@/components/account/ui";
+import { signInDemo } from "@/lib/auth/demoUser";
 import type { Locale } from "@/lib/i18n/config";
 
 /**
  * PREVIEW affiliate login (ui-ux). There is no real affiliate auth yet — the
  * affiliate role/session is pending full-stack — so the pre-filled demo
- * credentials just land on the affiliate dashboard. Strings are hardcoded IT for
- * this first pass (i18n deposited to marketing). Same field/button primitives as
- * the agency/customer login for a consistent look.
+ * credentials just land on the affiliate dashboard. Like the customer login it
+ * marks the demo user (`signInDemo`), so the rest of the storefront (e.g. the
+ * checkout) recognises the affiliate as logged-in and shows the saved personal
+ * data + payment methods in a read-only card, same as agency/customer. Strings
+ * are hardcoded IT for this first pass (i18n deposited to marketing). Same
+ * field/button primitives as the agency/customer login for a consistent look.
  */
 export function AffiliateLoginForm({ lang }: { lang: Locale }) {
   const router = useRouter();
@@ -24,6 +28,9 @@ export function AffiliateLoginForm({ lang }: { lang: Locale }) {
     e.preventDefault();
     if (submitting) return;
     setSubmitting(true);
+    // PREVIEW: mark the demo user so the affiliate is recognised as logged-in
+    // across the storefront (checkout → saved personal data + payment cards).
+    signInDemo({ name: "Mario Rossi", email, role: "affiliate" });
     router.push(`/${lang}/affiliati/dashboard`);
   }
 
