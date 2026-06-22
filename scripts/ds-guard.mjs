@@ -120,7 +120,7 @@ const keyOf = (v) => `${v.rel}|${v.rule}|${v.text.replace(/\s+/g, " ").trim()}`;
 
 const violations = [];
 for (const file of walk(SRC)) {
-  const rel = relative(ROOT, file);
+  const rel = relative(ROOT, file).replaceAll("\\", "/"); // ponytail: normalizza sep → baseline portabile Windows/CI Linux
   if (SKIP_FILES.has(rel)) continue;
   const lines = readFileSync(file, "utf8").split("\n");
   lines.forEach((line, i) => {
