@@ -49,6 +49,20 @@ const DEMO_GALLERY: { src: string }[] = [
 ];
 const MIN_GALLERY = 5;
 
+/**
+ * Demo social-proof for the product header (Figma 64:9690). The storefront API
+ * carries no "tours done" counter and the seeded tours have no approved reviews,
+ * so the header's "+10.000 tour effettuati" row and the rating block would stay
+ * hidden (ProductHeader gates the rating on `reviews > 0`). Per the orchestrator
+ * decision (agency task #24) we show them with these placeholders. Real review
+ * aggregates, when present, always win over the demo. ⚠️ Remove once the backend
+ * serves real review aggregates — a fixed demo rate on every tour is acknowledged
+ * filler, not real data.
+ */
+const DEMO_TOURS_COUNT = "+10.000";
+const DEMO_RATING = 4.7;
+const DEMO_REVIEWS = 8000;
+
 /** ISO 4217 → display symbol for storefront price labels. */
 const CURRENCY_SYMBOL: Record<string, string> = { EUR: "€", USD: "$", GBP: "£" };
 
@@ -179,6 +193,21 @@ function htmlToText(html: string | null | undefined): string {
     .trim();
 }
 
+/**
+ * Split editorial HTML into readable paragraphs — each `<p>`/`<li>`/`<br>`-
+ * delimited block becomes one trimmed, tag-free string; empties are dropped.
+ * Lets the UI render real paragraph breaks instead of the single " · "-joined
+ * blob that {@link htmlToText} produces. Plain text (no tags) → one paragraph.
+ */
+function htmlToParagraphs(html: string | null | undefined): string[] {
+  if (!html) return [];
+  return html
+    .replace(/<br\s*\/?>/gi, "</p>")
+    .split(/<\/(?:p|li|div|h[1-6])>/i)
+    .map((chunk) => htmlToText(chunk))
+    .filter(Boolean);
+}
+
 const langName = (code: string | null): string | null =>
   code ? LANG_NAME[code] ?? code.toUpperCase() : null;
 
@@ -201,7 +230,8 @@ function ageRangeLabel(min: number | null, max: number | null): string {
 /** Free-cancellation cutoff (minutes) → human copy. */
 function freeCancellationCopy(minutes: number | null): string {
   if (minutes == null) return "";
-  if (minutes % 1440 === 0) return `Cancellazione gratuita fino a ${(minutes / 1440) * 24} ore prima`;
+  // A day-multiple (1440) reduces to the same "N ore prima" as the hour branch
+  // (1440/1440*24 === 1440/60), so the hour branch already covers it.
   if (minutes % 60 === 0) return `Cancellazione gratuita fino a ${minutes / 60} ore prima`;
   return `Cancellazione gratuita fino a ${minutes} minuti prima`;
 }
@@ -322,6 +352,19 @@ export function adaptProductDetail(api: ApiProductDetail, citta: string): Produc
       };
     });
 
+  // Distinct ISO languages the tour is offered in (from the option locales),
+  // default language first to mirror the option ordering → drives the circular
+  // flags in the product header (Figma 64:9690), same codes as the listing card.
+  const defaultLang = api.defaultLanguage?.toLowerCase() ?? null;
+  const languages = [
+    ...new Set(
+      api.options
+        .map((o) => o.language)
+        .filter((l): l is string => Boolean(l))
+        .map((l) => l.toLowerCase()),
+    ),
+  ].sort((a, b) => (a === defaultLang ? 0 : 1) - (b === defaultLang ? 0 : 1));
+
   const included = api.included ? { title: "Cosa è incluso", items: api.included.items } : undefined;
   const notIncluded = api.notIncluded
     ? { title: "Cosa non è incluso", items: api.notIncluded.items }
@@ -340,17 +383,51 @@ export function adaptProductDetail(api: ApiProductDetail, citta: string): Produc
   const now = new Date();
   const priceFrom = api.priceFrom ?? 0;
 
+  // Social proof: use the real review aggregate when the tour has approved
+  // reviews; otherwise fall back to the demo rate so the header block shows
+  // (orchestrator decision #24). Rating/reviews move together — never a real
+  // rating with a demo count, or vice versa.
+  const hasRealReviews = api.reviewsCount > 0;
+  const rating = hasRealReviews ? (api.rating ?? DEMO_RATING) : DEMO_RATING;
+  const reviews = hasRealReviews ? api.reviewsCount : DEMO_REVIEWS;
+
+  // Demo fallback: a tour published with no bookable options would strand the
+  // booking widget (no option cards → no checkout). Guarantee ONE option, with
+  // the ≥2 placeholder slots, so the booking → checkout path is testable for
+  // every product (same spirit as the `participants` fallback above and the
+  // page's force-rendered preview sections). ⚠️ Remove once every catalog tour
+  // ships real options.
+  const safeOptions: BookingOption[] =
+    options.length > 0
+      ? options
+      : [
+          {
+            id: "standard",
+            title: api.title,
+            description: api.shortDescription ?? htmlToText(api.description),
+            bullets: [durationLabel(api.durationMinutes), "Visita guidata"].filter(
+              Boolean,
+            ) as string[],
+            date: "",
+            slots: PLACEHOLDER_SLOTS,
+            prices: Object.fromEntries(participants.map((p) => [p.key, priceFrom])),
+            freeCancellation: "",
+          },
+        ];
+
   return {
     slug: api.slug,
     city: api.city ?? citta,
     cityName: api.cityName ?? capitalize(citta),
     title: api.title,
-    // Decorative "tours done" social proof has no data source → empty (the
-    // header hides the row); the review rating below is the real aggregate.
-    toursCount: "",
-    rating: api.rating ?? 0,
-    reviews: api.reviewsCount,
-    shortDescription: api.shortDescription ?? "",
+    // Decorative "tours done" social proof (no API source) → demo placeholder
+    // so the header row matches Figma (#24). Rating/reviews: real when present,
+    // demo otherwise (see above).
+    toursCount: DEMO_TOURS_COUNT,
+    rating,
+    reviews,
+    languages,
+    shortDescription: api.shortDescription ?? htmlToText(api.description),
     gallery,
     priceFrom,
     currency: CURRENCY_SYMBOL[api.currency] ?? "€",
@@ -364,8 +441,12 @@ export function adaptProductDetail(api: ApiProductDetail, citta: string): Produc
       lowPrice: priceFrom,
       discountPercent: 0,
     },
-    options,
-    description: api.description ?? "",
+    options: safeOptions,
+    // Live tours ship the description as HTML → flatten to plain text (was
+    // rendering raw `<p>` tags) and also expose the paragraph breakdown so the
+    // UI can render proper paragraphs instead of one " · "-joined line.
+    description: htmlToText(api.description),
+    descriptionParagraphs: htmlToParagraphs(api.description),
     thingsToKnow: htmlToText(api.thingsToKnow) || undefined,
     included,
     notIncluded,

@@ -27,6 +27,20 @@ const eslintConfig = defineConfig([
       ],
     },
   },
+  // High-value jsx-a11y rules beyond the Next core subset (the `jsx-a11y` plugin
+  // is already registered by eslint-config-next, so we only add rules here — no
+  // plugin redefinition). WARN-level: surfaces a11y debt in the shared lint gate
+  // without failing it; ratchet to "error" once consumers are clean.
+  {
+    rules: {
+      "jsx-a11y/label-has-associated-control": "warn",
+      "jsx-a11y/click-events-have-key-events": "warn",
+      "jsx-a11y/no-static-element-interactions": "warn",
+      "jsx-a11y/no-noninteractive-element-interactions": "warn",
+      "jsx-a11y/anchor-is-valid": "warn",
+      "jsx-a11y/interactive-supports-focus": "warn",
+    },
+  },
 ]);
 
 export default eslintConfig;

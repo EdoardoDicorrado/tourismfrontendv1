@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { customerResendVerification } from "@/lib/account/client";
 import { isLocale, type Locale } from "@/lib/i18n/config";
+import { isEmail, isNonEmptyString } from "@/lib/validation";
 
 /**
  * Resend verification email BFF (`POST /api/auth/customer/resend-verification`).
@@ -12,12 +13,6 @@ import { isLocale, type Locale } from "@/lib/i18n/config";
 
 export const dynamic = "force-dynamic";
 
-const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
-
-function isNonEmptyString(value: unknown): value is string {
-  return typeof value === "string" && value.trim().length > 0;
-}
-
 export async function POST(request: NextRequest) {
   let body: unknown;
   try {
@@ -27,7 +22,7 @@ export async function POST(request: NextRequest) {
   }
 
   const data = (body ?? {}) as { email?: unknown; locale?: unknown };
-  if (!isNonEmptyString(data.email) || !EMAIL_RE.test(data.email)) {
+  if (!isNonEmptyString(data.email) || !isEmail(data.email)) {
     return NextResponse.json({ ok: false, error: "invalid_email" }, { status: 400 });
   }
   const locale: Locale | undefined =

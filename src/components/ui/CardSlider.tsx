@@ -4,15 +4,18 @@ import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useRef } from "react";
 
-const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
+import { focusRing } from "@/components/ui/buttonVariants";
 
-/** Gap between cards — matches the `gap-4` (16px) used by every caller. */
-const GAP = 16;
+const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
 
 /** Distance to scroll for one card: card width + gap (fallback: 80% viewport). */
 function cardStep(el: HTMLElement) {
   const first = el.querySelector<HTMLElement>("li");
-  return first ? first.offsetWidth + GAP : Math.round(el.clientWidth * 0.8);
+  if (!first) return Math.round(el.clientWidth * 0.8);
+  // Derive the real gap from the rendered list (`gap-*`) instead of hardcoding,
+  // so the step stays correct whatever spacing the caller uses. Fallback: 16px.
+  const gap = parseFloat(getComputedStyle(el).columnGap) || 16;
+  return first.offsetWidth + gap;
 }
 
 /**
@@ -145,7 +148,13 @@ export function CardSlider({
 
   return (
     <div className="relative">
-      <ul ref={ref} className={className}>
+      <ul
+        ref={ref}
+        tabIndex={0}
+        role="group"
+        aria-label="Carrusel"
+        className={className}
+      >
         {children}
       </ul>
       <motion.button
@@ -157,7 +166,7 @@ export function CardSlider({
         // `y: "-50%"` lives in the motion transform (not a Tailwind class) so it
         // composes with the `whileTap` scale instead of being overwritten by it.
         style={{ y: "-50%" }}
-        className="absolute right-1 top-1/2 flex h-11 w-11 items-center justify-center sm:hidden"
+        className={`absolute right-1 top-1/2 flex h-11 w-11 items-center justify-center rounded-full ${focusRing} sm:hidden`}
       >
         <Image
           src="/images/icon-arrow.svg"

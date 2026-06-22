@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { isEmail } from "@/lib/validation";
+
 /**
  * Careers application BFF — receives a "Lavora con noi" job application.
  *
@@ -22,7 +24,7 @@ const ALLOWED_TYPES = new Set([
   "application/msword",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ]);
-const ALLOWED_EXT = /\.(pdf|docx?|DOCX?)$/i;
+const ALLOWED_EXT = /\.(pdf|docx?)$/i;
 
 const REQUIRED_FIELDS = [
   "first_name",
@@ -75,7 +77,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, error: `missing_${field}` }, { status: 422 });
     }
   }
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test((form.get("email") as string).trim())) {
+  if (!isEmail((form.get("email") as string).trim())) {
     return NextResponse.json({ ok: false, error: "invalid_email" }, { status: 422 });
   }
   if (form.get("gdpr_consent") !== "true") {

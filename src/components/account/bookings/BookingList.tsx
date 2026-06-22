@@ -40,7 +40,7 @@ export function BookingList({
   ];
 
   // Preserve tab + q across pagination links.
-  const paginationBase = `${listBase}?tab=${encodeURIComponent(tab)}&q=${encodeURIComponent(q)}`;
+  const paginationBase = `${listBase}?tab=${encodeURIComponent(tab)}${q ? `&q=${encodeURIComponent(q)}` : ""}`;
 
   return (
     <div className="flex flex-col gap-6">

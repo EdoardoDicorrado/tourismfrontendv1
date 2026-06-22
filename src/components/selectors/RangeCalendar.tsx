@@ -87,7 +87,7 @@ export function RangeCalendar({
   // Range rule: first pick (or a pick before the current start, or after a
   // complete range) starts a fresh range; the next pick on/after start closes it.
   const pick = (iso: string) => {
-    if (!start || (start && end) || iso < start) {
+    if (!start || end || iso < start) {
       onChange(iso, null);
     } else {
       onChange(start, iso);
@@ -95,7 +95,7 @@ export function RangeCalendar({
   };
 
   return (
-    <div className="flex max-h-[90vh] flex-col rounded-t-[20px] bg-white shadow-2xl">
+    <div className="flex max-h-[90vh] flex-col rounded-t-[20px] bg-white">
       {/* Header — same chrome as the filters sheet: grabber handle + soft round
           close (so the two listing sheets share one top treatment). */}
       <div className="shrink-0 border-b border-soft-grey px-4 pb-3 pt-3">

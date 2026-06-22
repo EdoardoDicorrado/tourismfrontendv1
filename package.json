@@ -7,9 +7,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "ds:check": "node scripts/ds-guard.mjs"
+    "typecheck": "tsc --noEmit",
+    "ds:check": "node scripts/ds-guard.mjs",
+    "ds:check:update-baseline": "node scripts/ds-guard.mjs --update-baseline",
+    "test": "node scripts/check-ordering.mjs && node scripts/ds-guard.test.mjs"
   },
   "dependencies": {
+    "flag-icons": "^7.5.0",
     "framer-motion": "^12.40.0",
     "next": "16.2.7",
     "react": "19.2.4",

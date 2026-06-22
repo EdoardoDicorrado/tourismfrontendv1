@@ -11,9 +11,9 @@ import type { Dictionary } from "@/lib/i18n/dictionaries";
 export function AboutHero({ dict }: { dict: Dictionary }) {
   const t = dict.about.hero;
   return (
-    <section className="relative isolate flex min-h-[340px] items-end overflow-hidden border-b border-soft-grey sm:min-h-[420px]">
+    <section className="relative isolate flex min-h-[415px] flex-col justify-end overflow-hidden border-b border-soft-grey">
       <Image
-        src="/images/hero-colosseo.png"
+        src="/images/about-hero.png"
         alt=""
         fill
         priority
@@ -22,15 +22,15 @@ export function AboutHero({ dict }: { dict: Dictionary }) {
       />
       <div
         aria-hidden
-        className="absolute inset-0 -z-10 bg-gradient-to-t from-black/65 via-black/30 to-transparent"
+        className="absolute inset-0 -z-10 bg-gradient-to-t from-[rgba(0,0,0,0.4)] from-[39.289%] to-transparent to-[52.386%]"
       />
 
-      <Container className="py-10 sm:py-14">
-        <div className="flex max-w-[640px] flex-col gap-5">
-          <h1 className="text-3xl font-bold leading-tight text-white drop-shadow-sm sm:text-4xl lg:text-5xl">
+      <Container className="py-6">
+        <div className="flex flex-col gap-4">
+          <h1 className="text-[32px] font-bold leading-[normal] break-words text-white">
             {t.title}
           </h1>
-          <div className="flex items-center gap-4" aria-label={t.socialLabel}>
+          <div className="flex items-center gap-3" aria-label={t.socialLabel}>
             {socialLinks.map((s) => (
               <a
                 key={s.label}

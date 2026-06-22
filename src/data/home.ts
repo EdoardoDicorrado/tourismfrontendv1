@@ -72,6 +72,8 @@ export interface Review {
   date: string;
   rating: number;
   text: string;
+  /** Backend display order on the home (lower = first). Omitted in fixtures → curated array order. */
+  position?: number;
 }
 
 export const cities: City[] = [
@@ -320,25 +322,6 @@ export const reviews: Review[] = [
     date: "Febbraio 2026",
     rating: 5,
     text: "Prenotazione semplice e supporto sempre disponibile. Guida gentilissima e competente. Torneremo!",
-  },
-];
-
-export const footerNav = [
-  {
-    title: "Azienda",
-    links: ["Blog", "Chi siamo", "Lavora con noi"],
-  },
-  {
-    title: "Destinazioni",
-    links: ["Roma", "Firenze", "Torino", "Milano", "Venezia", "Tutte le destinazioni"],
-  },
-  {
-    title: "Collabora con noi",
-    links: ["Agenzie di viaggio", "Affiliati", "Integrazioni e API"],
-  },
-  {
-    title: "Termini e condizioni",
-    links: ["Cookie Policy", "Reso e recessi"],
   },
 ];
 

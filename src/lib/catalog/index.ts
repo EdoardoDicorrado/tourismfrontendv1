@@ -3,10 +3,13 @@ import "server-only";
 import {
   destinations as mockDestinations,
   getOffers,
+  reviews as mockReviews,
   type Destination,
   type Product,
+  type Review,
 } from "@/data/home";
 import { availabilityForSlug } from "@/data/availability";
+import { partners as mockPartners, type Partner } from "@/data/partners";
 import { discountBadge, oldPriceFor, promoForSlug, urgencyLabel } from "@/data/promo";
 import { attractions as mockAttractions, listingProducts, type Attraction } from "@/data/listing";
 import { getProduct, type ProductDetail } from "@/data/product";
@@ -17,6 +20,7 @@ import {
   adaptProduct,
   adaptProductDetail,
 } from "@/lib/catalog/adapters";
+import { byPosition } from "@/lib/catalog/ordering";
 import type { Locale } from "@/lib/i18n/config";
 
 /**
@@ -26,11 +30,15 @@ import type { Locale } from "@/lib/i18n/config";
  * never regresses. See `@/lib/api/storefront` and [[storefront-api-da-definire]].
  */
 
-/** Home "Destinazioni più popolari" cards (max 3, matching the 3-up design). */
+/**
+ * Home "Destinazioni più popolari" cards + search "suggerimenti" (max 3,
+ * matching the 3-up design). The CRM owns the display order via each card's
+ * `position` (lower = first); we sort by it before slicing.
+ */
 export async function getHomeDestinations(lang: Locale): Promise<Destination[]> {
   const api = await fetchDestinations(lang);
   if (!api || api.length === 0) return mockDestinations;
-  return api.slice(0, 3).map(adaptDestination);
+  return byPosition(api).slice(0, 3).map(adaptDestination);
 }
 
 /**
@@ -48,7 +56,11 @@ export async function getHomeOffers(lang: Locale): Promise<Product[]> {
     await Promise.all(
       cities.map(async (citta) => {
         const detail = await fetchDestination(citta, lang);
-        return detail?.products.map((p) => adaptProduct(p, citta)) ?? [];
+        // Order within each city is backend-owned (`position`, lower = first);
+        // sort before adapting so the "Tour in offerta" grid honours the CRM
+        // ordering. A dedicated offers endpoint, when it lands, returns the
+        // chosen order directly — this `byPosition` then becomes a no-op.
+        return byPosition(detail?.products ?? []).map((p) => adaptProduct(p, citta));
       }),
     )
   ).flat();
@@ -95,9 +107,40 @@ export async function getProductDetail(
   return getProduct(citta, slug) ?? null;
 }
 
-/** Listing "Attrazioni più popolari" cards (max 4, matching the 4-up design). */
+/**
+ * "Attrazioni più popolari" cards for the search popup + listing (max 4,
+ * matching the 4-up design). SELECTION is backend-owned: the CRM flags which
+ * monuments belong in the carousel (`in_carousel`); ORDER is backend-owned via
+ * `position` (lower = first). We fall back to the full set when nothing is
+ * flagged so the section never empties.
+ */
 export async function getListingAttractions(lang: Locale): Promise<Attraction[]> {
   const api = await fetchMonuments(lang);
   if (!api || api.length === 0) return mockAttractions;
-  return api.slice(0, 4).map(adaptAttraction);
+  const carousel = api.filter((m) => m.in_carousel);
+  const ordered = byPosition(carousel.length > 0 ? carousel : api);
+  return ordered.slice(0, 4).map(adaptAttraction);
+}
+
+/**
+ * Home "Siamo partner di:" logos. No partners feed yet → curated fixtures
+ * ([[partners]] in `@/data/partners`). When the storefront exposes institutional
+ * partners (monuments with `is_institutional_partner` + `logo_url`, or a
+ * dedicated `/partners` endpoint), fetch + adapt here; the `Partners` component
+ * reads this via props and won't change. SELECTION = the returned set; ORDER is
+ * backend-owned via `position` (lower = first).
+ */
+export async function getHomePartners(): Promise<Partner[]> {
+  return byPosition(mockPartners);
+}
+
+/**
+ * Home "Cosa pensano i nostri viaggiatori" — the curated few traveler reviews
+ * shown on the homepage. No reviews endpoint yet → fixtures. When it lands,
+ * fetch the FEATURED home set and return the same shape; the `Reviews` component
+ * reads this via props and won't change. SELECTION = the featured set; ORDER is
+ * backend-owned via `position` (lower = first).
+ */
+export async function getHomeReviews(): Promise<Review[]> {
+  return byPosition(mockReviews);
 }

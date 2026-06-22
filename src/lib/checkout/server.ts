@@ -193,6 +193,24 @@ export async function quotePromo({
   items: unknown[];
   locale?: Locale;
 }): Promise<PromoQuoteResult> {
+  // DEMO: a fake "test" code (−10% off the cart) so the discount UI can be previewed
+  // end-to-end before the real promo endpoint is live. Real codes still degrade to
+  // "unavailable" below. Remove once promos are wired (deposited to full-stack).
+  if (code.trim().toLowerCase() === "test") {
+    const cartTotal = items.reduce<number>((sum, raw) => {
+      const t = Number((raw as { total?: unknown })?.total);
+      return sum + (Number.isFinite(t) ? t : 0);
+    }, 0);
+    const discount = cartTotal > 0 ? Math.round(cartTotal * 10) / 100 : 10;
+    const label =
+      locale === "es"
+        ? "Descuento test −10%"
+        : locale === "en"
+          ? "Test discount −10%"
+          : "Sconto test −10%";
+    return { applied: true, quote: { code: "TEST", discount, label } };
+  }
+
   try {
     const raw = await backendFetch<RawPromoQuote>({
       path: withBrand(PROMO_PATH),
@@ -370,5 +388,103 @@ export async function checkRedsysStatus({
     // Keep polling on transient/unknown failures — only the backend confirms/fails.
     void err;
     return { ok: true, status: "pending" };
+  }
+}
+
+// --- Email verification (OTP) + "how did you find us" referral -------------------
+// The storefront customer-auth/feedback endpoints are not defined yet (CLAUDE.md).
+// Gated by `CHECKOUT_AUTH_LIVE`: off (default) → preview (no backend traffic, the
+// flow proceeds so the checkout is testable end-to-end); on → proxy to the backend.
+// When the endpoints land, flip the env and fill the paths — the routes/UI shapes
+// below do not change.
+const VERIFY_SEND_PATH = "/api/storefront/v1/checkout/verify/send";
+const VERIFY_CHECK_PATH = "/api/storefront/v1/checkout/verify/check";
+const REFERRAL_PATH = "/api/storefront/v1/checkout/referral";
+
+function storefrontAuthLive(): boolean {
+  return process.env.CHECKOUT_AUTH_LIVE === "true";
+}
+
+/** Email the lead booker a one-time code. Preview: pretend it was sent. */
+export async function sendVerificationCode({
+  email,
+  locale,
+}: {
+  email: string;
+  locale?: Locale;
+}): Promise<{ sent: boolean }> {
+  if (!storefrontAuthLive()) {
+    void [VERIFY_SEND_PATH, email];
+    return { sent: true };
+  }
+  try {
+    await backendFetch<unknown>({ path: withBrand(VERIFY_SEND_PATH), method: "POST", body: { email }, locale });
+    return { sent: true };
+  } catch (err) {
+    console.warn("[checkout] verify/send unavailable:", err instanceof Error ? err.message : err);
+    return { sent: false };
+  }
+}
+
+export type VerifyResult =
+  | { verified: true }
+  | { verified: false; reason: "invalid" | "expired" | "unavailable" };
+
+/** Verify the emailed OTP. Preview: accept any non-empty code so the flow advances. */
+export async function checkVerificationCode({
+  email,
+  code,
+  locale,
+}: {
+  email: string;
+  code: string;
+  locale?: Locale;
+}): Promise<VerifyResult> {
+  if (!storefrontAuthLive()) {
+    void [VERIFY_CHECK_PATH, email];
+    return code.trim() ? { verified: true } : { verified: false, reason: "invalid" };
+  }
+  try {
+    const raw = await backendFetch<{ verified?: boolean; reason?: string }>({
+      path: withBrand(VERIFY_CHECK_PATH),
+      method: "POST",
+      body: { email, code },
+      locale,
+    });
+    if (raw.verified) return { verified: true };
+    return { verified: false, reason: raw.reason === "expired" ? "expired" : "invalid" };
+  } catch (err) {
+    const status = err instanceof BackendError ? err.status : 0;
+    return { verified: false, reason: status === 422 ? "invalid" : "unavailable" };
+  }
+}
+
+/** Record the post-order "how did you find us" answer. Preview: accept and drop. */
+export async function submitReferral({
+  reference,
+  referral,
+  email,
+  locale,
+}: {
+  reference?: string;
+  referral: string;
+  email?: string;
+  locale?: Locale;
+}): Promise<{ ok: boolean }> {
+  if (!storefrontAuthLive()) {
+    void [REFERRAL_PATH, reference, email];
+    return { ok: true };
+  }
+  try {
+    await backendFetch<unknown>({
+      path: withBrand(REFERRAL_PATH),
+      method: "POST",
+      body: { reference, referral, email },
+      locale,
+    });
+    return { ok: true };
+  } catch (err) {
+    console.warn("[checkout] referral unavailable:", err instanceof Error ? err.message : err);
+    return { ok: false };
   }
 }

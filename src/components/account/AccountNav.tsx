@@ -22,6 +22,7 @@ import { LogoutButton } from "./LogoutButton";
 export type AccountNavKey =
   | "bookings"
   | "discountCodes"
+  | "settings"
   | "profile"
   | "payment"
   | "password";
@@ -45,6 +46,11 @@ function buildGroups(session: Session, lang: Locale, nav: Dictionary["account"][
       {
         links: [
           { key: "discountCodes", label: nav.discountCodes, href: `/${lang}/agenzie/codici-sconto` },
+        ],
+      },
+      {
+        links: [
+          { key: "settings", label: nav.settings, href: `/${lang}/agenzie/impostazioni` },
         ],
       },
       {

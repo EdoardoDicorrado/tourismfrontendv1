@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { AccountLayout } from "@/components/account/AccountLayout";
 import { BookingDetail } from "@/components/account/bookings/BookingDetail";
-import { getBooking } from "@/lib/account/client";
+import { getAgencyBookingMock } from "@/lib/account/mockBookings";
 import { requireRole } from "@/lib/account/session";
 import { fill, isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
@@ -41,7 +41,8 @@ export default async function AgencyBookingDetailPage({
   if ("redirectTo" in guard) redirect(guard.redirectTo);
   const session = guard.session;
 
-  const booking = await getBooking(id, session.token);
+  // PREVIEW: fake agency booking (the storefront API isn't wired yet — see CLAUDE.md).
+  const booking = getAgencyBookingMock(id);
   if (!booking) notFound();
 
   return (

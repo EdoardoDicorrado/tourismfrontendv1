@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getPaymentInfo, updatePaymentInfo } from "@/lib/account/client";
 import { getSession } from "@/lib/account/session";
 import type { PaymentInfoPatch } from "@/lib/account/types";
+import { isEmail } from "@/lib/validation";
 
 /**
  * Agency payment BFF — read / update the agency's billing + payout details
@@ -99,7 +100,7 @@ export async function PATCH(request: NextRequest) {
   if (
     paypalEmail !== undefined &&
     paypalEmail !== "" &&
-    !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(paypalEmail)
+    !isEmail(paypalEmail)
   ) {
     return NextResponse.json({ ok: false, error: "invalid_email" }, { status: 422 });
   }

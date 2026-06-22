@@ -1,0 +1,46 @@
+name: CI
+
+# Quality gates for the TourisMotion storefront. Runs on every push and PR.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # --- Hard gates: a failure here fails the build ---
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      # --- Design System guard (scripts/ds-guard.mjs, owned by design-system) ---
+      # HARD gate via a checked-in BASELINE: the pre-existing backlog is
+      # grandfathered in scripts/ds-guard.baseline.json, so this fails the build
+      # only on NEW divergences (hardcoded hex, arbitrary radius/spacing/shadow/z,
+      # inline color, legacy hover). Migrate the backlog over time, then shrink the
+      # baseline with `pnpm ds:check:update-baseline` (intended to only ever shrink).
+      - name: Design System check
+        run: pnpm ds:check
+
+      - name: Test (lib smokes)
+        run: pnpm test

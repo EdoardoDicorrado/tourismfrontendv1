@@ -25,7 +25,7 @@ export function Faq({ dict }: { dict: Dictionary }) {
       <Container>
         <h2 className="text-2xl font-bold text-ink sm:text-3xl">{dict.faq.title}</h2>
 
-        <div className="mx-auto mt-6 max-w-[860px] divide-y divide-soft-grey border-y border-soft-grey">
+        <div className="mx-auto mt-6 max-w-[860px] divide-y divide-cta border-b border-cta">
           {faqs.map((f, i) => {
             const isOpen = open === i;
             const panelId = `${baseId}-${i}`;

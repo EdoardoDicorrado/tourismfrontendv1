@@ -175,10 +175,14 @@ export function SearchOverlay({
             className="w-full bg-transparent text-base text-ink outline-none placeholder:text-stroke"
           />
         </motion.form>
-        <button
+        <motion.button
           type="button"
           onClick={onClose}
           aria-label={dict.search.close}
+          // In chiusura l'overlay resta montato ~0.7s per il morph-back della pill
+          // (layoutId condiviso). Senza exit il close button resterebbe l'unico
+          // residuo visibile: lo facciamo sparire ISTANTANEAMENTE come backdrop/lista.
+          exit={{ opacity: 0, transition: { duration: 0 } }}
           className="shrink-0 text-cta transition-opacity hover:opacity-70"
         >
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -190,7 +194,7 @@ export function SearchOverlay({
               strokeLinecap="round"
             />
           </svg>
-        </button>
+        </motion.button>
       </div>
 
       {/* Results / suggestions */}

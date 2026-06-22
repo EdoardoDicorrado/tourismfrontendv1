@@ -1,29 +1,63 @@
+import { Disclosure } from "@/components/ui/Disclosure";
 import type { IncludedList as IncludedListData } from "@/data/product";
 
-/** "Cosa è incluso / non è incluso" checklist. Figma 64:10481 / 64:10517. */
+/**
+ * "Cosa è incluso / Cosa non è incluso" — ONE accordion section (Figma 64:10481):
+ * the heading (20px) + chevron, then the included list (green ✓) and, 16px below,
+ * the "Cosa non è incluso" sub-heading (16px extrabold, no own chevron) + excluded
+ * list (red ✗). A single cta (#007CA2) separator under the whole block.
+ * `divided={false}` + own `border-b border-cta` so we colour the line without
+ * touching the `Disclosure` primitive. Internal spacing = 16px (Figma gap-[16px]).
+ */
 export function IncludedList({
-  data,
   included,
-  title,
+  notIncluded,
+  includedTitle,
+  notIncludedTitle,
 }: {
-  data: IncludedListData;
-  included: boolean;
-  title: string;
+  included: IncludedListData;
+  notIncluded?: IncludedListData;
+  includedTitle: string;
+  notIncludedTitle: string;
 }) {
   return (
-    <section className="flex flex-col gap-3">
-      <h2 className={`font-extrabold text-ink ${included ? "text-xl sm:text-2xl" : "text-base"}`}>
-        {title}
-      </h2>
-      <ul className="flex flex-col gap-1">
-        {data.items.map((item) => (
-          <li key={item} className="flex items-center gap-2 text-sm font-medium leading-6 text-ink">
-            <Mark included={included} />
-            {item}
-          </li>
-        ))}
-      </ul>
-    </section>
+    <Disclosure
+      defaultOpen
+      divided={false}
+      className="border-b border-cta"
+      summary={<h2 className="text-xl font-extrabold text-ink sm:text-2xl">{includedTitle}</h2>}
+    >
+      <div className="flex flex-col gap-4">
+        <ul className="flex flex-col gap-1">
+          {included.items.map((item, i) => (
+            <li
+              key={`inc-${i}-${item}`}
+              className="flex items-center gap-2 text-sm font-medium leading-6 text-ink"
+            >
+              <Mark included />
+              {item}
+            </li>
+          ))}
+        </ul>
+
+        {notIncluded && notIncluded.items.length > 0 && (
+          <>
+            <h3 className="text-base font-extrabold text-ink">{notIncludedTitle}</h3>
+            <ul className="flex flex-col gap-1">
+              {notIncluded.items.map((item, i) => (
+                <li
+                  key={`exc-${i}-${item}`}
+                  className="flex items-center gap-2 text-sm font-medium leading-6 text-ink"
+                >
+                  <Mark included={false} />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </div>
+    </Disclosure>
   );
 }
 

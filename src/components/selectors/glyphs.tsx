@@ -33,9 +33,9 @@ export function CalendarGlyph() {
   );
 }
 
-export function CheckCircle() {
+export function CheckCircle({ size = 20 }: { size?: number } = {}) {
   return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden>
       <circle cx="10" cy="10" r="10" fill="white" />
       <path d="M5.5 10.5l2.8 2.8 6-6.2" stroke="#007ca2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
@@ -92,7 +92,7 @@ export function FieldButton({
       aria-haspopup="dialog"
       aria-expanded={active}
       aria-controls={id}
-      className={`flex w-full items-center justify-center gap-3 rounded-full border bg-white px-4 py-3.5 text-sm font-semibold text-ink transition-colors ${
+      className={`flex w-full items-center justify-center gap-2.5 rounded-full border bg-white px-4 py-4 text-base font-bold text-ink transition-colors ${
         active ? "border-cta" : "border-stroke hover:border-cta"
       }`}
     >

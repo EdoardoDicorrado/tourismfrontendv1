@@ -1,9 +1,10 @@
 import Image from "next/image";
+import Link from "next/link";
 
 import { CardSlider } from "@/components/ui/CardSlider";
 import { Container } from "@/components/ui/Container";
 import type { Destination } from "@/data/home";
-import { fill } from "@/lib/i18n/config";
+import { fill, type Locale } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
 /**
@@ -15,7 +16,15 @@ import type { Dictionary } from "@/lib/i18n/dictionaries";
  * badge inset 16px; "16 + Esperienze" (SemiBold 12px CTA), the city name
  * (ExtraBold 24px), rating (ExtraBold 20px + 26px star) and a Medium 14px blurb.
  */
-export function Destinations({ dict, destinations }: { dict: Dictionary; destinations: Destination[] }) {
+export function Destinations({
+  lang,
+  dict,
+  destinations,
+}: {
+  lang: Locale;
+  dict: Dictionary;
+  destinations: Destination[];
+}) {
   return (
     <section className="py-3 sm:py-12">
       <Container>
@@ -27,7 +36,12 @@ export function Destinations({ dict, destinations }: { dict: Dictionary; destina
         >
           {destinations.map((d) => (
             <li key={d.slug} className="w-[267px] shrink-0 snap-start sm:w-auto">
-              <article className="flex h-full flex-col overflow-clip rounded-[10px] border border-soft bg-white">
+              <Link
+                href={`/${lang}/attivita/${d.slug}`}
+                aria-label={d.name}
+                className="group block h-full"
+              >
+                <article className="flex h-full flex-col overflow-clip rounded-[10px] border border-soft bg-white transition-colors group-hover:border-cta">
                 <div className="relative aspect-[267/214] w-full">
                   <Image
                     src={d.image}
@@ -61,7 +75,8 @@ export function Destinations({ dict, destinations }: { dict: Dictionary; destina
                   </div>
                   <p className="line-clamp-2 text-sm font-medium text-ink">{d.description}</p>
                 </div>
-              </article>
+                </article>
+              </Link>
             </li>
           ))}
         </CardSlider>

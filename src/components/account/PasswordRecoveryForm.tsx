@@ -120,7 +120,7 @@ function ForgotMode({
         {dict.submit}
       </SubmitButton>
       <Link
-        href={`/${lang}/agenzie/accedi`}
+        href={backToLoginHref}
         className="text-center text-sm font-bold text-cta hover:underline"
       >
         {dict.backToLogin}

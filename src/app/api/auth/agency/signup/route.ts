@@ -4,6 +4,7 @@ import { agencySignup } from "@/lib/account/client";
 import { BackendError } from "@/lib/api/client";
 import type { AgencySignupPayload } from "@/lib/account/types";
 import { isLocale, type Locale } from "@/lib/i18n/config";
+import { isEmail, isNonEmptyString } from "@/lib/validation";
 
 /**
  * Agency signup BFF (`POST /api/auth/agency/signup`).
@@ -22,12 +23,6 @@ import { isLocale, type Locale } from "@/lib/i18n/config";
  */
 
 export const dynamic = "force-dynamic";
-
-const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
-
-function isNonEmptyString(value: unknown): value is string {
-  return typeof value === "string" && value.trim().length > 0;
-}
 
 function nullableString(value: unknown): string | null {
   return isNonEmptyString(value) ? value : null;
@@ -80,7 +75,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, error: `missing_${field}` }, { status: 422 });
     }
   }
-  if (!EMAIL_RE.test(user.email as string)) {
+  if (!isEmail(user.email as string)) {
     return NextResponse.json({ ok: false, error: "invalid_email" }, { status: 422 });
   }
   if (user.email !== user.email_confirm) {

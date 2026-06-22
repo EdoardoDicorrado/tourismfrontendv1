@@ -17,6 +17,14 @@ export function cx(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(" ");
 }
 
+/**
+ * Canonical focus-visible ring — the single source for the DS focus indicator.
+ * Consumed by `buttonVariants()` here and re-used by IconButton so the keyboard
+ * focus treatment never drifts between the two button primitives.
+ */
+export const focusRing =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta focus-visible:ring-offset-2";
+
 export type ButtonVariant = "primary" | "outline" | "ghost" | "destructive";
 export type ButtonSize = "sm" | "md" | "lg";
 
@@ -45,11 +53,11 @@ export function buttonVariants({
 } = {}) {
   const base =
     "inline-flex items-center justify-center text-center font-extrabold transition-colors " +
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta focus-visible:ring-offset-2 " +
-    "disabled:pointer-events-none disabled:opacity-50";
+    focusRing +
+    " disabled:pointer-events-none disabled:opacity-50";
 
   const sizes: Record<ButtonSize, string> = {
-    sm: "px-4 py-2 text-sm",
+    sm: "px-4 py-2 text-sm min-h-11",
     md: "px-6 py-3 text-base",
     lg: "px-7 py-3.5 text-base",
   };

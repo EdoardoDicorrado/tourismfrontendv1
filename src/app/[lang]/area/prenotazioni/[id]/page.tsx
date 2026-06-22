@@ -4,7 +4,8 @@ import { notFound, redirect } from "next/navigation";
 import { AccountLayout } from "@/components/account/AccountLayout";
 import { BookingDetail } from "@/components/account/bookings/BookingDetail";
 import { getBooking } from "@/lib/account/client";
-import { requireRole } from "@/lib/account/session";
+import { getCustomerBookingMock } from "@/lib/account/mockBookings";
+import { PREVIEW_CUSTOMER_TOKEN, requireRole } from "@/lib/account/session";
 import { fill, isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 
@@ -42,7 +43,11 @@ export default async function CustomerBookingDetailPage({
   // `requireRole("customer")` guarantees the customer role; narrow the union.
   if (session.role !== "customer") notFound();
 
-  const booking = await getBooking(id, session.token);
+  // PREVIEW: the demo session (sentinel token) resolves from mock fixtures.
+  const booking =
+    session.token === PREVIEW_CUSTOMER_TOKEN
+      ? getCustomerBookingMock(id)
+      : await getBooking(id, session.token);
   if (!booking) notFound();
 
   return (

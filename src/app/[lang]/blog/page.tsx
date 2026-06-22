@@ -6,10 +6,10 @@ import { BlogCategories } from "@/components/blog/BlogCategories";
 import { BlogHero } from "@/components/blog/BlogHero";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
-import { ButtonLink } from "@/components/ui/Button";
+import { CardSlider } from "@/components/ui/CardSlider";
 import { Container } from "@/components/ui/Container";
 import { getArticles, getCategories, getFeaturedArticle } from "@/data/blog";
-import { fill, isLocale } from "@/lib/i18n/config";
+import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 
 type Params = { lang: string };
@@ -39,40 +39,47 @@ export default async function BlogPage({ params }: { params: Promise<Params> }) 
   const articles = getArticles(lang);
   const featured = getFeaturedArticle(lang);
   const latest = articles.filter((a) => a.slug !== featured.slug).slice(0, 4);
+  // Hero slider: l'articolo in evidenza + gli ultimi, che ruotano nello slider.
+  const heroArticles = [featured, ...latest];
   const labelFor = (id: string) => categories.find((c) => c.id === id)?.label ?? id;
 
   return (
     <>
       <Header lang={lang} dict={dict} />
       <main className="flex-1">
-        <BlogHero lang={lang} dict={dict} />
+        <BlogHero lang={lang} dict={dict} articles={heroArticles} />
 
-        <section className="py-12 sm:py-16">
+        <section className="pt-8 pb-6">
           <Container>
             <h2 className="text-2xl font-extrabold text-ink sm:text-3xl">{dict.blog.latest}</h2>
-            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {/* Slider orizzontale come le altre pagine (Offers/RelatedActivities): ultimi
+                4 articoli, altezze UGUALI (li stretch + ArticleCard h-full), full-bleed mobile. */}
+            <CardSlider
+              label={dict.common.nextCard}
+              className="no-scrollbar -mx-4 mt-5 flex snap-x snap-mandatory items-stretch gap-4 overflow-x-auto scroll-px-4 px-4 pb-1 sm:mx-0 sm:px-0"
+            >
               {latest.map((a) => (
-                <ArticleCard
-                  key={a.slug}
-                  lang={lang}
-                  article={a}
-                  categoryLabel={labelFor(a.categoryId)}
-                  dict={dict.blog}
-                />
+                <li key={a.slug} className="w-[267px] shrink-0 snap-start">
+                  <ArticleCard
+                    lang={lang}
+                    article={a}
+                    categoryLabel={labelFor(a.categoryId)}
+                    dict={dict.blog}
+                  />
+                </li>
               ))}
-            </div>
+            </CardSlider>
           </Container>
         </section>
 
-        <BlogCategories lang={lang} dict={dict.blog} categories={categories} articles={articles} />
-
-        <section className="pb-14">
-          <Container className="flex justify-center">
-            <ButtonLink href={`/${lang}/attivita/${featured.bookCitySlug}`} size="lg">
-              {fill(dict.blog.book, { city: featured.bookCity })}
-            </ButtonLink>
-          </Container>
-        </section>
+        <BlogCategories
+          lang={lang}
+          dict={dict.blog}
+          categories={categories}
+          articles={articles}
+          bookCity={featured.bookCity}
+          bookCitySlug={featured.bookCitySlug}
+        />
       </main>
       <Footer lang={lang} dict={dict} />
     </>

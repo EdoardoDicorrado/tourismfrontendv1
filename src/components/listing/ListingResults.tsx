@@ -14,8 +14,8 @@ import type { Dictionary } from "@/lib/i18n/dictionaries";
  * OR English"), groups are AND'd across each other, and any selected tag that is
  * not part of a group (the quick chips like "skip-line") is its own AND constraint.
  */
-function matchesFilters(tags: string[], selected: string[]): boolean {
-  if (selected.length === 0) return true;
+/** Group the selected tags by advanced-filter group once per query (not per product). */
+function groupSelected(selected: string[]): Map<string, string[]> {
   const byGroup = new Map<string, string[]>();
   for (const id of selected) {
     const key = tagToGroup[id] ?? `solo:${id}`;
@@ -23,6 +23,10 @@ function matchesFilters(tags: string[], selected: string[]): boolean {
     if (arr) arr.push(id);
     else byGroup.set(key, [id]);
   }
+  return byGroup;
+}
+
+function matchesFilters(tags: string[], byGroup: Map<string, string[]>): boolean {
   for (const ids of byGroup.values()) {
     if (!ids.some((id) => tags.includes(id))) return false;
   }
@@ -51,9 +55,9 @@ function matchesDates(product: Product, range: DateRange): boolean {
 export function ListingResults({ lang, dict, products }: { lang: Locale; dict: Dictionary; products: Product[] }) {
   const { active, toggle, clear, range } = useListingFilters();
 
-  const selected = [...active];
+  const byGroup = groupSelected([...active]);
   const results = products.filter(
-    (p) => matchesFilters(p.tags ?? [], selected) && matchesDates(p, range),
+    (p) => matchesFilters(p.tags ?? [], byGroup) && matchesDates(p, range),
   );
 
   return (

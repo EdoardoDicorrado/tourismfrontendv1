@@ -15,7 +15,7 @@ export function Textarea({ invalid, className, ...props }: TextareaProps) {
   return (
     <textarea
       aria-invalid={invalid || undefined}
-      className={cx(inputClass, "min-h-24 resize-y", invalid && "border-badge", className)}
+      className={cx(inputClass, "min-h-24 resize-y", invalid ? "border-badge" : "border-stroke", className)}
       {...props}
     />
   );

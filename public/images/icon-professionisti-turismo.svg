@@ -1,0 +1,12 @@
+<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 42 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Group">
+<path id="Path" d="M24.5 7H31.5C34.3995 7 36.75 9.35051 36.75 12.25V19.25" stroke="var(--stroke-0, #36515C)" stroke-width="2.625" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Path_2" d="M14 28H10.5C7.60051 28 5.25 25.6495 5.25 22.75V19.25" stroke="var(--stroke-0, #36515C)" stroke-width="2.625" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Path_3" fill-rule="evenodd" clip-rule="evenodd" d="M24.4999 27.9996L23.4754 26.975C23.0112 26.5108 22.3816 26.25 21.7252 26.25C21.0687 26.25 20.4392 26.5108 19.975 26.975V26.975C19.1408 27.8092 19.0113 29.1163 19.6656 30.0979L23.0606 35.1913C23.7098 36.1651 24.8027 36.75 25.9731 36.75H32.6162C34.3814 36.75 35.8703 35.4355 36.0892 33.684L36.7226 28.6145C36.9559 26.7469 35.6705 25.0292 33.8129 24.7263L29.7499 24.0637V20.125C29.7499 18.6753 28.5747 17.5 27.1249 17.5V17.5C25.6752 17.5 24.4999 18.6753 24.4999 20.125V27.9996Z" stroke="var(--stroke-0, #36515C)" stroke-width="2.625" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Path_4" d="M7 9.625C7 12.4924 10.129 15.5554 11.914 17.0701C12.6189 17.6433 13.6293 17.6433 14.3343 17.0701C16.121 15.5554 19.25 12.4924 19.25 9.625" stroke="var(--stroke-0, #36515C)" stroke-width="2.625" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Path_5" d="M13.1253 9.5375C13.1736 9.53769 13.2126 9.57694 13.2125 9.62522C13.2124 9.6735 13.1732 9.71256 13.1249 9.7125C13.0766 9.71244 13.0375 9.67328 13.0375 9.625C13.0374 9.6017 13.0466 9.57932 13.0631 9.56288C13.0796 9.54643 13.102 9.53729 13.1253 9.5375" stroke="var(--stroke-0, #36515C)" stroke-width="2.625" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Path_6" d="M7 9.625V9.625C7 6.24226 9.74226 3.5 13.125 3.5V3.5C16.5077 3.5 19.25 6.24226 19.25 9.625V9.625" stroke="var(--stroke-0, #36515C)" stroke-width="2.625" stroke-linecap="round" stroke-linejoin="round"/>
+<g id="Path_7">
+</g>
+</g>
+</svg>

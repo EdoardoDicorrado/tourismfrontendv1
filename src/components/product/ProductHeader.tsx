@@ -4,13 +4,24 @@ import type { ProductDetail } from "@/data/product";
 import { fill, type Locale } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
-const avatars = [
-  "/images/avatar-review-1.png",
-  "/images/avatar-review-2.png",
-  "/images/avatar-review-3.png",
-];
+/**
+ * ISO language code → circular flag asset (`public/images/flags/*.svg`).
+ * Mirrors the maps in `listing/ListingResultCard` and `home/ProductCard` so the
+ * product header shows the same language flags as the cards. `en` → UK flag.
+ */
+const LANG_FLAG: Record<string, string> = {
+  en: "/images/flags/gb.svg",
+  it: "/images/flags/it.svg",
+  es: "/images/flags/es.svg",
+  fr: "/images/flags/fr.svg",
+  de: "/images/flags/de.svg",
+  pt: "/images/flags/pt.svg",
+  ru: "/images/flags/ru.svg",
+};
 
-/** Product title block — tour count, title, rating and short description. Figma 64:9690. */
+const MAX_FLAGS = 3;
+
+/** Product title block — tour count, language flags, title, rating and short description. Figma 64:9690. */
 export function ProductHeader({
   product,
   lang,
@@ -25,27 +36,58 @@ export function ProductHeader({
   // real approved reviews, so we never present a fake star average.
   const showToursDone = Boolean(product.toursCount);
   const showRating = product.reviews > 0;
+  const languages = product.languages ?? [];
+  const visibleLanguages = languages.slice(0, MAX_FLAGS);
+  const extraLanguages = languages.length - visibleLanguages.length;
 
   return (
     <div className="flex flex-col gap-3">
-      {showToursDone && (
+      {(showToursDone || languages.length > 0) && (
         <div className="flex items-center gap-3">
-          <span className="flex items-center gap-2 text-sm font-medium text-ink">
-            <Image src="/images/icon-walking.svg" alt="" width={22} height={22} />
-            {fill(dict.product.toursDone, { count: product.toursCount })}
-          </span>
-          <div className="flex -space-x-2">
-            {avatars.map((src, i) => (
-              <Image
-                key={i}
-                src={src}
-                alt=""
-                width={20}
-                height={20}
-                className="rounded-full ring-2 ring-white"
-              />
-            ))}
-          </div>
+          {showToursDone && (
+            <span className="flex items-center gap-2 text-sm font-medium text-ink">
+              <Image src="/images/icon-walking-ink.svg" alt="" width={22} height={22} unoptimized />
+              {fill(dict.product.toursDone, { count: product.toursCount })}
+            </span>
+          )}
+          {languages.length > 0 && (
+            <div
+              className={`flex shrink-0 items-center gap-2.5${showToursDone ? " ml-auto" : ""}`}
+              aria-label={languages.join(", ")}
+            >
+              {visibleLanguages.map((code) => {
+                const flag = LANG_FLAG[code];
+                return flag ? (
+                  <Image
+                    key={code}
+                    src={flag}
+                    alt=""
+                    title={code.toUpperCase()}
+                    width={18}
+                    height={18}
+                    className="h-[18px] w-[18px] rounded-full ring-1 ring-black/10"
+                    unoptimized
+                  />
+                ) : (
+                  <span
+                    key={code}
+                    title={code.toUpperCase()}
+                    className="text-xs font-semibold text-ink"
+                  >
+                    {code.toUpperCase()}
+                  </span>
+                );
+              })}
+              {extraLanguages > 0 && (
+                <span
+                  title={languages.slice(MAX_FLAGS).join(", ").toUpperCase()}
+                  className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-soft px-1 text-[10px] font-extrabold leading-none text-ink ring-1 ring-black/10"
+                >
+                  +{extraLanguages}
+                </span>
+              )}
+            </div>
+          )}
         </div>
       )}
 

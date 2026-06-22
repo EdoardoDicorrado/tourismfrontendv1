@@ -4,6 +4,7 @@ import { getSession } from "@/lib/account/session";
 import { createOrder } from "@/lib/checkout/server";
 import type { CreateOrderInput } from "@/lib/checkout/types";
 import { isLocale } from "@/lib/i18n/config";
+import { isEmail, isNonEmptyString } from "@/lib/validation";
 
 /**
  * Checkout BFF — creates an order from the cart.
@@ -20,10 +21,6 @@ import { isLocale } from "@/lib/i18n/config";
  */
 
 export const dynamic = "force-dynamic";
-
-function isNonEmptyString(value: unknown): value is string {
-  return typeof value === "string" && value.trim().length > 0;
-}
 
 export async function POST(request: NextRequest) {
   let body: unknown;
@@ -63,7 +60,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, error: `missing_${field}` }, { status: 400 });
     }
   }
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(customer.email as string)) {
+  if (!isEmail(customer.email as string)) {
     return NextResponse.json({ ok: false, error: "invalid_email" }, { status: 400 });
   }
 

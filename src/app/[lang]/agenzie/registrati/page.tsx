@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { AgencySignupView } from "@/components/account/AgencySignupView";
+import { AgencyApplyWizard } from "@/components/account/AgencyApplyWizard";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { Container } from "@/components/ui/Container";
@@ -22,10 +22,11 @@ export async function generateMetadata({
 }
 
 /**
- * Agency registration (`/[lang]/agenzie/registrati`). Submits to the
- * `/api/auth/agency/signup` BFF and, on success, shows a "pending activation"
- * notice (no session — the account must be activated by staff first). Uses the
- * wider card since the form has two sections.
+ * Agency partnership application (`/[lang]/agenzie/registrati`) — 2-step wizard +
+ * confirmation, Figma "Modulo // Mobile" (447:3087 / 447:3252 / 447:3434). A
+ * lead/candidatura (no account here): an operator follows up after submission.
+ * Supersedes the old 25-field account form — AgencySignupForm/View are kept for
+ * now (see ui-ux-4 task #3) but no longer mounted here.
  */
 export default async function AgencySignupPage({ params }: { params: Promise<Params> }) {
   const { lang } = await params;
@@ -36,16 +37,8 @@ export default async function AgencySignupPage({ params }: { params: Promise<Par
     <>
       <Header lang={lang} dict={dict} />
       <main className="flex-1">
-        <Container className="flex justify-center py-12 sm:py-16">
-          <div className="w-full max-w-[640px] rounded-[15px] border border-soft-grey bg-white p-6 sm:p-8">
-            <h1 className="text-2xl font-extrabold text-ink sm:text-3xl">
-              {dict.account.agencySignup.title}
-            </h1>
-            <p className="mt-1 text-sm text-ink/70">{dict.account.agencySignup.subtitle}</p>
-            <div className="mt-6">
-              <AgencySignupView lang={lang} dict={dict.account.agencySignup} />
-            </div>
-          </div>
+        <Container className="py-8 sm:py-10">
+          <AgencyApplyWizard lang={lang} />
         </Container>
       </main>
       <Footer lang={lang} dict={dict} />

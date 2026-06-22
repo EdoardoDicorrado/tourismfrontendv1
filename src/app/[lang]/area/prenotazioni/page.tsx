@@ -4,7 +4,8 @@ import { notFound, redirect } from "next/navigation";
 import { AccountLayout } from "@/components/account/AccountLayout";
 import { BookingList } from "@/components/account/bookings/BookingList";
 import { getBookings } from "@/lib/account/client";
-import { requireRole } from "@/lib/account/session";
+import { getCustomerBookingsMock } from "@/lib/account/mockBookings";
+import { PREVIEW_CUSTOMER_TOKEN, requireRole } from "@/lib/account/session";
 import type { BookingTab } from "@/lib/account/types";
 import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
@@ -67,7 +68,12 @@ export default async function CustomerBookingsPage({
   const q = first(sp.q).trim();
   const page = parsePage(first(sp.page));
 
-  const result = await getBookings({ token: session.token, tab, q, page });
+  // PREVIEW: the demo session (sentinel token) renders mock bookings until the
+  // customer bookings API lands; a real session hits the seam.
+  const result =
+    session.token === PREVIEW_CUSTOMER_TOKEN
+      ? getCustomerBookingsMock({ tab, q, page })
+      : await getBookings({ token: session.token, tab, q, page });
 
   return (
     <AccountLayout lang={lang} dict={dict} session={session} active="bookings">

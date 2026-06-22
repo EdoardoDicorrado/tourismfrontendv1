@@ -4,10 +4,10 @@ import { notFound } from "next/navigation";
 
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
-import { ReviewsList } from "@/components/reviews/ReviewsList";
+import { ReviewCard, ReviewsList } from "@/components/reviews/ReviewsList";
 import { Container } from "@/components/ui/Container";
 import { reviewsSummary } from "@/data/home";
-import { pageReviews } from "@/data/reviews";
+import { morePlatformReviews, pageReviews } from "@/data/reviews";
 import { fill, isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 
@@ -67,9 +67,24 @@ export default async function ReviewsPage({ params }: { params: Promise<Params> 
           </Container>
         </section>
 
-        <section className="pb-12">
+        <section className="pb-8">
           <Container>
             <ReviewsList lang={lang} dict={dict} reviews={pageReviews} />
+          </Container>
+        </section>
+
+        <section className="pb-12">
+          <Container>
+            <h2 className="text-xl font-extrabold text-ink sm:text-2xl">
+              {dict.reviewsPage.moreTitle}
+            </h2>
+            <ul className="mt-6 flex flex-col gap-4">
+              {morePlatformReviews.map((r) => (
+                <li key={r.id}>
+                  <ReviewCard review={r} lang={lang} />
+                </li>
+              ))}
+            </ul>
           </Container>
         </section>
       </main>

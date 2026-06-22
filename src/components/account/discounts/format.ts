@@ -65,7 +65,7 @@ export function formatDate(iso: string | null | undefined, locale: Locale): stri
  * Discount value → display label. PERCENT → "-20%"; FIXED (and any amount type)
  * → currency-formatted from minor units in the code's own currency. `null` → "—".
  */
-export function discountLabel(
+function discountLabel(
   type: string | null,
   value: number | null,
   currency: string | null,

@@ -1,8 +1,16 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useDragControls, useReducedMotion } from "framer-motion";
+
+import { duration, ease, spring } from "@/lib/motion/tokens";
+import { useFocusTrap } from "@/components/ui/useFocusTrap";
+
+// Mount guard for portals: `false` on the server + first hydration render, `true`
+// after mount — without setting state in an effect (avoids the extra render the
+// `useState`+`useEffect` pattern caused, and the `react-hooks/set-state-in-effect` lint).
+const noopSubscribe = () => () => {};
 
 /**
  * Anchored dropdown popover. Closes on outside-click and Escape.
@@ -29,6 +37,8 @@ export function Popover({
   panelClassName = "",
   animated = false,
   sheet = false,
+  label,
+  labelledBy,
 }: {
   trigger: (state: { open: boolean; toggle: () => void; id: string }) => React.ReactNode;
   children: (state: { close: () => void }) => React.ReactNode;
@@ -37,44 +47,51 @@ export function Popover({
   panelClassName?: string;
   animated?: boolean;
   sheet?: boolean;
+  /** Accessible name for the dialog/sheet panel (sets `aria-label`). */
+  label?: string;
+  /** ID of an element that labels the dialog/sheet panel (sets `aria-labelledby`). */
+  labelledBy?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const id = useId();
   const reduceMotion = useReducedMotion();
+  // Drag-to-dismiss del bottom sheet: il grabber in alto avvia il drag via questi
+  // controls, così la chiusura a trascinamento è affidabile anche quando il corpo
+  // dello sheet è pieno di controlli (steppers, calendario) che mangerebbero il gesto.
+  const dragControls = useDragControls();
   const close = () => setOpen(false);
 
   // Portals need the DOM; only render the sheet after mount (avoids SSR mismatch).
-  useEffect(() => setMounted(true), []);
+  const mounted = useSyncExternalStore(
+    noopSubscribe,
+    () => true,
+    () => false,
+  );
 
+  // The sheet is a modal: scroll-lock + Escape + focus move-in/restore + Tab
+  // trap all come from the shared hook (single source — see useFocusTrap).
+  useFocusTrap(sheet && open, panelRef, close);
+
+  // Anchored dropdown only: close on outside-click + Escape. (The sheet closes
+  // via its backdrop / Esc-from-the-hook; its panel lives in a portal outside
+  // `ref`, so the pointer check would misfire.)
   useEffect(() => {
-    if (!open) return;
+    if (!open || sheet) return;
     function onPointer(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     }
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") setOpen(false);
     }
-    // Sheet closes via its backdrop, not document-wide outside-click (the panel
-    // lives in a portal, outside `ref`, so the pointer check would misfire).
-    if (!sheet) document.addEventListener("mousedown", onPointer);
+    document.addEventListener("mousedown", onPointer);
     document.addEventListener("keydown", onKey);
     return () => {
       document.removeEventListener("mousedown", onPointer);
       document.removeEventListener("keydown", onKey);
     };
   }, [open, sheet]);
-
-  // Lock background scroll while the sheet is open.
-  useEffect(() => {
-    if (!sheet || !open) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [sheet, open]);
 
   if (sheet) {
     return (
@@ -86,35 +103,36 @@ export function Popover({
               {open && (
                 <motion.div
                   key="backdrop"
-                  className="fixed inset-0 z-50 bg-black/40"
+                  className="fixed inset-0 z-[var(--z-overlay)] bg-ink/40"
                   onClick={close}
                   aria-hidden
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  transition={{ duration: reduceMotion ? 0.12 : 0.22, ease: "easeOut" }}
+                  transition={{ duration: reduceMotion ? 0 : duration.fast, ease: ease.entrance }}
                 />
               )}
               {open && (
                 <motion.div
                   key="panel"
+                  ref={panelRef}
                   id={id}
                   role="dialog"
                   aria-modal="true"
-                  className={`fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-[680px] ${panelClassName}`}
+                  aria-label={label}
+                  aria-labelledby={labelledBy}
+                  tabIndex={-1}
+                  className={`fixed inset-x-0 bottom-0 z-[var(--z-sheet)] mx-auto w-full max-w-[680px] rounded-t-sheet bg-white shadow-sheet outline-none ${panelClassName}`}
                   initial={reduceMotion ? { opacity: 0 } : { y: "100%" }}
                   animate={reduceMotion ? { opacity: 1 } : { y: 0 }}
                   exit={reduceMotion ? { opacity: 0 } : { y: "100%" }}
-                  transition={
-                    reduceMotion
-                      ? { duration: 0.12 }
-                      : { type: "spring", stiffness: 320, damping: 34 }
-                  }
-                  // Drag-to-dismiss: si trascina il pannello verso il BASSO per chiudere
-                  // (il grabber in alto lo segnala). Su = bloccato (dragElastic top 0);
-                  // giù = rubber-band. Al rilascio, oltre soglia o flick veloce → close,
-                  // altrimenti spring-back a y:0 (constraints top/bottom = 0).
+                  transition={reduceMotion ? { duration: 0 } : spring}
+                  // Drag-to-dismiss: si trascina verso il BASSO per chiudere. Il drag si
+                  // avvia dal grabber (dragControls, sotto) E dal corpo del pannello. Su =
+                  // bloccato (dragElastic top 0); giù = rubber-band. Al rilascio, oltre
+                  // soglia o flick veloce → close, altrimenti spring-back a y:0.
                   drag="y"
+                  dragControls={dragControls}
                   dragConstraints={{ top: 0, bottom: 0 }}
                   dragElastic={{ top: 0, bottom: 0.5 }}
                   dragMomentum={false}
@@ -122,6 +140,17 @@ export function Popover({
                     if (info.offset.y > 120 || info.velocity.y > 600) close();
                   }}
                 >
+                  {/* Grabber: affordance + handle del drag-to-dismiss. onPointerDown avvia
+                      il drag (touchAction:none cattura il gesto verticale QUI, così trascinare
+                      dal pomello chiude sempre, anche se il corpo è pieno di controlli).
+                      aria-hidden: decorativo — la chiusura accessibile resta Esc/backdrop/×.
+                      Colore/size = token soft-grey; spec visiva fine → design-system. */}
+                  <div
+                    aria-hidden
+                    onPointerDown={(e) => dragControls.start(e)}
+                    style={{ touchAction: "none" }}
+                    className="absolute left-1/2 top-2 z-10 h-1.5 w-10 -translate-x-1/2 cursor-grab rounded-full bg-soft-grey active:cursor-grabbing"
+                  />
                   {children({ close })}
                 </motion.div>
               )}
@@ -135,7 +164,7 @@ export function Popover({
   const pos = align === "stretch" ? "left-0 right-0" : align === "end" ? "right-0" : "left-0";
   // Pop scales out from the corner nearest the trigger.
   const origin = align === "end" ? "top right" : align === "start" ? "top left" : "top center";
-  const panelClass = `absolute z-40 mt-2 ${pos} ${panelClassName}`;
+  const panelClass = `absolute z-[var(--z-dropdown)] mt-2 ${pos} ${panelClassName}`;
 
   return (
     <div ref={ref} className={className}>
@@ -146,6 +175,8 @@ export function Popover({
             <motion.div
               id={id}
               role="dialog"
+              aria-label={label}
+              aria-labelledby={labelledBy}
               className={panelClass}
               style={{ transformOrigin: origin }}
               initial={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.8, y: -6 }}
@@ -153,8 +184,9 @@ export function Popover({
               exit={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.9, y: -4 }}
               transition={
                 reduceMotion
-                  ? { duration: 0.12 }
-                  : { type: "spring", duration: 0.3, bounce: 0.45 }
+                  ? { duration: 0 }
+                  : // pop bouncy one-off: durata dal token, bounce 0.45 = carattere "pop"
+                    { type: "spring", duration: duration.base, bounce: 0.45 }
               }
             >
               {children({ close: () => setOpen(false) })}
@@ -163,7 +195,13 @@ export function Popover({
         </AnimatePresence>
       ) : (
         open && (
-          <div id={id} role="dialog" className={panelClass}>
+          <div
+            id={id}
+            role="dialog"
+            aria-label={label}
+            aria-labelledby={labelledBy}
+            className={panelClass}
+          >
             {children({ close: () => setOpen(false) })}
           </div>
         )

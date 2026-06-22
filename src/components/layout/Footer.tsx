@@ -17,7 +17,7 @@ export function Footer({ lang, dict }: { lang: Locale; dict: Dictionary }) {
   const linkColumns = dict.footer.columns.slice(0, 3); // Azienda, Destinazioni, Collabora con noi
 
   return (
-    <footer className="bg-cta text-white">
+    <footer id="site-footer" className="bg-cta text-white">
       <Container className="flex flex-col gap-6 py-8">
         {/* Language */}
         <div className="flex flex-col gap-3">
@@ -78,6 +78,16 @@ export function Footer({ lang, dict }: { lang: Locale; dict: Dictionary }) {
               </li>
             ))}
           </ul>
+        </div>
+
+        {/* TEMP (Edoardo): scorciatoie di accesso rapido per la demo — RIMUOVERE poi. */}
+        <div className="flex flex-wrap gap-x-6 gap-y-2 border-t border-white/20 pt-4 text-sm font-bold">
+          <Link href={`/${lang}/agenzie/accedi`} className="hover:underline">
+            Login agenzia
+          </Link>
+          <Link href={`/${lang}/affiliati/accedi`} className="hover:underline">
+            Login affiliato
+          </Link>
         </div>
       </Container>
 

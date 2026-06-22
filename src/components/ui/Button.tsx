@@ -11,14 +11,6 @@ import {
   type ButtonVariant,
 } from "@/components/ui/buttonVariants";
 
-// Re-export the pure styling helper + types so existing client imports
-// (`import { buttonVariants } from "@/components/ui/Button"`) keep working.
-// Server Components MUST import these straight from "@/components/ui/buttonVariants"
-// instead — re-exporting through this "use client" module would turn them into
-// client references and break server-side rendering.
-export { buttonVariants, cx };
-export type { ButtonSize, ButtonVariant };
-
 /** Spring used for the press scale — snappy, matches the slider arrow. */
 const pressTransition = { type: "spring" as const, stiffness: 600, damping: 22 };
 
@@ -42,11 +34,13 @@ export function Button({
   pill,
   fullWidth,
   className,
+  type = "button",
   ...props
 }: SharedProps & ComponentProps<typeof motion.button>) {
   const reduce = useReducedMotion();
   return (
     <motion.button
+      type={type}
       whileTap={reduce ? undefined : { scale: 0.96 }}
       transition={pressTransition}
       className={cx(buttonVariants({ variant, size, pill, fullWidth }), className)}
@@ -68,15 +62,22 @@ export function ButtonLink({
   pill,
   fullWidth,
   className,
+  disabled,
   ...props
-}: SharedProps & ComponentProps<typeof MotionLink>) {
+}: SharedProps & { disabled?: boolean } & ComponentProps<typeof MotionLink>) {
   const reduce = useReducedMotion();
   return (
     <MotionLink
-      whileTap={reduce ? undefined : { scale: 0.96 }}
+      whileTap={reduce || disabled ? undefined : { scale: 0.96 }}
       transition={pressTransition}
-      className={cx(buttonVariants({ variant, size, pill, fullWidth }), className)}
+      className={cx(
+        buttonVariants({ variant, size, pill, fullWidth }),
+        disabled && "pointer-events-none opacity-50",
+        className,
+      )}
       {...props}
+      aria-disabled={disabled || undefined}
+      tabIndex={disabled ? -1 : props.tabIndex}
     />
   );
 }

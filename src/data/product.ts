@@ -91,6 +91,13 @@ export interface ProductDetail {
   toursCount: string;
   rating: number;
   reviews: number;
+  /**
+   * ISO language codes the tour is offered in (e.g. ["it","es","en"]) → drives
+   * the circular flags in the header (Figma 64:9690), same assets as the cards.
+   * Optional: live catalog products get this from `adaptProductDetail` (the API
+   * options' languages) — see full-stack task #20.
+   */
+  languages?: string[];
   shortDescription: string;
   gallery: GalleryImage[];
   badge?: string;
@@ -109,6 +116,14 @@ export interface ProductDetail {
   };
   options: BookingOption[];
   description: string;
+  /**
+   * Editorial description split into paragraphs. Live catalog tours ship the
+   * description as HTML (`<p>…</p>`); `adaptProductDetail` flattens it to plain
+   * text for `description` and also exposes the paragraph breakdown here so the
+   * UI can render one `<p>` per entry instead of a single " · "-joined blob.
+   * Optional: when absent (e.g. fixtures) the UI falls back to `description`.
+   */
+  descriptionParagraphs?: string[];
   // Editorial sections are optional: real catalog tours may not carry every
   // block, so the page renders each one only when present.
   thingsToKnow?: string;
@@ -126,6 +141,7 @@ const product: ProductDetail = {
   toursCount: "+10.000",
   rating: 4.7,
   reviews: 8000,
+  languages: ["it", "es", "en"],
   shortDescription:
     "Esperienza stupenda, guida molto preparata. Mio parere personale la migliore in assoluto se vuoi scoprire la Roma antica senza perdere tempo in coda.",
   gallery: [
@@ -176,6 +192,7 @@ const product: ProductDetail = {
     {
       id: "tour-italiano",
       title: "Tour in Italiano: Colosseo, Musei Vaticani e Foro Romano",
+      flag: "/images/flags/it.svg",
       description:
         "Esperienza stupenda, guida molto preparata. Mio parere personale la migliore in assoluto se cerchi un tour completo della Roma imperiale.",
       bullets: ["Visita guidata", "Durata 4 ore", "Lingua italiana"],
@@ -187,7 +204,7 @@ const product: ProductDetail = {
     {
       id: "tour-english",
       title: "Guided Tour in English: Colosseum, Vatican Museums & Roman Forum",
-      flag: "/images/flag-uk.png",
+      flag: "/images/flags/gb.svg",
       description:
         "Esperienza stupenda, guida molto preparata. Mio parere personale la migliore in assoluto se preferisci una guida in lingua inglese.",
       bullets: ["Visita guidata", "Durata 4 ore", "Lingua inglese"],

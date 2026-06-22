@@ -47,13 +47,9 @@ export default async function CustomerLoginPage({ params }: { params: Promise<Pa
     <>
       <Header lang={lang} dict={dict} />
       <main className="flex-1">
-        <Container className="flex justify-center py-12 sm:py-16">
-          <div className="w-full max-w-[420px] rounded-[15px] border border-soft-grey bg-white p-6 sm:p-8">
-            <h1 className="text-2xl font-extrabold text-ink sm:text-3xl">{t.title}</h1>
-            <p className="mt-1 text-sm text-ink/70">{t.subtitle}</p>
-            <div className="mt-6">
-              <CustomerLoginForm lang={lang} dict={t} />
-            </div>
+        <Container className="py-12 sm:py-16">
+          <div className="mx-auto w-full max-w-[400px]">
+            <CustomerLoginForm lang={lang} dict={t} />
           </div>
         </Container>
       </main>

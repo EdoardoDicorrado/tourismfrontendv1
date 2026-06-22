@@ -1,43 +1,49 @@
+"use client";
+
 import Image from "next/image";
 
-import { buttonVariants } from "@/components/ui/buttonVariants";
 import { Container } from "@/components/ui/Container";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
 /**
- * Careers hero — image backdrop, headline and the primary "apply" CTA.
- * Figma node 447:1453 (Lavora con Noi // Mobile › hero). The CTA scrolls to the
- * application intro (`#candidatura`).
+ * Careers hero — pixel-perfect to Figma "Lavora con Noi // Mobile" (447:1453):
+ * a full-bleed photo on top, then the headline + subtitle + the primary
+ * "Candidati ora" CTA (smooth-scrolls to `#posizioni-aperte`).
  */
 export function CareersHero({ dict }: { dict: Dictionary }) {
   const t = dict.careers.hero;
-  return (
-    <section className="relative isolate flex min-h-[360px] items-center overflow-hidden border-b border-soft-grey sm:min-h-[440px]">
-      <Image
-        src="/images/hero-colosseo.png"
-        alt=""
-        fill
-        priority
-        sizes="100vw"
-        className="-z-10 object-cover"
-      />
-      <div
-        aria-hidden
-        className="absolute inset-0 -z-10 bg-gradient-to-r from-black/65 via-black/40 to-black/20"
-      />
 
-      <Container className="py-14 sm:py-20">
-        <div className="flex max-w-[640px] flex-col items-start gap-5">
-          <h1 className="text-3xl font-bold leading-tight text-white drop-shadow-sm sm:text-4xl lg:text-5xl">
-            {t.title}
-          </h1>
-          <p className="max-w-[440px] text-base font-medium text-white/90 sm:text-lg">
-            {t.subtitle}
-          </p>
-          <a href="#candidatura" className={buttonVariants({ size: "lg" })}>
-            {t.cta}
-          </a>
-        </div>
+  // Smooth-scroll to the open-roles section (same pattern as CareersSearch /
+  // StickyBookingBar). Native hash stays as the no-JS / reduced-motion fallback.
+  const scrollToPositions = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    const el = document.getElementById("posizioni-aperte");
+    if (!el) return;
+    e.preventDefault();
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    el.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+  };
+  return (
+    <section className="flex flex-col gap-4 pb-4">
+      <div className="relative h-[178px] w-full overflow-hidden">
+        <Image
+          src="/images/hero-lavora-con-noi.jpg"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover"
+        />
+      </div>
+      <Container className="flex flex-col items-start gap-4">
+        <h1 className="text-[32px] font-bold leading-tight text-ink">{t.title}</h1>
+        <p className="text-sm font-medium text-ink">{t.subtitle}</p>
+        <a
+          href="#posizioni-aperte"
+          onClick={scrollToPositions}
+          className="flex w-full items-center justify-center rounded-card bg-cta py-4 text-base font-extrabold text-white transition-[color,transform] hover:bg-cta-hover active:scale-[0.98] active:bg-cta-active"
+        >
+          {t.cta}
+        </a>
       </Container>
     </section>
   );

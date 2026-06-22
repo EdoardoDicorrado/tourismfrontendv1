@@ -1,9 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { customerLogin } from "@/lib/account/client";
-import { setSession } from "@/lib/account/session";
+import { PREVIEW_CUSTOMER_TOKEN, setSession } from "@/lib/account/session";
 import { BackendError } from "@/lib/api/client";
 import { isLocale, type Locale } from "@/lib/i18n/config";
+import { isNonEmptyString } from "@/lib/validation";
 
 /**
  * Customer login BFF (`POST /api/auth/customer/login`, email + password).
@@ -20,10 +21,6 @@ import { isLocale, type Locale } from "@/lib/i18n/config";
  */
 
 export const dynamic = "force-dynamic";
-
-function isNonEmptyString(value: unknown): value is string {
-  return typeof value === "string" && value.trim().length > 0;
-}
 
 /** Read the backend domain error code out of a BackendError envelope, if present. */
 function backendErrorCode(error: BackendError): string | undefined {
@@ -52,6 +49,22 @@ export async function POST(request: NextRequest) {
   }
   const locale: Locale | undefined =
     typeof data.locale === "string" && isLocale(data.locale) ? data.locale : undefined;
+
+  // PREVIEW (full-stack): demo customer login. `mario.rossi@tourismotion.it` /
+  // `demo1234` (the form's prefill) signs in as a mock customer so the Area
+  // Riservata opens end-to-end before the storefront customer-auth API lands.
+  // Mirrors the agency short-circuit. TODO: remove once /auth/customer/login is real.
+  if (data.email.trim().toLowerCase() === "mario.rossi@tourismotion.it" && data.password === "demo1234") {
+    await setSession({
+      token: PREVIEW_CUSTOMER_TOKEN,
+      token_type: "Bearer",
+      expires_at: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
+      role: "customer",
+      scope: { user_id: "preview-customer" },
+      customer: { first_name: "Mario", last_name: "Rossi", email: data.email },
+    });
+    return NextResponse.json({ ok: true, role: "customer" });
+  }
 
   try {
     const result = await customerLogin(data.email, data.password, locale);

@@ -9,6 +9,8 @@ import type { Dictionary } from "@/lib/i18n/dictionaries";
 
 type SignupError = "emailTaken" | "generic" | null;
 
+const labelClass = "mb-1 block text-sm font-bold text-ink";
+
 /** True when a Laravel-style validation `details` object flags an email field. */
 function isEmailValidation(details: unknown): boolean {
   if (!details || typeof details !== "object") return false;
@@ -96,7 +98,7 @@ export function CustomerSignupForm({
     <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label htmlFor="first_name" className="mb-1 block text-sm font-bold text-ink">
+          <label htmlFor="first_name" className={labelClass}>
             {dict.firstName}
           </label>
           <input
@@ -111,7 +113,7 @@ export function CustomerSignupForm({
           />
         </div>
         <div>
-          <label htmlFor="last_name" className="mb-1 block text-sm font-bold text-ink">
+          <label htmlFor="last_name" className={labelClass}>
             {dict.lastName}
           </label>
           <input
@@ -128,7 +130,7 @@ export function CustomerSignupForm({
       </div>
 
       <div>
-        <label htmlFor="signup-email" className="mb-1 block text-sm font-bold text-ink">
+        <label htmlFor="signup-email" className={labelClass}>
           {dict.email}
         </label>
         <input
@@ -145,7 +147,7 @@ export function CustomerSignupForm({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label htmlFor="signup-password" className="mb-1 block text-sm font-bold text-ink">
+          <label htmlFor="signup-password" className={labelClass}>
             {dict.password}
           </label>
           <input
@@ -160,7 +162,7 @@ export function CustomerSignupForm({
           />
         </div>
         <div>
-          <label htmlFor="signup-password-confirm" className="mb-1 block text-sm font-bold text-ink">
+          <label htmlFor="signup-password-confirm" className={labelClass}>
             {dict.passwordConfirm}
           </label>
           <input

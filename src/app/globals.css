@@ -8,19 +8,31 @@
   --color-ink: #36515c; /* Primari/body and text */
   --color-cta: #007ca2; /* Primari/CTA e Icon  */
   --color-badge: #dc0037; /* Primari/Badge       */
-  --color-rate: #e3ba40; /* Primari/Rate        */
+  --color-rate: #e3ba40; /* Primari/Rate — fill-only (star fills); fails contrast as text */
+  --color-rate-text: #8a6a00; /* on-light companion for rate text/legends (>=4.5:1 on white) */
   --color-soft: #def3fb; /* soft background     */
   --color-soft-grey: #d9d9d9; /* Soft grey           */
+  --color-surface: #ffffff; /* page/card surface (body background) */
   --color-stroke: #91a0b7; /* Stroke/Stroke 1     */
-  --color-stroke-2: #aed5e3; /* Stroke/storke 2     */
+  --color-stroke-2: #aed5e3; /* Stroke/stroke 2     */
 
   /* Semantic status colors — the REAL green/yellow used for availability and
    * "included/excluded" lists. Distinct from the teal CTA: status pills and
    * flashes intentionally reuse `cta` for "confirmed/success", so these are only
    * for availability/inclusion semantics. */
-  --color-success: #238d00; /* availability alta, "incluso" */
-  --color-warning: #cbc829; /* availability bassa           */
+  --color-success: #238d00; /* availability alta, "incluso" (fill) */
+  --color-success-text: #1a7000; /* success text on white (>=4.5:1) */
+  --color-warning: #cbc829; /* availability bassa — tint backgrounds only */
+  --color-warning-strong: #6f6600; /* warning dot/indicator on white (>=3:1) */
   --color-danger-deep: #8d0000; /* "non incluso" (rosso scuro) */
+  --color-promo: #ff004c; /* Figma promo/discount red — FILL only (3.9:1 as text, fails AA); distinct from badge #dc0037 (calendar price mark) */
+  --color-promo-text: #d40040; /* on-light companion for promo as TEXT (price/%): >=4.5:1 on white (~5.4:1) */
+  --color-soft-success: #deffd6; /* soft green pill bg — free-cancellation box (Figma) */
+
+  /* Theming: this is a LIGHT-ONLY palette BY DESIGN (brand). Colors are flat
+   * literals with no semantic→primitive indirection and no dark variant. If dark
+   * mode is ever scoped, restructure these as overridable :root vars + a
+   * prefers-color-scheme / .dark layer FIRST — don't bolt dark: on per-utility. */
 
   /* Derived interactive states — promoted from the inline `color-mix` that was
    * copied across buttons. ONE definition here → utilities `bg-cta-hover`,
@@ -44,9 +56,29 @@
   --text-2xs--line-height: 1rem;
 
   /* Elevation — replaces ad-hoc shadow-* / arbitrary shadows. */
-  --shadow-card: 0 1px 3px rgb(54 81 92 / 0.08);
-  --shadow-popover: 0 8px 24px rgb(54 81 92 / 0.12);
-  --shadow-sheet: 0 -8px 32px rgb(54 81 92 / 0.16);
+  --shadow-card: 0 1px 3px rgb(from var(--color-ink) r g b / 0.08);
+  --shadow-popover: 0 8px 24px rgb(from var(--color-ink) r g b / 0.12);
+  --shadow-sheet: 0 -8px 32px rgb(from var(--color-ink) r g b / 0.16);
+
+  /* Motion — SINGLE SOURCE for durations & easing (DS ↔ animations).
+   * `animations` mirrors these in `src/lib/motion/tokens.ts` for framer-motion
+   * (as seconds: fast .15 · base .3 · slow .6 · morph 1.2); CSS transitions/
+   * keyframes consume them directly. Keep the two in sync.
+   *
+   * Durations: Tailwind 4 has NO `duration-*` theme namespace, so these are plain
+   * custom props (like `--z-*` below) → use `duration-[var(--duration-base)]`
+   * or in raw CSS `transition-duration: var(--duration-fast)`. */
+  --duration-fast: 150ms; /* hover/tap, color feedback */
+  --duration-base: 300ms; /* fade/reveal standard, page transition */
+  --duration-slow: 600ms; /* backdrop, emphasis */
+  --duration-morph: 1200ms; /* shared-element search morph (already in use) */
+
+  /* Easing: `--ease-*` IS a Tailwind namespace → ALSO generates `ease-entrance`/
+   * `ease-emphasized` utilities. Entrances decelerate (easeOut-like). The spring
+   * for shared-element/layout stays JS-only in framer (see `spring` in
+   * `lib/motion/tokens.ts`) — not expressible as a CSS curve. */
+  --ease-entrance: cubic-bezier(0, 0, 0.2, 1); /* decelerate — entrate/reveal */
+  --ease-emphasized: cubic-bezier(0.65, 0, 0.35, 1); /* in-out marcato */
 
   --font-sans: var(--font-raleway), ui-sans-serif, system-ui, sans-serif;
 }
@@ -54,12 +86,19 @@
 /* Z-index scale. Tailwind 4 has no `--z-*` theme namespace, so these are plain
  * custom properties — use via arbitrary values: `className="z-[var(--z-sheet)]"`.
  * Single source for the layering order across header / sticky bars / overlays. */
+/* Both --duration-* (above) and --z-* (below) are non-namespaced custom props — use via arbitrary values. */
 :root {
   --z-sticky: 30; /* sticky filter bars, sticky booking bar */
   --z-header: 40; /* site header */
+  --z-dropdown: 90; /* anchored dropdown/popover above header, below overlays */
   --z-overlay: 100; /* modal backdrops, search overlay */
   --z-sheet: 110; /* bottom-sheet panel above its backdrop */
+  --z-modal: 120; /* full-screen overlay above sheets — lightbox, search overlay */
+  --z-modal-guard: 130; /* transient pointer guard during the search morph */
   --z-toast: 200; /* toasts above everything */
+
+  /* Layout — non-namespaced custom prop; consumers use max-w-[var(--container-site)]. */
+  --container-site: 1200px; /* max content width of the site shell */
 }
 
 /* Hide the scrollbar on horizontal sliders (TrustBar, Offers) while keeping scroll/swipe. */
@@ -76,7 +115,75 @@ html {
 }
 
 body {
-  background: #ffffff;
+  background: var(--color-surface);
   color: var(--color-ink);
   font-family: var(--font-sans);
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * MOTION layer — owned by `animations` (coordinated with design-system).
+ * The framer-motion side is mirrored in `src/lib/motion/tokens.ts`; this is the
+ * CSS side: the reduced-motion safety net + the skeleton shimmer keyframes.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+/* WCAG 2.3.3 — kill non-essential motion when the user asks for it. Covers CSS
+ * keyframes/transitions everywhere (the shimmer below, Tailwind's animate-*, etc.).
+ * Framer-motion is handled separately by <MotionProvider reducedMotion="user">. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* A loading spinner conveys "working" → ESSENTIAL motion, exempt from WCAG 2.3.3.
+   * The blanket reset above would freeze `animate-spin` mid-rotation (looks broken),
+   * so swap the spin for a reduced-motion-safe cue: a slow opacity pulse (no
+   * vestibular rotation, still signals activity). Higher specificity + !important
+   * beats the universal reset above. */
+  .animate-spin {
+    animation: reduced-motion-pulse 1.2s ease-in-out infinite !important;
+  }
+}
+
+@keyframes reduced-motion-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* Skeleton shimmer — a light sheen sweeping across the placeholder. The moving
+ * layer is a pseudo-element animated with `transform: translateX` only (GPU
+ * compositing, 60fps; no layout/paint thrash). The base element keeps its track
+ * colour (e.g. `bg-soft-grey/40`). Used by `components/ui/Skeleton`. */
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@utility animate-shimmer {
+  position: relative;
+  overflow: hidden;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgb(255 255 255 / 0.65),
+      transparent
+    );
+    /* Loop period: own value (the token scale is for one-shot transitions). */
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
 }

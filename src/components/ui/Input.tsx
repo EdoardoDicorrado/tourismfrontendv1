@@ -1,6 +1,6 @@
 import type { InputHTMLAttributes, ReactNode } from "react";
 
-import { cx } from "@/components/ui/buttonVariants";
+import { cx, focusRing } from "@/components/ui/buttonVariants";
 
 /**
  * Input / Field — the single source of truth for text inputs across the
@@ -16,9 +16,15 @@ import { cx } from "@/components/ui/buttonVariants";
  * bg. Errors reuse the `badge` token (no new colors).
  */
 
-/** Canonical input className. Append `border-badge` for the error state. */
+/**
+ * Canonical input className. The border *color* is selected per render site
+ * (`border-stroke` default / `border-badge` for the error state) so the two
+ * conflicting utilities never stack (no tailwind-merge by design).
+ */
 export const inputClass =
-  "w-full rounded-card border border-stroke bg-white px-4 py-3 text-ink outline-none transition-colors focus:border-cta disabled:cursor-not-allowed disabled:bg-soft disabled:text-ink/70";
+  "w-full rounded-card border bg-white px-4 py-3 text-ink outline-none transition-colors focus:border-cta " +
+  focusRing +
+  " disabled:cursor-not-allowed disabled:bg-soft disabled:text-ink/70";
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   /** Inline error state — switches the border to the badge token. */
@@ -30,7 +36,7 @@ export function Input({ invalid, className, ...props }: InputProps) {
   return (
     <input
       aria-invalid={invalid || undefined}
-      className={cx(inputClass, invalid && "border-badge", className)}
+      className={cx(inputClass, invalid ? "border-badge" : "border-stroke", className)}
       {...props}
     />
   );
@@ -87,7 +93,7 @@ export function Field({
           {label}
         </label>
       )}
-      <input
+      <Input
         id={id}
         name={name}
         type={type}
@@ -96,9 +102,9 @@ export function Field({
         required={required}
         disabled={disabled}
         autoComplete={autoComplete}
-        aria-invalid={error ? true : undefined}
+        invalid={!!error}
         aria-describedby={describedBy}
-        className={cx(inputClass, error && "border-badge", inputClassName)}
+        className={inputClassName}
       />
       {error ? (
         <p id={describedBy} className="mt-1 text-sm font-semibold text-badge">

@@ -6,6 +6,9 @@ import { locales, isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { CartProvider } from "@/lib/cart/CartContext";
 import { CartDrawer } from "@/components/cart/CartDrawer";
+import { AgencyBanner } from "@/components/layout/AgencyBanner";
+import { MotionProvider } from "@/components/ui/motion/MotionProvider";
+import { ToastProvider } from "@/lib/toast/ToastContext";
 import "../globals.css";
 
 const raleway = Raleway({
@@ -45,10 +48,15 @@ export default async function RootLayout({
   return (
     <html lang={lang} className={`${raleway.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
-        <CartProvider>
-          {children}
-          <CartDrawer lang={lang} dict={dict} />
-        </CartProvider>
+        <MotionProvider>
+          <CartProvider>
+            <ToastProvider>
+              <AgencyBanner label={dict.account.agencyBanner} />
+              {children}
+              <CartDrawer lang={lang} dict={dict} />
+            </ToastProvider>
+          </CartProvider>
+        </MotionProvider>
       </body>
     </html>
   );

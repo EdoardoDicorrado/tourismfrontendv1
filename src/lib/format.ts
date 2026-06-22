@@ -54,6 +54,13 @@ export function formatMonthYear(year: number, month0: number, locale: Locale): s
   );
 }
 
+/** Long month names, January-first, e.g. ["Gennaio",…] / ["January",…] (capitalized). */
+export function monthLongNames(locale: Locale): string[] {
+  const fmt = new Intl.DateTimeFormat(LOCALE_TAG[locale], { month: "long" });
+  // Day 1 of each month, explicit parts → deterministic (SSR-safe).
+  return Array.from({ length: 12 }, (_, m) => capitalize(fmt.format(new Date(2024, m, 1))));
+}
+
 /** Short weekday names, Monday-first, e.g. ["Lun","Mar",…] / ["Mon","Tue",…] (capitalized, no trailing dot). */
 export function weekdayShortNames(locale: Locale): string[] {
   const fmt = new Intl.DateTimeFormat(LOCALE_TAG[locale], { weekday: "short" });

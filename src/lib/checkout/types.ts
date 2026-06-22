@@ -161,3 +161,15 @@ export type PaymentAuthorizeResponse =
 export type PaymentStatusResponse =
   | { ok: true; status: "authorized" | "failed" | "pending"; reference?: string; state?: string }
   | { ok: false; error: string };
+
+/** Result of `POST /api/checkout/verify` with `action: "send"` — OTP email dispatch. */
+export type VerifySendResponse = { ok: true; sent: boolean } | { ok: false; error: string };
+
+/** Result of `POST /api/checkout/verify` with `action: "check"` — OTP validation. */
+export type VerifyCheckResponse =
+  | { ok: true; verified: true }
+  | { ok: true; verified: false; reason: "invalid" | "expired" | "unavailable" }
+  | { ok: false; error: string };
+
+/** Result of `POST /api/checkout/referral` — the "how did you find us" answer. */
+export type ReferralResponse = { ok: boolean; error?: string };

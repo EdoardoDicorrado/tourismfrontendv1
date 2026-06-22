@@ -47,6 +47,49 @@ function Check() {
   );
 }
 
+/** Source badge shown top-right of a review card. */
+function SourceBadge({ source }: { source: PageReview["source"] }) {
+  if (source === "google") {
+    return <Image src="/images/icon-google.svg" alt="Google" width={16} height={16} />;
+  }
+  if (source === "tripadvisor") {
+    return <span className="text-xs font-extrabold text-[#00AA6C]">Tripadvisor</span>;
+  }
+  return <span className="text-xs font-extrabold text-cta">TourisMotion</span>;
+}
+
+/** Single review card — used in the main sorted list and the "other platforms" block. */
+export function ReviewCard({ review, lang }: { review: PageReview; lang: Locale }) {
+  const date = new Intl.DateTimeFormat(lang, { month: "long", year: "numeric" }).format(
+    new Date(review.publishedAt),
+  );
+  return (
+    <article className="flex flex-col gap-4 rounded-[10px] bg-soft p-4">
+      <div className="flex items-center justify-between">
+        <Stars value={review.rating} size={16} />
+        <SourceBadge source={review.source} />
+      </div>
+
+      <div className="flex items-center gap-3">
+        <Image
+          src="/images/avatar-review-default.svg"
+          alt=""
+          width={44}
+          height={44}
+          className="shrink-0 rounded-full"
+        />
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <p className="text-base font-extrabold text-ink">{review.author}</p>
+          <span className="text-xs font-medium text-ink/70">{date}</span>
+          <p className="truncate text-xs font-semibold text-cta">{review.tour}</p>
+        </div>
+      </div>
+
+      <p className="text-sm font-medium leading-relaxed text-ink">{review.text}</p>
+    </article>
+  );
+}
+
 /**
  * Client-side reviews list for `/[lang]/recensioni`. Holds the sort state and
  * renders a curated subset of reviews fully expanded, stacked one below the
@@ -88,8 +131,6 @@ export function ReviewsList({
         return b.publishedAt.localeCompare(a.publishedAt);
     }
   });
-
-  const dateFmt = new Intl.DateTimeFormat(lang, { month: "long", year: "numeric" });
 
   return (
     <div className="flex flex-col gap-6">
@@ -152,31 +193,7 @@ export function ReviewsList({
       <ul className="flex flex-col gap-4">
         {sorted.map((r) => (
           <li key={r.id}>
-            <article className="flex flex-col gap-4 rounded-[10px] bg-soft p-4">
-              <div className="flex items-center justify-between">
-                <Stars value={r.rating} size={16} />
-                <Image src="/images/icon-google.svg" alt="Google" width={16} height={16} />
-              </div>
-
-              <div className="flex items-center gap-3">
-                <Image
-                  src="/images/avatar-review-default.svg"
-                  alt=""
-                  width={44}
-                  height={44}
-                  className="shrink-0 rounded-full"
-                />
-                <div className="flex min-w-0 flex-col gap-1">
-                  <p className="text-base font-extrabold text-ink">{r.author}</p>
-                  <p className="truncate text-xs font-semibold text-cta">{r.tour}</p>
-                </div>
-                <span className="ml-auto shrink-0 text-xs font-medium text-ink/70">
-                  {dateFmt.format(new Date(r.publishedAt))}
-                </span>
-              </div>
-
-              <p className="text-sm font-medium leading-relaxed text-ink">{r.text}</p>
-            </article>
+            <ReviewCard review={r} lang={lang} />
           </li>
         ))}
       </ul>

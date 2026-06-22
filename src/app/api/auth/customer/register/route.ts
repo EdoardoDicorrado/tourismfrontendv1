@@ -4,6 +4,7 @@ import { customerRegister } from "@/lib/account/client";
 import { BackendError } from "@/lib/api/client";
 import type { CustomerRegisterPayload } from "@/lib/account/types";
 import { isLocale, type Locale } from "@/lib/i18n/config";
+import { isEmail, isNonEmptyString } from "@/lib/validation";
 
 /**
  * Customer registration BFF (`POST /api/auth/customer/register`).
@@ -17,12 +18,6 @@ import { isLocale, type Locale } from "@/lib/i18n/config";
  */
 
 export const dynamic = "force-dynamic";
-
-const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
-
-function isNonEmptyString(value: unknown): value is string {
-  return typeof value === "string" && value.trim().length > 0;
-}
 
 export async function POST(request: NextRequest) {
   let body: unknown;
@@ -50,7 +45,7 @@ export async function POST(request: NextRequest) {
   if (!isNonEmptyString(data.last_name)) {
     return NextResponse.json({ ok: false, error: "missing_last_name" }, { status: 422 });
   }
-  if (!isNonEmptyString(data.email) || !EMAIL_RE.test(data.email)) {
+  if (!isNonEmptyString(data.email) || !isEmail(data.email)) {
     return NextResponse.json({ ok: false, error: "invalid_email" }, { status: 422 });
   }
   if (!isNonEmptyString(data.password) || data.password.length < 8) {

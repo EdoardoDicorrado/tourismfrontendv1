@@ -1,6 +1,6 @@
 /** Account-area UI primitives. Import from `@/components/account/ui`. */
 
-export { Field, fieldInputClass } from "./Field";
+export { fieldInputClass } from "./Field";
 export type { FieldProps } from "./Field";
 
 export { SubmitButton } from "./SubmitButton";

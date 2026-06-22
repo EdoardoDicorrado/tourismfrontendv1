@@ -7,40 +7,49 @@ import type { Dictionary } from "@/lib/i18n/dictionaries";
 
 /** Icon per benefit card, matched by index to `about.why.items`. */
 const ICONS = [
-  "/images/icon-star.svg",
-  "/images/icon-walking.svg",
-  "/images/icon-flexibility.svg",
-  "/images/icon-support.svg",
+  "/images/about-why-1.svg",
+  "/images/about-why-2.svg",
+  "/images/about-why-3.svg",
+  "/images/about-why-4.svg",
 ];
 
 /**
- * "Perché scegliere Tourismotion?" — four benefit cards plus the "Unisciti al
- * team" CTA pointing to the careers page. Figma nodes 447:1284 / 447:1318.
+ * "Perché scegliere Tourismotion?" — four benefit cards in a mobile
+ * horizontal scroller plus the "Unisciti al team" CTA pointing to the careers
+ * page. Figma nodes 447:1284 / 447:1318.
  */
 export function WhyChooseUs({ lang, dict }: { lang: Locale; dict: Dictionary }) {
   const t = dict.about.why;
   return (
     <section className="py-12 sm:py-16">
       <Container>
-        <h2 className="text-2xl font-extrabold text-ink sm:text-3xl">{t.title}</h2>
+        <h2 className="text-2xl font-extrabold text-ink">{t.title}</h2>
 
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <ul className="no-scrollbar -mx-4 mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-px-4 px-4 pb-1">
           {t.items.map((item, i) => (
-            <div key={item.title} className="flex flex-col gap-4 rounded-[10px] bg-soft p-5">
-              <Image src={ICONS[i]} alt="" width={42} height={42} unoptimized className="h-10 w-10" />
-              <div className="mt-auto">
-                <h3 className="font-semibold text-ink">{item.title}</h3>
-                <p className="mt-2 text-sm text-ink/80">{item.body}</p>
+            <li
+              key={item.title}
+              className="flex w-[267px] shrink-0 snap-start flex-col gap-6 overflow-hidden rounded-card bg-soft p-4"
+            >
+              <Image
+                src={ICONS[i]}
+                alt=""
+                width={42}
+                height={42}
+                unoptimized
+                className="h-[42px] w-[42px]"
+              />
+              <div className="flex flex-col gap-2 text-ink">
+                <h3 className="text-base font-semibold leading-normal">{item.title}</h3>
+                <p className="text-sm font-medium leading-normal">{item.body}</p>
               </div>
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
 
-        <div className="mt-10 flex justify-center">
-          <ButtonLink href={`/${lang}/lavora-con-noi`} size="lg">
-            {dict.about.cta}
-          </ButtonLink>
-        </div>
+        <ButtonLink href={`/${lang}/lavora-con-noi`} size="lg" fullWidth className="mt-6">
+          {dict.about.cta}
+        </ButtonLink>
       </Container>
     </section>
   );

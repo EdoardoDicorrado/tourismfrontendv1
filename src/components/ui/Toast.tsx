@@ -1,10 +1,13 @@
 import type { ReactNode } from "react";
 
+import { FEEDBACK } from "@/components/ui/Alert";
 import { cx } from "@/components/ui/buttonVariants";
+import { IconButton } from "@/components/ui/IconButton";
+import { CloseIcon } from "@/components/ui/icons";
 
 /**
  * Toast — presentational notification card + a fixed `ToastViewport` to stack
- * them (bottom-center, above everything via `--z-toast`).
+ * them (top-center, above everything via `--z-toast`).
  *
  * This is the STRUCTURE only. The queue/auto-dismiss timers and the enter/exit
  * motion are a follow-up to build WITH `animations` (and likely a small client
@@ -12,63 +15,66 @@ import { cx } from "@/components/ui/buttonVariants";
  */
 export type ToastVariant = "success" | "error" | "warning" | "info";
 
-const DOT: Record<ToastVariant, string> = {
-  success: "bg-cta",
-  error: "bg-badge",
-  warning: "bg-warning",
-  info: "bg-ink/40",
-};
+/** Semantic token name → dot background (literal classes so Tailwind emits them). */
+const DOT_BG = {
+  cta: "bg-cta",
+  badge: "bg-badge",
+  "warning-strong": "bg-warning-strong",
+} as const;
 
 export function Toast({
   variant = "info",
   title,
   children,
   onClose,
+  closeLabel = "Cerrar",
   className,
 }: {
   variant?: ToastVariant;
   title?: ReactNode;
   children?: ReactNode;
   onClose?: () => void;
+  closeLabel?: string;
   className?: string;
 }) {
   return (
     <div
-      role={variant === "error" ? "alert" : "status"}
+      role={variant === "error" ? "alert" : undefined}
       className={cx(
         "pointer-events-auto w-full max-w-sm rounded-card bg-white px-4 py-3 shadow-popover ring-1 ring-stroke/20",
         className,
       )}
     >
       <div className="flex items-start gap-3">
-        <span className={cx("mt-1.5 size-2 shrink-0 rounded-full", DOT[variant])} />
+        <span className={cx("mt-1.5 size-2 shrink-0 rounded-full", DOT_BG[FEEDBACK[variant]])} />
         <div className="flex-1 text-sm">
           {title ? <p className="font-bold text-ink">{title}</p> : null}
-          {children ? <p className="text-ink/70">{children}</p> : null}
+          {children ? <p className="text-ink">{children}</p> : null}
         </div>
         {onClose ? (
-          <button
-            type="button"
+          <IconButton
+            label={closeLabel}
+            variant="ghost"
+            size="lg"
             onClick={onClose}
-            aria-label="Chiudi"
-            className="-mr-1 -mt-1 shrink-0 rounded-full p-1 text-ink/50 transition-colors hover:bg-soft hover:text-ink"
+            className="-my-2.5 -mr-2.5 shrink-0"
           >
-            <svg aria-hidden viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M6 6l12 12M18 6L6 18" />
-            </svg>
-          </button>
+            <CloseIcon />
+          </IconButton>
         ) : null}
       </div>
     </div>
   );
 }
 
-/** Fixed bottom-center stack for toasts. Click-through except on the cards. */
+/** Fixed top-center stack for toasts. Click-through except on the cards. */
 export function ToastViewport({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <div
+      aria-live="polite"
+      aria-atomic="false"
       className={cx(
-        "pointer-events-none fixed inset-x-0 bottom-0 z-[var(--z-toast)] flex flex-col items-center gap-2 p-4",
+        "pointer-events-none fixed inset-x-0 top-0 z-[var(--z-toast)] flex flex-col items-center gap-2 p-4",
         className,
       )}
     >

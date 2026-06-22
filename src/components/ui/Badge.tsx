@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ComponentPropsWithoutRef, ReactNode } from "react";
 
 import { cx } from "@/components/ui/buttonVariants";
 
@@ -27,11 +27,15 @@ const BASE: Record<BadgeVariant, string> = {
   soft: "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold",
 };
 
-/** Default text size per variant (overridable via `className`). */
+/**
+ * Default text size per variant. A `className` passed by the caller only wins
+ * when it doesn't conflict — cx() is a plain join with no tailwind-merge.
+ */
 const SIZE: Record<BadgeVariant, Record<BadgeSize, string>> = {
   solid: { md: "text-sm", sm: "text-xs" },
-  count: { md: "text-[11px]", sm: "text-[10px]" },
-  soft: { md: "", sm: "" }, // soft fixes text-xs in BASE
+  count: { md: "text-2xs", sm: "text-2xs" },
+  // size intentionally fixed for soft: text-xs is pinned in BASE.
+  soft: { md: "", sm: "" },
 };
 
 /** Literal Tailwind classes per (variant, tone) — kept static for the JIT. */
@@ -53,12 +57,11 @@ const TONE: Record<BadgeVariant, Partial<Record<BadgeTone, string>>> = {
   },
 };
 
-export interface BadgeProps {
+export interface BadgeProps extends ComponentPropsWithoutRef<"span"> {
   children: ReactNode;
   variant?: BadgeVariant;
   tone?: BadgeTone;
   size?: BadgeSize;
-  className?: string;
 }
 
 export function Badge({
@@ -67,9 +70,16 @@ export function Badge({
   tone = "badge",
   size = "md",
   className,
+  ...rest
 }: BadgeProps) {
+  // Fall back to each variant's `badge` tone so a type-valid but unmapped
+  // (variant, tone) combo never renders an unstyled badge.
+  const toneClass = TONE[variant][tone] ?? TONE[variant].badge;
   return (
-    <span className={cx(BASE[variant], SIZE[variant][size], TONE[variant][tone], className)}>
+    <span
+      {...rest}
+      className={cx(BASE[variant], SIZE[variant][size], toneClass, className)}
+    >
       {children}
     </span>
   );

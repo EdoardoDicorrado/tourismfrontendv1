@@ -15,9 +15,14 @@ export function Divider({
   label?: ReactNode;
   className?: string;
 }) {
+  // `label` forces a horizontal divider; `orientation` is ignored when a label is set.
   if (label) {
     return (
-      <div className={cx("flex items-center gap-3 text-xs font-medium text-ink/60", className)}>
+      <div
+        role="separator"
+        aria-orientation="horizontal"
+        className={cx("flex items-center gap-3 text-xs font-medium text-ink/60", className)}
+      >
         <span className="h-px flex-1 bg-stroke/40" />
         {label}
         <span className="h-px flex-1 bg-stroke/40" />

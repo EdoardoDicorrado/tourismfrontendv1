@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { ApplyPromo } from "@/components/careers/ApplyPromo";
-import { CareersApplicationForm } from "@/components/careers/CareersApplicationForm";
 import { CareersHero } from "@/components/careers/CareersHero";
+import { CareersSearch } from "@/components/careers/CareersSearch";
 import { OpenPositions } from "@/components/careers/OpenPositions";
 import { WhyWorkWithUs } from "@/components/careers/WhyWorkWithUs";
 import { Footer } from "@/components/layout/Footer";
@@ -40,10 +40,10 @@ export default async function CareersPage({ params }: { params: Promise<Params> 
       <Header lang={lang} dict={dict} />
       <main className="flex-1">
         <CareersHero dict={dict} />
+        <CareersSearch dict={dict.careers} />
         <WhyWorkWithUs dict={dict} />
-        <OpenPositions dict={dict.careers} />
-        <ApplyPromo dict={dict.careers} />
-        <CareersApplicationForm lang={lang} dict={dict.careers} />
+        <OpenPositions lang={lang} dict={dict.careers} />
+        <ApplyPromo lang={lang} dict={dict.careers} />
       </main>
       <Footer lang={lang} dict={dict} />
     </>

@@ -1,41 +1,63 @@
 import Image from "next/image";
+import Link from "next/link";
 
-import { buttonVariants } from "@/components/ui/buttonVariants";
 import { Container } from "@/components/ui/Container";
+import { Rich } from "@/components/partner/Rich";
+import type { Locale } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
 /**
- * "Invia la tua candidatura" promo card — the intro the hero / position CTAs
- * scroll to (`#candidatura`). Its button points to the form below (`#modulo`).
- * Figma node 447:1471.
+ * "Invia la tua candidatura" promo card — pixel-perfect to Figma "Lavora con Noi
+ * // Mobile" (447:1471): a stacked card with two gecko mascots over a circular
+ * backdrop on the cta-blue band, then a soft panel (title + copy with bold runs +
+ * the "Vai al modulo" button → the standalone spontaneous-application page).
  */
-export function ApplyPromo({ dict }: { dict: Dictionary["careers"] }) {
+export function ApplyPromo({ lang, dict }: { lang: Locale; dict: Dictionary["careers"] }) {
   const t = dict.apply;
   return (
-    <section id="candidatura" className="scroll-mt-8 py-12 sm:py-16">
+    <section className="py-4">
       <Container>
-        <div className="overflow-hidden rounded-[15px] border border-soft-grey">
-          <div className="grid md:grid-cols-2">
-            <div className="flex items-center justify-center bg-cta px-6 py-10">
-              <Image
-                src="/images/support-illustration.svg"
-                alt=""
-                width={220}
-                height={220}
-                className="h-auto w-auto max-w-[220px]"
-              />
-            </div>
-            <div className="flex flex-col gap-4 bg-soft p-6 sm:p-8">
-              <h2 className="text-2xl font-extrabold text-ink sm:text-3xl">{t.title}</h2>
+        <div className="overflow-hidden rounded-card">
+          <div className="relative flex h-[214px] items-end justify-center overflow-hidden bg-cta">
+            <Image
+              src="/images/gecko-ellipse-bg.svg"
+              alt=""
+              width={265}
+              height={265}
+              className="absolute left-1/2 top-1/2 size-[265px] max-w-none -translate-x-1/2 -translate-y-1/2"
+            />
+            <Image
+              src="/images/gecko-request.png"
+              alt=""
+              width={150}
+              height={200}
+              unoptimized
+              className="relative -mr-5 h-[170px] w-auto"
+            />
+            <Image
+              src="/images/gecko.png"
+              alt=""
+              width={200}
+              height={250}
+              unoptimized
+              className="relative h-[206px] w-auto"
+            />
+          </div>
+          <div className="flex flex-col gap-4 bg-soft p-4">
+            <h2 className="text-2xl font-extrabold text-ink">{t.title}</h2>
+            <div className="flex flex-col gap-4 text-sm leading-[1.3] text-ink">
               {t.body.map((paragraph) => (
-                <p key={paragraph} className="text-sm leading-relaxed text-ink/90 sm:text-base">
-                  {paragraph}
+                <p key={paragraph}>
+                  <Rich text={paragraph} />
                 </p>
               ))}
-              <a href="#modulo" className={`mt-2 ${buttonVariants({ size: "lg" })}`}>
-                {t.cta}
-              </a>
             </div>
+            <Link
+              href={`/${lang}/lavora-con-noi/candidatura`}
+              className="flex w-full items-center justify-center rounded-card bg-cta py-4 text-base font-bold text-white transition-colors hover:bg-cta-hover active:bg-cta-active"
+            >
+              {t.cta}
+            </Link>
           </div>
         </div>
       </Container>

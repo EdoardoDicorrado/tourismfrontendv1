@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { changeAgencyPassword } from "@/lib/account/client";
 import { getSession } from "@/lib/account/session";
+import { isNonEmptyString } from "@/lib/validation";
 
 /**
  * Agency password BFF — change the logged-in agency user's password.
@@ -16,10 +17,6 @@ import { getSession } from "@/lib/account/session";
  */
 
 export const dynamic = "force-dynamic";
-
-function isNonEmptyString(value: unknown): value is string {
-  return typeof value === "string" && value.length > 0;
-}
 
 export async function POST(request: NextRequest) {
   const session = await getSession();

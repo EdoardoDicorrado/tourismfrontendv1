@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { AnimatePresence } from "framer-motion";
 
 import { SearchOverlay } from "@/components/search/SearchOverlay";
+import { onOpenSearch } from "@/lib/search/searchSignal";
 import type { Destination, Product } from "@/data/home";
 import type { Attraction } from "@/data/listing";
 import type { Locale } from "@/lib/i18n/config";
@@ -28,6 +29,9 @@ type Props = {
 export function HeaderSearch({ lang, dict, destinations, attractions, products }: Props) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+
+  // Let other parts of the app (e.g. the empty cart's "explore" CTA) open search.
+  useEffect(() => onOpenSearch(() => setOpen(true)), []);
 
   // Homepage = hero pill handles search → no duplicate trigger in the header.
   if (pathname === `/${lang}`) return null;

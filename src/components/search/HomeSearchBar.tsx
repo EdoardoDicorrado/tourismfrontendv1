@@ -8,6 +8,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useHydrated } from "@/lib/useHydrated";
 
 import { SearchOverlay } from "@/components/search/SearchOverlay";
+import { onOpenSearch } from "@/lib/search/searchSignal";
 import type { Destination, Product } from "@/data/home";
 import type { Attraction } from "@/data/listing";
 import type { Locale } from "@/lib/i18n/config";
@@ -35,6 +36,9 @@ export function HomeSearchBar({ lang, dict, destinations, attractions, products 
   const triggerRef = useRef<HTMLButtonElement>(null);
   const reduceMotion = useReducedMotion();
   const hydrated = useHydrated();
+
+  // Allow opening from elsewhere (e.g. the empty cart's "explore" CTA).
+  useEffect(() => onOpenSearch(() => setOpen(true)), []);
 
   const close = () => {
     setOpen(false);

@@ -10,13 +10,13 @@ import type { Dictionary } from "@/lib/i18n/dictionaries";
 export function AboutStats({ dict }: { dict: Dictionary }) {
   const t = dict.about.stats;
   return (
-    <section className="bg-soft/40 py-12 sm:py-16">
-      <Container>
-        <h2 className="text-2xl font-extrabold text-ink sm:text-3xl">{t.title}</h2>
+    <section className="py-4">
+      <Container className="flex flex-col items-start gap-4">
+        <h2 className="w-full text-2xl font-extrabold leading-normal text-ink">{t.title}</h2>
 
-        <div className="relative mt-6 h-48 overflow-hidden rounded-[15px] sm:h-64">
+        <div className="relative h-[146px] w-full overflow-hidden rounded-[15px]">
           <Image
-            src="/images/card-tour-guidato.png"
+            src="/images/about-numeri.png"
             alt={t.imageAlt}
             fill
             sizes="100vw"
@@ -24,11 +24,11 @@ export function AboutStats({ dict }: { dict: Dictionary }) {
           />
         </div>
 
-        <dl className="mt-8 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        <dl className="flex w-full flex-col items-start gap-4 rounded-[15px] bg-soft p-4">
           {t.items.map((item) => (
-            <div key={item.label}>
-              <dt className="text-xl font-bold text-cta sm:text-2xl">{item.value}</dt>
-              <dd className="mt-1 text-base text-ink/80">{item.label}</dd>
+            <div key={item.label} className="flex w-full flex-col items-start gap-2">
+              <dt className="whitespace-nowrap text-xl font-bold text-cta">{item.value}</dt>
+              <dd className="w-full text-base font-medium leading-normal text-ink">{item.label}</dd>
             </div>
           ))}
         </dl>

@@ -11,6 +11,8 @@ type SignupError = "emailTaken" | "generic" | null;
 
 type SignupDict = Dictionary["account"]["agencySignup"];
 
+const labelClass = "mb-1 block text-sm font-bold text-ink";
+
 /** Country options (ISO 3166-1 alpha-2) for the LATAM/ES market — proper nouns, no i18n. */
 const COUNTRY_OPTIONS: { value: string; label: string }[] = [
   { value: "IT", label: "Italia" },
@@ -39,7 +41,7 @@ function Input({
 }) {
   return (
     <div>
-      <label htmlFor={id} className="mb-1 block text-sm font-bold text-ink">
+      <label htmlFor={id} className={labelClass}>
         {label}
         {required ? <span className="text-badge"> *</span> : null}
       </label>
@@ -209,7 +211,7 @@ export function AgencySignupForm({
           <Input id="postal_code" label={dict.postalCode} value={postalCode} onChange={setPostalCode} required />
           <Input id="city" label={dict.city} value={city} onChange={setCity} required />
           <div>
-            <label htmlFor="country_alpha2" className="mb-1 block text-sm font-bold text-ink">
+            <label htmlFor="country_alpha2" className={labelClass}>
               {dict.country}
               <span className="text-badge"> *</span>
             </label>
@@ -238,7 +240,7 @@ export function AgencySignupForm({
           <Input id="tripadvisor_url" label={dict.tripadvisorUrl} value={tripadvisorUrl} onChange={setTripadvisorUrl} />
         </div>
         <div>
-          <label htmlFor="collaboration_reason" className="mb-1 block text-sm font-bold text-ink">
+          <label htmlFor="collaboration_reason" className={labelClass}>
             {dict.collaborationReason}
             <span className="text-badge"> *</span>
           </label>

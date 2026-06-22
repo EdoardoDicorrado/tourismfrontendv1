@@ -37,8 +37,6 @@ export interface PricingInput {
   discountPercent: number;
 }
 
-export const WEEKDAYS = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"];
-
 const MONTHS = [
   "Gennaio",
   "Febbraio",
@@ -61,7 +59,7 @@ export function isoDate(year: number, month: number, day: number): string {
   return `${year}-${pad(month + 1)}-${pad(day)}`;
 }
 
-export function monthLabel(year: number, month: number): string {
+function monthLabel(year: number, month: number): string {
   return `${MONTHS[month]} ${year}`;
 }
 
@@ -69,12 +67,6 @@ export function monthLabel(year: number, month: number): string {
 export function monthIndexFromLabel(label: string): number {
   const i = MONTHS.indexOf(label);
   return i === -1 ? 0 : i;
-}
-
-/** "12 Giugno 2026" from an ISO date — for the selected-date label. */
-export function formatIsoLong(iso: string): string {
-  const [y, m, d] = iso.split("-").map(Number);
-  return `${d} ${MONTHS[m - 1]} ${y}`;
 }
 
 /** Year/month shifted by `delta` months, with rollover. */

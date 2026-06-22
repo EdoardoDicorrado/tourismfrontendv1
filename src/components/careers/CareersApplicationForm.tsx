@@ -2,10 +2,11 @@
 
 import { useRef, useState } from "react";
 
-import { fieldInputClass, Flash, SubmitButton } from "@/components/account/ui";
-import { ButtonLink } from "@/components/ui/Button";
+import { Flash } from "@/components/account/ui";
 import { Container } from "@/components/ui/Container";
-import type { Locale } from "@/lib/i18n/config";
+import { Popover } from "@/components/ui/Popover";
+import { formatDateLong, monthLongNames, weekdayShortNames } from "@/lib/format";
+import { fill, type Locale } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
 type Step = 1 | 2 | "done";
@@ -16,19 +17,255 @@ const ALLOWED_EXT = /\.(pdf|docx?)$/i;
 const FILE_ACCEPT =
   ".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
-function fill(template: string, vars: Record<string, string | number>): string {
-  return template.replace(/\{(\w+)\}/g, (_, k: string) => String(vars[k] ?? `{${k}}`));
+const ctaButton =
+  "flex w-full items-center justify-center rounded-card bg-cta py-4 text-base font-bold text-white transition-colors hover:bg-cta-hover active:bg-cta-active disabled:opacity-60";
+
+/** Bordered "floating label" field — Figma "Modulo" (447:1844): cta border, cta label, ink value. */
+function FloatingField({
+  id,
+  label,
+  className = "",
+  ...props
+}: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <div className="flex w-full flex-col gap-1 rounded-card border border-cta p-2">
+      <label htmlFor={id} className="text-xs font-bold text-cta">
+        {label}
+      </label>
+      <input
+        id={id}
+        className={`w-full border-0 bg-transparent p-0 text-base font-medium leading-[22px] text-ink outline-none placeholder:text-ink/40 ${className}`}
+        {...props}
+      />
+    </div>
+  );
 }
 
-/** Dashed upload field — label, hint and the selected file (with a remove action). */
+type FormDict = Dictionary["careers"]["form"];
+
+const pad2 = (n: number) => String(n).padStart(2, "0");
+
+/**
+ * Birth-date field — replaces the native `<input type="date">` with a modern
+ * year → month → day cascade picker in a bottom sheet (mobile-first). The value
+ * stays an ISO `yyyy-mm-dd` string so the form/BFF payload is unchanged.
+ */
+function BirthDateField({
+  id,
+  label,
+  value,
+  onChange,
+  lang,
+  t,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (iso: string) => void;
+  lang: Locale;
+  t: FormDict;
+}) {
+  return (
+    <Popover
+      sheet
+      label={label}
+      trigger={({ open, toggle, id: panelId }) => (
+        <div className="flex w-full flex-col gap-1 rounded-card border border-cta p-2">
+          <span className="text-xs font-bold text-cta">{label}</span>
+          <button
+            id={id}
+            type="button"
+            onClick={toggle}
+            aria-haspopup="dialog"
+            aria-expanded={open}
+            aria-controls={panelId}
+            className="w-full bg-transparent p-0 text-left text-base font-medium leading-[22px] outline-none"
+          >
+            {value ? (
+              <span className="text-ink">{formatDateLong(value, lang)}</span>
+            ) : (
+              <span className="text-ink/40">{t.birthDatePlaceholder}</span>
+            )}
+          </button>
+        </div>
+      )}
+    >
+      {({ close }) => (
+        <DobPicker
+          value={value}
+          lang={lang}
+          t={t}
+          onPick={(iso) => {
+            onChange(iso);
+            close();
+          }}
+          onClose={close}
+        />
+      )}
+    </Popover>
+  );
+}
+
+/** Cascade picker body: pick year, then month, then day. Caps at today (no future DOB). */
+function DobPicker({
+  value,
+  lang,
+  t,
+  onPick,
+  onClose,
+}: {
+  value: string;
+  lang: Locale;
+  t: FormDict;
+  onPick: (iso: string) => void;
+  onClose: () => void;
+}) {
+  // Sheet content only renders after the trigger click → client-only, so reading
+  // "today" here can't cause an SSR/hydration mismatch.
+  const today = new Date();
+  const maxYear = today.getFullYear();
+  const minYear = maxYear - 100;
+
+  const init = value ? value.split("-").map(Number) : null;
+  const [year, setYear] = useState<number | null>(init ? init[0] : null);
+  const [month, setMonth] = useState<number | null>(init ? init[1] - 1 : null);
+  const [mode, setMode] = useState<"year" | "month" | "day">(value ? "day" : "year");
+
+  const months = monthLongNames(lang);
+  const weekdays = weekdayShortNames(lang);
+  const years = Array.from({ length: maxYear - minYear + 1 }, (_, i) => maxYear - i);
+
+  const monthDisabled = (m: number) => year === maxYear && m > today.getMonth();
+  const dayDisabled = (d: number) =>
+    year === maxYear && month === today.getMonth() && d > today.getDate();
+  const dayCount = year !== null && month !== null ? new Date(year, month + 1, 0).getDate() : 0;
+  const lead = year !== null && month !== null ? (new Date(year, month, 1).getDay() + 6) % 7 : 0;
+
+  const prompt =
+    mode === "year" ? t.birthDateYear : mode === "month" ? t.birthDateMonth : t.birthDateDay;
+
+  const chip = "rounded-badge bg-soft px-3 py-1 text-sm font-bold text-cta";
+  const cell = "grid aspect-square place-items-center rounded-card text-base font-medium transition";
+
+  return (
+    <div className="flex max-h-[85vh] flex-col rounded-t-sheet bg-white">
+      {/* Header (pt clears the sheet grabber) */}
+      <div className="flex shrink-0 items-center gap-4 border-b border-soft-grey px-4 pb-2 pt-6">
+        <p className="flex-1 text-[20px] font-extrabold text-cta">{t.birthDate}</p>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label={t.back}
+          className="grid size-11 shrink-0 place-items-center rounded-full text-cta transition hover:bg-soft"
+        >
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden>
+            <circle cx="12" cy="12" r="10.5" stroke="currentColor" strokeWidth="1.6" />
+            <path d="M8.5 8.5l7 7M15.5 8.5l-7 7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Breadcrumb: current step + tap a chip to revisit year/month */}
+      <div className="flex shrink-0 flex-wrap items-center gap-2 px-4 py-3">
+        <span className="text-sm font-bold text-ink">{prompt}</span>
+        {year !== null && mode !== "year" && (
+          <button type="button" className={chip} onClick={() => setMode("year")}>
+            {year}
+          </button>
+        )}
+        {month !== null && mode === "day" && (
+          <button type="button" className={chip} onClick={() => setMode("month")}>
+            {months[month]}
+          </button>
+        )}
+      </div>
+
+      {/* Body */}
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-6">
+        {mode === "year" && (
+          <div className="grid grid-cols-4 gap-2">
+            {years.map((y) => (
+              <button
+                key={y}
+                type="button"
+                onClick={() => {
+                  setYear(y);
+                  setMode("month");
+                }}
+                className={`${cell} ${y === year ? "bg-cta text-white" : "text-ink hover:bg-soft"}`}
+              >
+                {y}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {mode === "month" && (
+          <div className="grid grid-cols-3 gap-2">
+            {months.map((name, m) => (
+              <button
+                key={name}
+                type="button"
+                disabled={monthDisabled(m)}
+                onClick={() => {
+                  setMonth(m);
+                  setMode("day");
+                }}
+                className={`${cell} px-1 text-sm disabled:opacity-30 ${
+                  m === month ? "bg-cta text-white" : "text-ink hover:bg-soft"
+                }`}
+              >
+                {name}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {mode === "day" && year !== null && month !== null && (
+          <div>
+            <div className="grid grid-cols-7 text-center text-xs font-bold text-ink/60">
+              {weekdays.map((d, i) => (
+                <span key={i} className="py-1">
+                  {d}
+                </span>
+              ))}
+            </div>
+            <div className="grid grid-cols-7 gap-1">
+              {Array.from({ length: lead }, (_, i) => (
+                <span key={`b-${i}`} aria-hidden />
+              ))}
+              {Array.from({ length: dayCount }, (_, i) => i + 1).map((d) => {
+                const iso = `${year}-${pad2(month + 1)}-${pad2(d)}`;
+                const isSel = iso === value;
+                return (
+                  <button
+                    key={d}
+                    type="button"
+                    disabled={dayDisabled(d)}
+                    onClick={() => onPick(iso)}
+                    className={`${cell} disabled:opacity-30 ${
+                      isSel ? "bg-cta text-white" : "text-ink hover:bg-soft"
+                    }`}
+                  >
+                    {d}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** Dashed upload zone — Figma "Modulo" step 2 (447:2024): doc icon + label/hint, upload icon, whole box clickable. */
 function FileField({
   id,
   label,
   hint,
   file,
   onSelect,
-  uploadCta,
-  changeLabel,
   removeLabel,
   disabled,
 }: {
@@ -37,15 +274,17 @@ function FileField({
   hint: string;
   file: File | null;
   onSelect: (file: File | null) => void;
-  uploadCta: string;
-  changeLabel: string;
   removeLabel: string;
   disabled?: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
-
+  const openPicker = () => inputRef.current?.click();
+  const remove = () => {
+    if (inputRef.current) inputRef.current.value = "";
+    onSelect(null);
+  };
   return (
-    <div className="rounded-[10px] border border-dashed border-cta/60 bg-white p-4">
+    <div>
       <input
         ref={inputRef}
         id={id}
@@ -55,71 +294,65 @@ function FileField({
         onChange={(e) => onSelect(e.target.files?.[0] ?? null)}
         className="hidden"
       />
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-sm font-bold text-cta">{label}</p>
-          {file ? (
-            <p className="mt-0.5 truncate text-sm text-ink">{file.name}</p>
-          ) : (
-            <p className="mt-0.5 text-xs text-ink/60">{hint}</p>
-          )}
-        </div>
-        <div className="flex shrink-0 items-center gap-3">
-          {file && (
-            <button
-              type="button"
-              disabled={disabled}
-              onClick={() => {
-                if (inputRef.current) inputRef.current.value = "";
-                onSelect(null);
-              }}
-              className="text-sm font-semibold text-badge hover:underline disabled:opacity-60"
-            >
-              {removeLabel}
-            </button>
-          )}
+      {file ? (
+        // Loaded state: solid azure box, big file name (label/hint gone), trash to remove.
+        <div className="flex w-full items-center justify-between gap-4 rounded-card border border-cta bg-soft p-4 text-cta">
           <button
             type="button"
             disabled={disabled}
-            onClick={() => inputRef.current?.click()}
-            className="rounded-[8px] border border-cta px-3 py-1.5 text-sm font-bold text-cta transition-colors hover:bg-cta hover:text-white disabled:opacity-60"
+            onClick={openPicker}
+            className="flex min-w-0 flex-1 items-center gap-2 text-left disabled:opacity-60"
           >
-            {file ? changeLabel : uploadCta}
+            <DocIcon />
+            <span className="min-w-0 truncate text-base font-bold">{file.name}</span>
+          </button>
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={remove}
+            aria-label={removeLabel}
+            className="grid size-9 shrink-0 place-items-center rounded-full text-badge transition hover:bg-white disabled:opacity-60"
+          >
+            <TrashIcon />
           </button>
         </div>
-      </div>
+      ) : (
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={openPicker}
+          className="flex w-full items-center justify-between gap-4 rounded-card border border-dashed border-cta p-4 text-left text-cta disabled:opacity-60"
+        >
+          <span className="flex min-w-0 items-center gap-2">
+            <DocIcon />
+            <span className="min-w-0">
+              <span className="block text-xs font-bold">{label}</span>
+              <span className="block truncate text-xs font-normal">{hint}</span>
+            </span>
+          </span>
+          <UploadIcon />
+        </button>
+      )}
     </div>
   );
 }
 
-/** A submitted-application snapshot, rendered in the confirmation recap. */
-type Recap = {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  birthDate: string;
-  residence: string;
-  domicile: string;
-  cvName: string;
-  coverName: string;
-  reference: string;
-};
-
 /**
- * Multi-step "Lavora con noi" application form. Figma nodes 447:1834 (step 1 —
- * personal data), 447:2014 (step 2 — documents) and 447:2191 (confirmation).
- *
- * Submits multipart/form-data to the `/api/careers/apply` BFF (the public careers
- * API is not defined yet, so that route is a validated stub). React Compiler is
- * ON: every state write here happens in an event handler, never in an effect.
+ * Multi-step "Lavora con noi" application form — pixel-perfect to Figma "Modulo //
+ * Mobile" (447:1834 step 1 — personal data, 447:2014 step 2 — documents, 447:2191 —
+ * "Candidatura inviata" confirmation). Submits multipart/form-data to the
+ * `/api/careers/apply` BFF (validated stub until the careers API exists). React
+ * Compiler is ON: every state write happens in an event handler, never an effect.
  */
 export function CareersApplicationForm({
   lang,
   dict,
+  positionTitle,
 }: {
   lang: Locale;
   dict: Dictionary["careers"];
+  /** When set (apply to a specific role), the title reads "Candidatura per {position} – Step N". */
+  positionTitle?: string;
 }) {
   const t = dict.form;
 
@@ -140,7 +373,6 @@ export function CareersApplicationForm({
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [recap, setRecap] = useState<Recap | null>(null);
 
   function emailValid(value: string): boolean {
     return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value.trim());
@@ -211,18 +443,6 @@ export function CareersApplicationForm({
       const res = await fetch("/api/careers/apply", { method: "POST", body });
       const data = (await res.json()) as { ok?: boolean; reference?: string };
       if (res.ok && data.ok) {
-        setRecap({
-          firstName: firstName.trim(),
-          lastName: lastName.trim(),
-          email: email.trim(),
-          phone: `${phonePrefix} ${phone.trim()}`.trim(),
-          birthDate,
-          residence: residence.trim(),
-          domicile: domicile.trim(),
-          cvName: cvFile.name,
-          coverName: coverFile?.name ?? "",
-          reference: data.reference ?? "",
-        });
         setStep("done");
         return;
       }
@@ -233,287 +453,258 @@ export function CareersApplicationForm({
     setSubmitting(false);
   }
 
-  if (step === "done" && recap) {
-    return <Confirmation lang={lang} dict={dict} recap={recap} />;
+  if (step === "done") {
+    return <Confirmation lang={lang} dict={dict} />;
   }
 
   return (
-    <section id="modulo" className="scroll-mt-8 bg-soft/40 py-12 sm:py-16">
-      <Container className="flex justify-center">
-        <div className="w-full max-w-[560px] rounded-[15px] border border-soft-grey bg-white p-6 sm:p-8">
-          <p className="text-sm font-semibold text-cta">{fill(t.stepOf, { n: step, total: 2 })}</p>
-          <h2 className="mt-1 text-2xl font-extrabold text-ink sm:text-3xl">{t.title}</h2>
-          <p className="text-lg font-bold text-ink">
-            {step === 1 ? t.step1Subtitle : t.step2Subtitle}
-          </p>
-          <p className="mt-2 text-sm text-ink/70">{t.intro}</p>
+    <section id="modulo" className="scroll-mt-8 py-4">
+      <Container className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2 text-ink">
+          <h2 className="text-2xl font-extrabold leading-tight">
+            {positionTitle
+              ? fill(t.headingPosition, { position: positionTitle, n: String(step) })
+              : fill(t.heading, { n: String(step) })}
+            <br />
+            {t.headingBrand}
+          </h2>
+          <p className="text-base">{step === 1 ? t.step1Subtitle : t.step2Subtitle}</p>
+        </div>
 
-          {step === 1 ? (
-            <form onSubmit={handleContinue} className="mt-6 flex flex-col gap-4" noValidate>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Labelled id="cv-first-name" label={t.firstName}>
-                  <input
-                    id="cv-first-name"
-                    type="text"
-                    autoComplete="given-name"
-                    required
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    className={fieldInputClass}
-                  />
-                </Labelled>
-                <Labelled id="cv-last-name" label={t.lastName}>
-                  <input
-                    id="cv-last-name"
-                    type="text"
-                    autoComplete="family-name"
-                    required
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    className={fieldInputClass}
-                  />
-                </Labelled>
-              </div>
+        {step === 1 ? (
+          <form onSubmit={handleContinue} className="flex flex-col gap-4" noValidate>
+            <FloatingField
+              id="cv-first-name"
+              label={t.firstName}
+              type="text"
+              autoComplete="given-name"
+              required
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+            />
+            <FloatingField
+              id="cv-last-name"
+              label={t.lastName}
+              type="text"
+              autoComplete="family-name"
+              required
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+            />
+            <FloatingField
+              id="cv-email"
+              label={t.email}
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
 
-              <Labelled id="cv-email" label={t.email}>
-                <input
-                  id="cv-email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className={fieldInputClass}
-                />
-              </Labelled>
-
-              <div>
-                <label htmlFor="cv-phone" className="mb-1 block text-sm font-bold text-ink">
-                  {t.phone}
-                </label>
-                <div className="flex gap-2">
-                  <div className="w-28 shrink-0">
-                    <select
-                      aria-label={t.phonePrefix}
-                      value={phonePrefix}
-                      onChange={(e) => setPhonePrefix(e.target.value)}
-                      className={fieldInputClass}
-                    >
-                      {PHONE_PREFIXES.map((prefix) => (
-                        <option key={prefix} value={prefix}>
-                          {prefix}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <input
-                    id="cv-phone"
-                    type="tel"
-                    autoComplete="tel-national"
-                    required
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className={`${fieldInputClass} min-w-0 flex-1`}
-                  />
-                </div>
-              </div>
-
-              <Labelled id="cv-birth-date" label={t.birthDate}>
-                <input
-                  id="cv-birth-date"
-                  type="date"
-                  autoComplete="bday"
-                  required
-                  value={birthDate}
-                  onChange={(e) => setBirthDate(e.target.value)}
-                  className={fieldInputClass}
-                />
-              </Labelled>
-
-              <Labelled id="cv-residence" label={t.residence}>
-                <input
-                  id="cv-residence"
-                  type="text"
-                  autoComplete="street-address"
-                  required
-                  value={residence}
-                  onChange={(e) => setResidence(e.target.value)}
-                  className={fieldInputClass}
-                />
-              </Labelled>
-
-              <Labelled id="cv-domicile" label={t.domicile}>
-                <input
-                  id="cv-domicile"
-                  type="text"
-                  value={domicile}
-                  onChange={(e) => setDomicile(e.target.value)}
-                  className={fieldInputClass}
-                />
-              </Labelled>
-
-              {error && <Flash variant="error">{error}</Flash>}
-
-              <SubmitButton>{t.continue}</SubmitButton>
-            </form>
-          ) : (
-            <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4" noValidate>
-              <FileField
-                id="cv-file"
-                label={t.cv}
-                hint={t.cvHint}
-                file={cvFile}
-                onSelect={setCvFile}
-                uploadCta={t.uploadCta}
-                changeLabel={t.changeFile}
-                removeLabel={t.removeFile}
-                disabled={submitting}
-              />
-              <FileField
-                id="cover-file"
-                label={t.coverLetter}
-                hint={t.coverLetterHint}
-                file={coverFile}
-                onSelect={setCoverFile}
-                uploadCta={t.uploadCta}
-                changeLabel={t.changeFile}
-                removeLabel={t.removeFile}
-                disabled={submitting}
-              />
-
-              <p className="text-xs uppercase leading-relaxed text-ink/60">{t.privacyNotice}</p>
-
-              <label className="flex items-start gap-2 text-sm text-ink/80">
-                <input
-                  type="checkbox"
-                  checked={gdpr}
-                  onChange={(e) => setGdpr(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 shrink-0 accent-cta"
-                />
-                <span>{t.gdpr}</span>
+            {/* Phone with country-prefix select (Figma 447:1859) */}
+            <div className="flex w-full flex-col gap-1 rounded-card border border-cta p-2">
+              <label htmlFor="cv-phone" className="text-xs font-bold text-cta">
+                {t.phone}
               </label>
-
-              {error && <Flash variant="error">{error}</Flash>}
-
-              <SubmitButton loading={submitting} loadingLabel={t.submitting}>
-                {t.submit}
-              </SubmitButton>
-              <button
-                type="button"
-                onClick={() => {
-                  setError(null);
-                  setStep(1);
-                }}
-                disabled={submitting}
-                className="text-sm font-semibold text-cta hover:underline disabled:opacity-60"
-              >
-                {t.back}
-              </button>
-            </form>
-          )}
-        </div>
-      </Container>
-    </section>
-  );
-}
-
-/** Label + control wrapper matching the account-form field look. */
-function Labelled({
-  id,
-  label,
-  children,
-}: {
-  id: string;
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <label htmlFor={id} className="mb-1 block text-sm font-bold text-ink">
-        {label}
-      </label>
-      {children}
-    </div>
-  );
-}
-
-/** Confirmation screen — check mark, recap of the submitted data, "about us" card. */
-function Confirmation({
-  lang,
-  dict,
-  recap,
-}: {
-  lang: Locale;
-  dict: Dictionary["careers"];
-  recap: Recap;
-}) {
-  const t = dict.success;
-  const f = dict.form;
-
-  const rows: Array<[string, string]> = [
-    [f.firstName, recap.firstName],
-    [f.lastName, recap.lastName],
-    [f.email, recap.email],
-    [f.phone, recap.phone],
-    [f.birthDate, recap.birthDate],
-    [f.residence, recap.residence],
-    [f.domicile, recap.domicile],
-    [f.cv, recap.cvName],
-    [f.coverLetter, recap.coverName],
-  ];
-
-  return (
-    <section id="modulo" className="scroll-mt-8 bg-soft/40 py-12 sm:py-16">
-      <Container className="flex justify-center">
-        <div className="w-full max-w-[560px]">
-          <div className="flex flex-col items-center gap-3 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-ink text-white">
-              <svg
-                viewBox="0 0 24 24"
-                className="h-7 w-7"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2.5}
-                aria-hidden
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-extrabold text-ink sm:text-3xl">{t.title}</h2>
-            <p className="max-w-[420px] text-base text-ink/80">{t.subtitle}</p>
-          </div>
-
-          <div className="mt-8 rounded-[15px] border border-soft-grey bg-white p-6">
-            <div className="flex items-center justify-between gap-3 border-b border-soft-grey pb-3">
-              <h3 className="font-extrabold text-ink">{t.recapTitle}</h3>
-              {recap.reference && (
-                <span className="text-xs font-semibold text-ink/60">
-                  {t.referenceLabel}: <span className="text-cta">{recap.reference}</span>
+              <div className="flex items-center gap-4">
+                <span className="flex h-11 shrink-0 items-center rounded-badge border border-ink px-2">
+                  <select
+                    aria-label={t.phonePrefix}
+                    value={phonePrefix}
+                    onChange={(e) => setPhonePrefix(e.target.value)}
+                    className="bg-transparent text-base font-medium text-ink outline-none"
+                  >
+                    {PHONE_PREFIXES.map((prefix) => (
+                      <option key={prefix} value={prefix}>
+                        {prefix}
+                      </option>
+                    ))}
+                  </select>
                 </span>
-              )}
+                <input
+                  id="cv-phone"
+                  type="tel"
+                  autoComplete="tel-national"
+                  required
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full flex-1 border-0 bg-transparent p-0 text-base font-medium leading-[22px] text-ink outline-none"
+                />
+              </div>
             </div>
-            <dl className="mt-4 grid gap-x-6 gap-y-3 sm:grid-cols-2">
-              {rows
-                .filter(([, value]) => value)
-                .map(([label, value]) => (
-                  <div key={label} className="min-w-0">
-                    <dt className="text-xs font-semibold uppercase tracking-wide text-ink/50">
-                      {label}
-                    </dt>
-                    <dd className="truncate text-sm font-medium text-ink">{value}</dd>
-                  </div>
-                ))}
-            </dl>
-          </div>
 
-          <div className="mt-6 flex flex-col items-start gap-4 rounded-[15px] bg-soft p-6">
-            <p className="text-base text-ink/90">{t.cardText}</p>
-            <ButtonLink href={`/${lang}/chi-siamo`} size="md">
-              {t.cardCta}
-            </ButtonLink>
-          </div>
+            <BirthDateField
+              id="cv-birth-date"
+              label={t.birthDate}
+              value={birthDate}
+              onChange={setBirthDate}
+              lang={lang}
+              t={t}
+            />
+            <FloatingField
+              id="cv-residence"
+              label={t.residence}
+              type="text"
+              autoComplete="street-address"
+              required
+              value={residence}
+              onChange={(e) => setResidence(e.target.value)}
+            />
+            <FloatingField
+              id="cv-domicile"
+              label={t.domicile}
+              type="text"
+              value={domicile}
+              onChange={(e) => setDomicile(e.target.value)}
+            />
+
+            {error && <Flash variant="error">{error}</Flash>}
+
+            <button type="submit" className={ctaButton}>
+              {t.continue}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+            <FileField
+              id="cv-file"
+              label={t.cv}
+              hint={t.cvHint}
+              file={cvFile}
+              onSelect={setCvFile}
+              removeLabel={t.removeFile}
+              disabled={submitting}
+            />
+            <FileField
+              id="cover-file"
+              label={t.coverLetter}
+              hint={t.coverLetterHint}
+              file={coverFile}
+              onSelect={setCoverFile}
+              removeLabel={t.removeFile}
+              disabled={submitting}
+            />
+
+            <p className="text-xs font-semibold uppercase leading-snug text-ink">{t.privacyNotice}</p>
+
+            <label className="flex cursor-pointer items-center gap-2">
+              <input
+                type="checkbox"
+                checked={gdpr}
+                disabled={submitting}
+                onChange={(e) => setGdpr(e.target.checked)}
+                className="peer sr-only"
+              />
+              <span className="flex size-7 shrink-0 items-center justify-center rounded-card border border-cta text-white peer-checked:bg-cta peer-focus-visible:ring-2 peer-focus-visible:ring-cta/40">
+                {gdpr && (
+                  <svg viewBox="0 0 16 16" className="h-4 w-4" fill="none" aria-hidden>
+                    <path
+                      d="M3.5 8.5l3 3 6-6"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                )}
+              </span>
+              <span className="text-base text-ink">{t.gdpr}</span>
+            </label>
+
+            {error && <Flash variant="error">{error}</Flash>}
+
+            <button type="submit" disabled={submitting} className={ctaButton}>
+              {submitting ? t.submitting : t.submit}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setError(null);
+                setStep(1);
+              }}
+              disabled={submitting}
+              className="text-sm font-semibold text-cta hover:underline disabled:opacity-60"
+            >
+              {t.back}
+            </button>
+          </form>
+        )}
+      </Container>
+    </section>
+  );
+}
+
+/** "Candidatura inviata" — Figma "Modulo // Mobile" success (447:2191). */
+function Confirmation({ lang, dict }: { lang: Locale; dict: Dictionary["careers"] }) {
+  const t = dict.success;
+  return (
+    <section id="modulo" className="scroll-mt-8 py-4">
+      <Container className="flex flex-col items-center gap-4">
+        <span className="flex size-[77px] shrink-0 items-center justify-center rounded-full bg-ink">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" aria-hidden>
+            <path
+              d="M5 12.5l4.5 4.5L19 7"
+              stroke="white"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
+        <h2 className="text-center text-2xl font-extrabold text-ink">{t.title}</h2>
+        <p className="text-center text-base text-ink">{t.subtitle}</p>
+
+        <div className="flex w-full flex-col gap-4 rounded-card bg-soft p-4">
+          <p className="text-sm text-ink">{t.cardText}</p>
+          <a
+            href={`/${lang}/chi-siamo`}
+            className="flex w-full items-center justify-center rounded-card bg-cta py-4 text-base font-bold text-white transition-colors hover:bg-cta-hover active:bg-cta-active"
+          >
+            {t.cardCta}
+          </a>
         </div>
       </Container>
     </section>
+  );
+}
+
+function DocIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden className="shrink-0">
+      <path
+        d="M14 3v4a1 1 0 0 0 1 1h4M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden className="shrink-0">
+      <path
+        d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m2 0v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V7m4 4v6m4-6v6"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function UploadIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden className="shrink-0">
+      <path
+        d="M12 16V4m0 0L8 8m4-4l4 4M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }

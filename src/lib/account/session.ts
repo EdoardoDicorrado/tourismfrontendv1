@@ -20,7 +20,15 @@ import type { AuthResult, Session, SessionRole } from "./types";
  */
 
 /** httpOnly cookie name. */
-export const SESSION_COOKIE = "tm_account";
+const SESSION_COOKIE = "tm_account";
+
+/**
+ * PREVIEW sentinel token (full-stack). A customer session minted by the demo
+ * short-circuit in `POST /api/auth/customer/login` carries this token instead of a
+ * real JWT; the Area Riservata pages detect it to render mock bookings until the
+ * storefront customer-auth + bookings API lands. Remove together with the short-circuit.
+ */
+export const PREVIEW_CUSTOMER_TOKEN = "preview-customer-token";
 
 /** Fallback cookie lifetime in seconds (8h — the agency token TTL) if `expires_at` is unparseable. */
 const MAX_AGE = 60 * 60 * 8;

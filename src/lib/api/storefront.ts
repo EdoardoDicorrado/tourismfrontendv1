@@ -1,7 +1,7 @@
 import "server-only";
 
-import { backendFetch, BackendError } from "@/lib/api/client";
 import type { Locale } from "@/lib/i18n/config";
+import { makeTryFetch, query } from "@/lib/api/storefront-fetch";
 
 /**
  * Typed client for the tatanka3 **storefront** API (`/api/storefront/v1`),
@@ -45,6 +45,8 @@ export interface ApiProductCard {
   reviews_count: number;
   /** `<destination-slug>/<product-slug>` for the detail-page link. */
   detail_path: string;
+  /** Backend-controlled order within its list (lower = first); absent until the offers feed exposes it. */
+  position?: number;
 }
 
 /** Destination detail (`GET /destinations/{slug}`) — adds nested product cards. */
@@ -64,6 +66,8 @@ export interface ApiMonumentCard {
   cover_url: string | null;
   products_count: number;
   coordinates: { latitude: number; longitude: number } | null;
+  /** Backend-controlled carousel order (lower = first); absent until the feed exposes it. */
+  position?: number;
 }
 
 /** Monument detail (`GET /monuments/{slug}`) — adds nested product cards. */
@@ -135,28 +139,8 @@ export interface ApiProductDetail {
   seo: { title: string | null; description: string | null; robots: string; jsonld: Record<string, unknown> };
 }
 
-function query(params: Record<string, string | undefined>): string {
-  const sp = new URLSearchParams();
-  for (const [key, value] of Object.entries(params)) {
-    if (value) sp.set(key, value);
-  }
-  const s = sp.toString();
-  return s ? `?${s}` : "";
-}
-
-/** Run a storefront GET; return `null` on any backend/network failure. */
-async function tryFetch<T>(path: string, locale: Locale): Promise<T | null> {
-  try {
-    return await backendFetch<T>({ path, locale });
-  } catch (err) {
-    // 404 = storefront not deployed on this backend (expected on prod): stay
-    // quiet. Anything else (5xx, network) is worth a single warning.
-    if (!(err instanceof BackendError) || err.status >= 500) {
-      console.warn(`[storefront] ${path} unavailable, falling back to fixtures:`, String(err));
-    }
-    return null;
-  }
-}
+/** Storefront GET → `null` on any backend/network failure; callers fall back to fixtures. */
+const tryFetch = makeTryFetch("storefront");
 
 export function fetchDestinations(locale: Locale): Promise<ApiDestinationCard[] | null> {
   return tryFetch(`/api/storefront/v1/destinations${query({ brand: STOREFRONT_BRAND, lang: locale })}`, locale);

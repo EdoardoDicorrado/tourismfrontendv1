@@ -4,9 +4,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ArticleCard } from "@/components/blog/ArticleCard";
+import { BlogBackButton } from "@/components/blog/BlogBackButton";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { ButtonLink } from "@/components/ui/Button";
+import { CardSlider } from "@/components/ui/CardSlider";
 import { Container } from "@/components/ui/Container";
 import {
   articleSlugs,
@@ -55,13 +57,10 @@ export default async function ArticlePage({ params }: { params: Promise<Params> 
   const related = getRelatedArticles(lang, slug);
   const bookHref = `/${lang}/attivita/${article.bookCitySlug}`;
 
-  const tourCards = [
-    { image: article.tourImages[0], label: fill(dict.blog.viewAllTours, { city: article.bookCity }) },
-    {
-      image: article.tourImages[1],
-      label: fill(dict.blog.discoverExperiences, { city: article.bookCity }),
-    },
-  ];
+  const tourCards = article.tourImages.map((image, i) => ({
+    image,
+    label: article.tourLabels[i],
+  }));
 
   return (
     <>
@@ -69,18 +68,12 @@ export default async function ArticlePage({ params }: { params: Promise<Params> 
       <main className="flex-1">
         <div className="relative h-60 w-full border-b border-soft-grey sm:h-80 lg:h-[420px]">
           <Image src={article.image} alt="" fill priority sizes="100vw" className="object-cover" />
+          <BlogBackButton fallbackHref={`/${lang}/blog`} label={dict.gallery.back} />
         </div>
 
         <Container className="py-10 sm:py-14">
           <article className="mx-auto max-w-[760px]">
-            <Link
-              href={`/${lang}/blog`}
-              className="text-sm font-semibold text-cta hover:underline"
-            >
-              ← {dict.blog.backToBlog}
-            </Link>
-
-            <h1 className="mt-4 text-3xl font-extrabold text-ink sm:text-4xl">{article.title}</h1>
+            <h1 className="text-3xl font-extrabold text-ink sm:text-4xl">{article.title}</h1>
             <p className="mt-3 text-lg font-semibold text-ink/90">{article.excerpt}</p>
 
             <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink/60">
@@ -105,23 +98,23 @@ export default async function ArticlePage({ params }: { params: Promise<Params> 
               {fill(dict.blog.book, { city: article.bookCity })}
             </ButtonLink>
 
-            <div className="mt-8 grid gap-4 sm:grid-cols-2">
+            <div className="mt-8 grid grid-cols-2 gap-4">
               {tourCards.map((card) => (
                 <Link
                   key={card.label}
                   href={bookHref}
-                  className="group overflow-hidden rounded-[10px] bg-soft transition-shadow hover:shadow-md"
+                  className="group overflow-hidden rounded-card bg-soft transition-shadow hover:shadow-md"
                 >
-                  <div className="relative aspect-[16/9] w-full overflow-hidden">
+                  <div className="relative aspect-[120/73] w-full overflow-hidden">
                     <Image
                       src={card.image}
                       alt=""
                       fill
-                      sizes="(max-width: 640px) 90vw, 380px"
+                      sizes="(max-width: 768px) 45vw, 360px"
                       className="object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                   </div>
-                  <p className="p-4 font-extrabold text-ink">{card.label}</p>
+                  <p className="p-4 text-base font-extrabold text-ink">{card.label}</p>
                 </Link>
               ))}
             </div>
@@ -130,17 +123,22 @@ export default async function ArticlePage({ params }: { params: Promise<Params> 
           {related.length > 0 && (
             <div className="mx-auto mt-14 max-w-[1100px]">
               <h2 className="text-2xl font-extrabold text-ink sm:text-3xl">{dict.blog.related}</h2>
-              <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {/* Slider orizzontale come le altre pagine (coerente con "ultimi articoli"). */}
+              <CardSlider
+                label={dict.common.nextCard}
+                className="no-scrollbar -mx-4 mt-8 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-px-4 px-4 pb-1 sm:mx-0 sm:px-0"
+              >
                 {related.map((a) => (
-                  <ArticleCard
-                    key={a.slug}
-                    lang={lang}
-                    article={a}
-                    categoryLabel={labelFor(a.categoryId)}
-                    dict={dict.blog}
-                  />
+                  <li key={a.slug} className="w-[267px] shrink-0 snap-start">
+                    <ArticleCard
+                      lang={lang}
+                      article={a}
+                      categoryLabel={labelFor(a.categoryId)}
+                      dict={dict.blog}
+                    />
+                  </li>
                 ))}
-              </div>
+              </CardSlider>
             </div>
           )}
         </Container>

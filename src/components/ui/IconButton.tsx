@@ -1,13 +1,25 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
-import { cx } from "@/components/ui/buttonVariants";
+import { cx, focusRing } from "@/components/ui/buttonVariants";
 
 /**
- * IconButton — round icon-only button (slider arrows, the 28px glyph buttons,
- * close ×, etc.). `label` is REQUIRED → becomes `aria-label` (icon buttons have
- * no text). Server-safe; the tactile press-scale is `animations`' to add on top.
+ * IconButton — round icon-only button (slider arrows, glyph buttons, close ×,
+ * back, stepper, etc.). THE single source for every icon button: pass a shared
+ * glyph from `@/components/ui/icons` as children. `label` is REQUIRED → becomes
+ * `aria-label`. Server-safe; the tactile press-scale is `animations`' to add on top.
+ *
+ * Variants: `solid`/`soft`/`outline`/`ghost` (on light surfaces), `elevated`
+ * (white + shadow, floats over a photo — e.g. the gallery back button), `on-media`
+ * (translucent white on a dark photo/lightbox), `danger` (destructive, e.g. remove).
  */
-export type IconButtonVariant = "solid" | "soft" | "outline" | "ghost";
+export type IconButtonVariant =
+  | "solid"
+  | "soft"
+  | "outline"
+  | "ghost"
+  | "elevated"
+  | "on-media"
+  | "danger";
 export type IconButtonSize = "sm" | "md" | "lg";
 
 const SIZE: Record<IconButtonSize, string> = {
@@ -18,9 +30,14 @@ const SIZE: Record<IconButtonSize, string> = {
 
 const VARIANT: Record<IconButtonVariant, string> = {
   solid: "bg-cta text-white hover:bg-cta-hover active:bg-cta-active",
-  soft: "bg-soft text-cta hover:bg-cta-hover hover:text-white",
-  outline: "border border-cta text-cta hover:bg-cta-hover hover:text-white",
-  ghost: "text-ink hover:bg-soft",
+  soft: "bg-soft text-cta hover:bg-cta-hover hover:text-white active:bg-cta-active active:text-white",
+  outline:
+    "border border-cta text-cta hover:bg-cta-hover hover:text-white active:bg-cta-active active:text-white",
+  ghost: "text-ink hover:bg-soft active:bg-soft-active",
+  elevated: "bg-white text-ink shadow-card hover:bg-soft",
+  "on-media": "bg-white/10 text-white backdrop-blur-sm hover:bg-white/20",
+  // ds-guard-ignore-next-line: tint rosso tenue per l'icona ghost distruttiva — nessun token -hover si adatta a un bottone solo-icona trasparente
+  danger: "text-badge hover:bg-badge/10 active:bg-badge/15",
 };
 
 export interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -46,8 +63,8 @@ export function IconButton({
       aria-label={label}
       className={cx(
         "inline-flex shrink-0 items-center justify-center rounded-full transition-colors",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta focus-visible:ring-offset-2",
-        "disabled:cursor-not-allowed disabled:opacity-50",
+        focusRing,
+        "disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-50",
         SIZE[size],
         VARIANT[variant],
         className,

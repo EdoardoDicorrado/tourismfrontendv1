@@ -227,7 +227,7 @@ export function FilterBar({
           )}
         >
           {({ close }) => (
-            <div className="flex max-h-[88vh] flex-col rounded-t-[20px] bg-white shadow-2xl">
+            <div className="flex max-h-[88vh] flex-col rounded-t-[20px] bg-white">
               {/* Header */}
               <div className="shrink-0 border-b border-soft-grey px-4 pb-3 pt-3">
                 <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-stroke/60" aria-hidden />

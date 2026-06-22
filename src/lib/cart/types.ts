@@ -42,6 +42,16 @@ export interface CartItem {
   lines: CartLine[];
   /** Line total in the product currency, discount applied. */
   total: number;
+  // --- Product meta for the checkout/confirmation summary chips (Figma 76:14193 /
+  // 85:16877). Carried from the product detail at add-to-cart so the summary shows
+  // real per-tour data instead of preview constants. Optional: older cart entries
+  // (and any non-product line) simply omit them and the UI falls back to preview.
+  /** Product rating shown left of the summary title. */
+  rating?: number;
+  /** Feature chips (Durata · Visita guidata · Lingua) — the option's bullets. */
+  features?: string[];
+  /** Free-cancellation deadline copy for the summary's cancellation box. */
+  cancellationNote?: string;
 }
 
 /** Lead-booker details collected at checkout. */

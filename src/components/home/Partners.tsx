@@ -4,19 +4,8 @@ import Image from "next/image";
 import { useEffect, useRef } from "react";
 
 import { Container } from "@/components/ui/Container";
+import { partners as defaultPartners, type Partner } from "@/data/partners";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
-
-/**
- * Partner logos shown in the "Siamo partner di:" section. Data-driven so real
- * partners can be dropped in later by extending this list — the mobile marquee
- * and the `sm+` grid both render straight from it.
- */
-const partners = [
-  { name: "Musei Vaticani", logo: "/images/partner-musei-vaticani.png", width: 149, height: 81 },
-  { name: "Musei Vaticani", logo: "/images/partner-musei-vaticani.png", width: 149, height: 81 },
-  { name: "Musei Vaticani", logo: "/images/partner-musei-vaticani.png", width: 149, height: 81 },
-  { name: "Musei Vaticani", logo: "/images/partner-musei-vaticani.png", width: 149, height: 81 },
-];
 
 /** Seconds for the marquee to advance by one full set of logos. */
 const LOOP_DURATION = 25;
@@ -31,7 +20,7 @@ const MOMENTUM_MAX = 3500;
 /** If the finger was still for longer than this (ms) before release, no flick. */
 const FLICK_IDLE_MS = 80;
 
-function PartnerLogo({ partner }: { partner: (typeof partners)[number] }) {
+function PartnerLogo({ partner }: { partner: Partner }) {
   return (
     <div className="flex h-[158px] items-center justify-center rounded-[10px] border border-soft bg-white p-4">
       <Image
@@ -56,8 +45,17 @@ function PartnerLogo({ partner }: { partner: (typeof partners)[number] }) {
  * motion` (no auto-scroll; manual drag still allowed).
  *
  * sm+: static grid.
+ *
+ * Logos come from props (sourced via `getHomePartners` in `@/lib/catalog`),
+ * defaulting to the local fixtures so the section renders standalone.
  */
-export function Partners({ dict }: { dict: Dictionary }) {
+export function Partners({
+  dict,
+  partners = defaultPartners,
+}: {
+  dict: Dictionary;
+  partners?: Partner[];
+}) {
   const trackRef = useRef<HTMLUListElement>(null);
 
   useEffect(() => {

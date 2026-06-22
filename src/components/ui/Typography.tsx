@@ -46,14 +46,17 @@ export function Heading({
 export function SectionTitle({
   children,
   as = "h2",
+  size = "xl",
   className,
 }: {
   children: ReactNode;
   as?: ElementType;
+  /** Visual size — resize via this prop, not a conflicting `className` (cx has no merge). */
+  size?: HeadingSize;
   className?: string;
 }) {
   return (
-    <Heading as={as} size="xl" className={className}>
+    <Heading as={as} size={size} className={className}>
       {children}
     </Heading>
   );

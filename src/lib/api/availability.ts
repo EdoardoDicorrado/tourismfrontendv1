@@ -1,8 +1,8 @@
 import "server-only";
 
-import { backendFetch, BackendError } from "@/lib/api/client";
 import { STOREFRONT_BRAND } from "@/lib/api/storefront";
 import type { Locale } from "@/lib/i18n/config";
+import { makeTryFetch, query } from "@/lib/api/storefront-fetch";
 
 /**
  * Storefront **live availability** client (`GET /products/{slug}/availability`).
@@ -32,28 +32,8 @@ export interface ApiAvailabilitySlot {
   currency: string;
 }
 
-function query(params: Record<string, string | undefined>): string {
-  const sp = new URLSearchParams();
-  for (const [key, value] of Object.entries(params)) {
-    if (value) sp.set(key, value);
-  }
-  const s = sp.toString();
-  return s ? `?${s}` : "";
-}
-
-/** Run an availability GET; return `null` on any backend/network failure (incl. 404). */
-async function tryFetch<T>(path: string, locale: Locale): Promise<T | null> {
-  try {
-    return await backendFetch<T>({ path, locale });
-  } catch (err) {
-    // 404 = availability not deployed on this backend (expected on prod today):
-    // stay quiet. Anything else (5xx, network) is worth a single warning.
-    if (!(err instanceof BackendError) || err.status >= 500) {
-      console.warn(`[availability] ${path} unavailable, falling back to placeholder:`, String(err));
-    }
-    return null;
-  }
-}
+/** Availability GET → `null` on any backend/network failure; callers fall back to placeholders. */
+const tryFetch = makeTryFetch("availability");
 
 const BASE = (slug: string) =>
   `/api/storefront/v1/products/${encodeURIComponent(slug)}/availability`;
@@ -85,12 +65,12 @@ function normalizeSlots(raw: unknown): ApiAvailabilitySlot[] | null {
         if (!Number.isNaN(n)) prices[k.toLowerCase()] = n;
       }
     }
-    const available = Number(o.available);
+    const seats = Number.isNaN(Number(o.available)) ? 0 : Number(o.available);
     return {
       slotId: typeof o.slotId === "string" ? o.slotId : "",
       time: typeof o.time === "string" ? o.time : "",
-      available: Number.isNaN(available) ? 0 : available,
-      soldOut: o.soldOut === true || available === 0,
+      available: seats,
+      soldOut: o.soldOut === true || seats === 0,
       prices,
       currency: typeof o.currency === "string" ? o.currency : "EUR",
     } satisfies ApiAvailabilitySlot;

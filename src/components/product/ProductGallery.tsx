@@ -2,13 +2,14 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 import type { GalleryImage } from "@/data/product";
 import { fill } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import { Chevron } from "@/components/selectors/glyphs";
+import { spring } from "@/lib/motion/tokens";
 
 /** "images" glyph for the "Mostra galleria" pill (pure geometry, currentColor). */
 function GalleryGlyph() {
@@ -24,10 +25,11 @@ function GalleryGlyph() {
 
 /**
  * Product image gallery — single large image with overlay back button,
- * "Mostra galleria" pill and pagination dots; the pill opens a grid lightbox.
- * Figma frame "Promo" 64:9937 (mobile, ~361×400, rounded-[15px]).
- * Swipe gesture + slide transition between images are intentionally left to
- * `animations-1` (motion); dot/lightbox switching here is plain state.
+ * "Mostra galleria" pill, plus a thumbnail strip below; the pill opens a grid lightbox.
+ * Figma frame "Promo" 64:9937 (mobile, ~361×400, rounded-panel).
+ * Swipe gesture + slide transition between images (main swiper AND lightbox viewer)
+ * are owned by `animations-1` (motion); the lightbox also auto-scrolls its active
+ * thumbnail into view. Thumbnail/lightbox *layout* + state switching = plain state.
  */
 export function ProductGallery({
   images,
@@ -46,9 +48,12 @@ export function ProductGallery({
   const [direction, setDirection] = useState(0);
   const [lightbox, setLightbox] = useState(false);
   const current = images[active] ?? images[0];
+  // Strip miniature DENTRO la lightbox (overflow-x): la usiamo per auto-scrollare
+  // la miniatura attiva in vista quando cambia immagine (vedi effect più sotto).
+  const lightboxStripRef = useRef<HTMLDivElement>(null);
 
-  // Lo swiper principale mostra al MASSIMO 4 immagini, a loop; la lightbox
-  // ("Mostra galleria") resta l'unico punto in cui si vedono TUTTE.
+  // Lo swiper principale (e la strip miniature sotto) mostrano al MASSIMO 4 immagini;
+  // la lightbox ("Mostra galleria") resta l'unico punto in cui si vedono TUTTE.
   const swiperImages = images.slice(0, 4);
   const swiperCount = swiperImages.length;
 
@@ -62,17 +67,27 @@ export function ProductGallery({
     });
   };
 
-  /** Salta a un indice preciso (dots / lightbox) calcolando la direzione dello slide. */
+  /** Salta a un indice preciso (miniature / lightbox) calcolando la direzione dello slide. */
   const goTo = (i: number) => {
     setDirection(i > active ? 1 : -1);
     setActive(i);
   };
 
-  // Slide orizzontale tra le immagini; reduced-motion → solo dissolvenza (niente x).
+  /** Avanti/indietro su TUTTE le immagini, con wrap — usato dallo swipe della lightbox
+   *  (lo swiper main è capato a 4; la lightbox naviga l'intero set, come le frecce). */
+  const paginateAll = (dir: number) => {
+    if (images.length <= 1) return;
+    setDirection(dir);
+    setActive((a) => (a + dir + images.length) % images.length);
+  };
+
+  // Slide orizzontale NETTO tra le immagini: solo `x`, NIENTE opacity (niente
+  // dissolvenza/ghosting). Le due foto restano piene mentre una esce a sinistra
+  // e l'altra entra da destra. reduced-motion → cambio istantaneo (transition 0).
   const slideVariants = {
-    enter: (dir: number) => ({ x: dir >= 0 ? "100%" : "-100%", opacity: 0 }),
-    center: { x: 0, opacity: 1 },
-    exit: (dir: number) => ({ x: dir >= 0 ? "-100%" : "100%", opacity: 0 }),
+    enter: (dir: number) => ({ x: dir >= 0 ? "100%" : "-100%" }),
+    center: { x: 0 },
+    exit: (dir: number) => ({ x: dir >= 0 ? "-100%" : "100%" }),
   };
   const SWIPE_THRESHOLD = 60; // px di trascinamento oltre cui si cambia foto
 
@@ -98,69 +113,199 @@ export function ProductGallery({
     };
   }, [lightbox]);
 
+  // Mini-galleria della lightbox: tieni la miniatura attiva sempre a vista. Quando
+  // `active` cambia (swipe/frecce/tap) scrolla la strip per centrarla. `block:nearest`
+  // evita scroll verticali della pagina; reduced-motion → salto istantaneo.
+  useEffect(() => {
+    if (!lightbox) return;
+    const el = lightboxStripRef.current?.children[active] as HTMLElement | undefined;
+    el?.scrollIntoView({
+      behavior: reduceMotion ? "auto" : "smooth",
+      inline: "center",
+      block: "nearest",
+    });
+  }, [active, lightbox, reduceMotion]);
+
   return (
-    <div className="relative aspect-[361/400] w-full overflow-hidden rounded-[15px] sm:aspect-[16/9]">
-      {/* Immagine principale: drag orizzontale per scorrere lo swiper (cap 4, loop).
-          Ogni foto è keyata su `active` così entra/esce con slide; reduced-motion → fade. */}
-      <AnimatePresence initial={false} custom={direction}>
-        <motion.div
-          key={active}
-          custom={direction}
-          className="absolute inset-0"
-          variants={slideVariants}
-          initial={reduceMotion ? { opacity: 0 } : "enter"}
-          animate={reduceMotion ? { opacity: 1 } : "center"}
-          exit={reduceMotion ? { opacity: 0 } : "exit"}
-          transition={
-            reduceMotion
-              ? { duration: 0 }
-              : { x: { type: "spring", stiffness: 320, damping: 34 }, opacity: { duration: 0.2 } }
-          }
-          drag={swiperCount > 1 ? "x" : false}
-          dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={0.6}
-          dragMomentum={false}
-          onDragEnd={(_event, info) => {
-            if (info.offset.x < -SWIPE_THRESHOLD || info.velocity.x < -400) paginate(1);
-            else if (info.offset.x > SWIPE_THRESHOLD || info.velocity.x > 400) paginate(-1);
-          }}
-        >
-          <Image
-            src={current.src}
-            alt={current.alt}
-            fill
-            priority
-            draggable={false}
-            sizes="(max-width: 1024px) 100vw, 800px"
-            className="select-none object-cover"
-          />
-        </motion.div>
-      </AnimatePresence>
+    <div className="w-full">
+      <div className="relative aspect-[361/400] w-full overflow-hidden rounded-panel sm:aspect-[16/9]">
+        {/* Immagine principale: drag orizzontale per scorrere lo swiper (cap 4, loop).
+            Ogni foto è keyata su `active` così entra/esce con slide netto (solo x, no fade);
+            reduced-motion → cambio istantaneo. */}
+        <AnimatePresence initial={false} custom={direction}>
+          <motion.div
+            key={active}
+            custom={direction}
+            className="absolute inset-0"
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={reduceMotion ? { duration: 0 } : { x: spring }}
+            drag={swiperCount > 1 ? "x" : false}
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.6}
+            dragMomentum={false}
+            onDragEnd={(_event, info) => {
+              if (info.offset.x < -SWIPE_THRESHOLD || info.velocity.x < -400) paginate(1);
+              else if (info.offset.x > SWIPE_THRESHOLD || info.velocity.x > 400) paginate(-1);
+            }}
+          >
+            <Image
+              src={current.src}
+              alt={current.alt}
+              fill
+              priority
+              draggable={false}
+              sizes="(max-width: 1024px) 100vw, 800px"
+              className="select-none object-cover"
+            />
+          </motion.div>
+        </AnimatePresence>
 
-      {/* Top overlay: back button (left) + "Mostra galleria" pill (right) */}
-      <div className="absolute inset-x-4 top-4 flex items-start justify-between gap-3">
-        <button
-          type="button"
-          onClick={goBack}
-          aria-label={dict.gallery.back}
-          className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-ink shadow-md transition hover:bg-white/90 active:scale-95"
-        >
-          <Chevron dir="left" />
-        </button>
+        {/* Top overlay: back button (left) + "Mostra galleria" pill (right) */}
+        <div className="absolute inset-x-4 top-4 flex items-start justify-between gap-3">
+          <button
+            type="button"
+            onClick={goBack}
+            aria-label={dict.gallery.back}
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-ink shadow-md transition hover:bg-white/90 active:scale-95"
+          >
+            <Chevron dir="left" />
+          </button>
 
-        <button
-          type="button"
-          onClick={() => setLightbox(true)}
-          className="flex items-center gap-2 rounded-[5px] border border-white bg-black/10 px-2 py-2 text-sm font-extrabold text-white backdrop-blur-sm transition hover:bg-black/25 active:scale-95"
-        >
-          <GalleryGlyph />
-          {dict.gallery.showGallery}
-        </button>
+          <button
+            type="button"
+            onClick={() => setLightbox(true)}
+            className="flex items-center gap-2 rounded-badge border border-white bg-black/10 px-2 py-2 text-sm font-extrabold text-white backdrop-blur-sm transition hover:bg-black/25 active:scale-95"
+          >
+            <GalleryGlyph />
+            {dict.gallery.showGallery}
+          </button>
+        </div>
+
+        {/* "Mostra galleria" lightbox — full-screen VIEWER: immagine grande centrale
+            (object-contain) con frecce prev/next + mini-galleria scrollabile sotto.
+            Navigazione/layout = qui (stato). ZOOM (pinch/double-tap/pan), swipe e
+            auto-scroll-into-view della miniatura attiva = gesture/motion → animations-1. */}
+        {lightbox && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={dict.gallery.showGallery}
+            className="fixed inset-0 z-[120] flex flex-col bg-black/95"
+          >
+            <div className="flex items-center justify-between px-4 py-3">
+              <span className="text-sm font-bold text-white">
+                {active + 1} / {images.length}
+              </span>
+              <button
+                type="button"
+                onClick={() => setLightbox(false)}
+                aria-label={dict.gallery.close}
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20 active:scale-95"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+                  <path d="M2 2l12 12M14 2L2 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Immagine grande centrale + frecce. Drag orizzontale per scorrere TUTTE
+                le immagini (swipe), con lo stesso slide netto dello swiper principale;
+                reduced-motion → cambio istantaneo. (Zoom pinch/double-tap = TODO motion.) */}
+            <div className="relative flex-1 overflow-hidden">
+              <AnimatePresence initial={false} custom={direction}>
+                <motion.div
+                  key={active}
+                  custom={direction}
+                  className="absolute inset-0"
+                  variants={slideVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={reduceMotion ? { duration: 0 } : { x: spring }}
+                  drag={images.length > 1 ? "x" : false}
+                  dragConstraints={{ left: 0, right: 0 }}
+                  dragElastic={0.6}
+                  dragMomentum={false}
+                  onDragEnd={(_event, info) => {
+                    if (info.offset.x < -SWIPE_THRESHOLD || info.velocity.x < -400) paginateAll(1);
+                    else if (info.offset.x > SWIPE_THRESHOLD || info.velocity.x > 400) paginateAll(-1);
+                  }}
+                >
+                  <Image
+                    src={current.src}
+                    alt={current.alt}
+                    fill
+                    draggable={false}
+                    sizes="100vw"
+                    className="select-none object-contain"
+                  />
+                </motion.div>
+              </AnimatePresence>
+
+              {images.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => goTo((active - 1 + images.length) % images.length)}
+                    aria-label={fill(dict.gallery.showImage, {
+                      n: String(((active - 1 + images.length) % images.length) + 1),
+                    })}
+                    className="absolute left-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition hover:bg-white/20 active:scale-95"
+                  >
+                    <Chevron dir="left" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => goTo((active + 1) % images.length)}
+                    aria-label={fill(dict.gallery.showImage, {
+                      n: String(((active + 1) % images.length) + 1),
+                    })}
+                    className="absolute right-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition hover:bg-white/20 active:scale-95"
+                  >
+                    <Chevron dir="right" />
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* Mini-galleria: strip orizzontale di TUTTE le immagini. Tap → goTo(i) (resta
+                nel viewer, non chiude). Attiva = ring-cta. La miniatura attiva viene
+                auto-scrollata in vista (effect su `active`) ad ogni cambio immagine. */}
+            {images.length > 1 && (
+              <div ref={lightboxStripRef} className="flex gap-2 overflow-x-auto px-4 py-3">
+                {images.map((img, i) => (
+                  <button
+                    key={img.src + i}
+                    type="button"
+                    onClick={() => goTo(i)}
+                    aria-label={fill(dict.gallery.showImage, { n: String(i + 1) })}
+                    aria-pressed={i === active}
+                    className={`relative aspect-[4/3] h-16 shrink-0 overflow-hidden rounded-card ring-2 transition ${
+                      i === active ? "ring-cta" : "ring-transparent hover:ring-white/60"
+                    }`}
+                  >
+                    <Image src={img.src} alt={img.alt} fill sizes="120px" className="select-none object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Pagination dots — limitati allo swiper (max 4), sincronizzati con l'indice. */}
+      {/* Thumbnail strip — sotto l'immagine grande, mirror dello swiper (cap 4).
+          Tap su una miniatura → goTo(i); la miniatura attiva è marcata con ring-cta
+          (stesso pattern della lightbox). SOSTITUISCE i pagination dots: la strip
+          indica già posizione + contenuto. Divergenza voluta dal Figma 64:9937 (che
+          mostra i dots) — feature richiesta da animations-1.
+          FISSA: 4 miniature flex-1 entrano tutte nella riga → MAI scroll, niente
+          auto-scroll-into-view. Indici 0..3 (swiperImages) così goTo(i) resta valido;
+          le foto oltre il cap-4 restano visibili solo nella lightbox. */}
       {swiperCount > 1 && (
-        <div className="absolute inset-x-0 bottom-4 flex items-center justify-center gap-1.5">
+        <div className="mt-2 flex gap-2">
           {swiperImages.map((img, i) => (
             <button
               key={img.src + i}
@@ -168,56 +313,20 @@ export function ProductGallery({
               onClick={() => goTo(i)}
               aria-label={fill(dict.gallery.showImage, { n: String(i + 1) })}
               aria-pressed={i === active}
-              className={`rounded-full transition-all ${
-                i === active ? "h-2.5 w-2.5 bg-white" : "h-2 w-2 bg-white/50 hover:bg-white/80"
+              className={`relative aspect-[4/3] flex-1 overflow-hidden rounded-card ring-2 transition ${
+                i === active ? "ring-cta" : "ring-transparent hover:ring-ink/20"
               }`}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* "Mostra galleria" lightbox — static grid of all images (no motion). */}
-      {lightbox && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label={dict.gallery.showGallery}
-          className="fixed inset-0 z-[120] flex flex-col bg-black/95"
-        >
-          <div className="flex items-center justify-between px-4 py-3">
-            <span className="text-sm font-bold text-white">
-              {active + 1} / {images.length}
-            </span>
-            <button
-              type="button"
-              onClick={() => setLightbox(false)}
-              aria-label={dict.gallery.close}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20 active:scale-95"
             >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
-                <path d="M2 2l12 12M14 2L2 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
+              <Image
+                src={img.src}
+                alt={img.alt}
+                fill
+                draggable={false}
+                sizes="25vw"
+                className="select-none object-cover"
+              />
             </button>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 overflow-y-auto px-4 pb-8">
-            {images.map((img, i) => (
-              <button
-                key={img.src + i}
-                type="button"
-                onClick={() => {
-                  goTo(i);
-                  setLightbox(false);
-                }}
-                aria-label={fill(dict.gallery.showImage, { n: String(i + 1) })}
-                className={`relative aspect-[4/3] overflow-hidden rounded-[10px] ring-2 transition ${
-                  i === active ? "ring-cta" : "ring-transparent hover:ring-white/60"
-                }`}
-              >
-                <Image src={img.src} alt={img.alt} fill sizes="50vw" className="object-cover" />
-              </button>
-            ))}
-          </div>
+          ))}
         </div>
       )}
     </div>

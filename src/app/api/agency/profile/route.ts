@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getAgencyProfile, updateAgencyProfile } from "@/lib/account/client";
 import { getSession } from "@/lib/account/session";
 import type { AgencyProfilePatch } from "@/lib/account/types";
+import { isEmail } from "@/lib/validation";
 
 /**
  * Agency profile BFF — read / update the logged-in agency's profile.
@@ -100,7 +101,7 @@ export async function PATCH(request: NextRequest) {
 
   // Validate the contact email if it was provided.
   const email = patch.user?.email;
-  if (typeof email === "string" && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+  if (typeof email === "string" && !isEmail(email)) {
     return NextResponse.json({ ok: false, error: "invalid_email" }, { status: 422 });
   }
 

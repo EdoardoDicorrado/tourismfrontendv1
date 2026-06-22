@@ -1,6 +1,6 @@
 import type { InputHTMLAttributes, ReactNode } from "react";
 
-import { cx } from "@/components/ui/buttonVariants";
+import { cx, focusRing } from "@/components/ui/buttonVariants";
 
 /**
  * Checkbox — native input (accessible, form-native) styled with the CTA accent.
@@ -16,8 +16,8 @@ export interface CheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement
 
 const boxClass =
   "size-5 shrink-0 rounded-badge border border-stroke accent-cta " +
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta focus-visible:ring-offset-2 " +
-  "disabled:cursor-not-allowed disabled:opacity-50";
+  focusRing +
+  " disabled:cursor-not-allowed disabled:opacity-50";
 
 export function Checkbox({ label, hint, invalid, className, id, ...props }: CheckboxProps) {
   const input = (
@@ -25,13 +25,19 @@ export function Checkbox({ label, hint, invalid, className, id, ...props }: Chec
       id={id}
       type="checkbox"
       aria-invalid={invalid || undefined}
-      className={cx(boxClass, invalid && "border-badge", !label && className)}
+      className={cx(boxClass, invalid && "ring-2 ring-badge ring-offset-1", !label && className)}
       {...props}
     />
   );
   if (!label) return input;
   return (
-    <label htmlFor={id} className={cx("flex cursor-pointer items-start gap-2", className)}>
+    <label
+      htmlFor={id}
+      className={cx(
+        "flex min-h-11 cursor-pointer items-center gap-2 has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50",
+        className,
+      )}
+    >
       {input}
       <span className="text-sm text-ink">
         <span className="font-medium">{label}</span>

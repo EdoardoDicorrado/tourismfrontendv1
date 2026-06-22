@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { requestPasswordReset, resetPassword } from "@/lib/account/client";
 import { isLocale, type Locale } from "@/lib/i18n/config";
+import { isEmail, isNonEmptyString } from "@/lib/validation";
 
 /**
  * Password recovery BFF (agency + customer). Two actions on one route, discriminated by
@@ -18,12 +19,6 @@ import { isLocale, type Locale } from "@/lib/i18n/config";
  */
 
 export const dynamic = "force-dynamic";
-
-const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
-
-function isNonEmptyString(value: unknown): value is string {
-  return typeof value === "string" && value.trim().length > 0;
-}
 
 export async function POST(request: NextRequest) {
   let body: unknown;
@@ -45,7 +40,7 @@ export async function POST(request: NextRequest) {
     typeof data.locale === "string" && isLocale(data.locale) ? data.locale : undefined;
 
   if (data.action === "forgot") {
-    if (!isNonEmptyString(data.email) || !EMAIL_RE.test(data.email)) {
+    if (!isNonEmptyString(data.email) || !isEmail(data.email)) {
       return NextResponse.json({ ok: false, error: "invalid_email" }, { status: 400 });
     }
     // Anti-enumeration: never reveal whether the email is known.
@@ -56,7 +51,7 @@ export async function POST(request: NextRequest) {
   if (data.action === "reset") {
     // The Laravel broker keys on email + token, so both come back in the reset
     // link (`?token=…&email=…`) and must be replayed here.
-    if (!isNonEmptyString(data.email) || !EMAIL_RE.test(data.email)) {
+    if (!isNonEmptyString(data.email) || !isEmail(data.email)) {
       return NextResponse.json({ ok: false, error: "invalid_email" }, { status: 400 });
     }
     if (!isNonEmptyString(data.token)) {

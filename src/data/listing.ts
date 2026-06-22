@@ -133,9 +133,6 @@ const cardAvatars = [
   "/images/avatar-review-3.png",
 ];
 
-/** Total result count shown in the grid heading ("28 Tour trovati"). */
-export const totalTours = 28;
-
 export const listingProducts: Product[] = [
   {
     id: "musei-vaticani-storia-papa",

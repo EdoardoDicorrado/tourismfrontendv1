@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 
-import { ButtonLink } from "@/components/ui/Button";
+import { useFocusTrap } from "@/components/ui/useFocusTrap";
+import { Button, ButtonLink } from "@/components/ui/Button";
 import { OrderItems } from "@/components/cart/OrderItems";
+import { emitOpenSearch } from "@/lib/search/searchSignal";
 import { useCart } from "@/lib/cart/CartContext";
 import { formatMoney } from "@/lib/format";
 import type { Locale } from "@/lib/i18n/config";
@@ -18,27 +20,11 @@ import type { Dictionary } from "@/lib/i18n/dictionaries";
  */
 export function CartDrawer({ lang, dict }: { lang: Locale; dict: Dictionary }) {
   const { items, hydrated, total, removeItem, open, closeCart } = useCart();
-  const closeRef = useRef<HTMLButtonElement>(null);
+  const asideRef = useRef<HTMLElement>(null);
   const reduceMotion = useReducedMotion();
 
-  // While open: lock body scroll, close on Esc, focus the close button, and
-  // restore focus to the trigger on close.
-  useEffect(() => {
-    if (!open) return;
-    const prevFocused = document.activeElement;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    closeRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeCart();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => {
-      document.body.style.overflow = prevOverflow;
-      window.removeEventListener("keydown", onKey);
-      if (prevFocused instanceof HTMLElement) prevFocused.focus();
-    };
-  }, [open, closeCart]);
+  // Scroll-lock + Esc + focus move-in/restore + Tab trap, all from the shared hook.
+  useFocusTrap(open, asideRef, closeCart);
 
   return (
     <div className={`fixed inset-0 z-[100] ${open ? "" : "pointer-events-none"}`} inert={!open}>
@@ -58,9 +44,11 @@ export function CartDrawer({ lang, dict }: { lang: Locale; dict: Dictionary }) {
           (lascia 1/4 di backdrop). Tween con curva da drawer per una slide netta.
           Reduced-motion → snap istantaneo. */}
       <motion.aside
+        ref={asideRef}
         role="dialog"
         aria-modal="true"
         aria-label={dict.cart.title}
+        tabIndex={-1}
         className="absolute right-0 top-0 flex h-full w-[90%] max-w-[520px] flex-col bg-white shadow-2xl"
         initial={false}
         animate={{ x: open ? "0%" : "100%" }}
@@ -76,7 +64,6 @@ export function CartDrawer({ lang, dict }: { lang: Locale; dict: Dictionary }) {
             )}
           </h2>
           <button
-            ref={closeRef}
             type="button"
             onClick={closeCart}
             aria-label={dict.cart.close}
@@ -98,9 +85,16 @@ export function CartDrawer({ lang, dict }: { lang: Locale; dict: Dictionary }) {
         ) : items.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
             <p className="text-ink/70">{dict.cart.empty}</p>
-            <ButtonLink href={`/${lang}/attivita/roma`} onClick={closeCart} size="md">
+            <Button
+              type="button"
+              onClick={() => {
+                closeCart();
+                emitOpenSearch();
+              }}
+              size="md"
+            >
               {dict.cart.emptyCta}
-            </ButtonLink>
+            </Button>
           </div>
         ) : (
           <>

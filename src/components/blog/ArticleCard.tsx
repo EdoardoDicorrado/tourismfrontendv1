@@ -23,9 +23,9 @@ export function ArticleCard({
   return (
     <Link
       href={`/${lang}/blog/${article.slug}`}
-      className="group flex flex-col overflow-hidden rounded-[10px] bg-soft transition-shadow hover:shadow-md"
+      className="group flex h-full flex-col overflow-hidden rounded-card bg-soft transition-shadow hover:shadow-md"
     >
-      <div className="relative aspect-[16/10] w-full overflow-hidden">
+      <div className="relative aspect-[2/1] w-full overflow-hidden">
         <Image
           src={article.image}
           alt=""

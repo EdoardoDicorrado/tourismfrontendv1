@@ -5,7 +5,7 @@ import { ButtonLink } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { ReviewsInfoTooltip } from "@/components/home/ReviewsInfoTooltip";
 import { Stars } from "@/components/ui/Stars";
-import { reviews, reviewsSummary } from "@/data/home";
+import { reviews as defaultReviews, reviewsSummary, type Review } from "@/data/home";
 import { fill, type Locale } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
@@ -23,14 +23,17 @@ export function Reviews({
   dict,
   title,
   cta,
+  reviews = defaultReviews,
 }: {
   lang: Locale;
   dict: Dictionary;
   title?: string;
   cta?: string;
+  /** Which reviews to show, in order (sourced via `getHomeReviews`). Defaults to fixtures. */
+  reviews?: Review[];
 }) {
   return (
-    <section className="py-3 sm:py-12">
+    <section className="py-4 sm:py-12">
       <Container>
         {/* Info "i" sits to the RIGHT of the heading as a click tooltip
             (intentional divergence from Figma 1:1184, which has it on the left). */}

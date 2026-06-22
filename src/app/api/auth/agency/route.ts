@@ -4,6 +4,7 @@ import { agencyLogin } from "@/lib/account/client";
 import { setSession } from "@/lib/account/session";
 import { BackendError } from "@/lib/api/client";
 import { isLocale, type Locale } from "@/lib/i18n/config";
+import { isNonEmptyString } from "@/lib/validation";
 
 /**
  * Agency login BFF (email + password).
@@ -20,10 +21,6 @@ import { isLocale, type Locale } from "@/lib/i18n/config";
  */
 
 export const dynamic = "force-dynamic";
-
-function isNonEmptyString(value: unknown): value is string {
-  return typeof value === "string" && value.trim().length > 0;
-}
 
 export async function POST(request: NextRequest) {
   let body: unknown;
@@ -42,6 +39,27 @@ export async function POST(request: NextRequest) {
   }
   const locale: Locale | undefined =
     typeof data.locale === "string" && isLocale(data.locale) ? data.locale : undefined;
+
+  // PREVIEW (ui-ux): demo agency login. `test@test.it` / `test` signs in as a mock
+  // agency so the agency storefront experience can be shown end-to-end before the
+  // storefront auth API lands. TODO(full-stack): remove once /auth/agency is real.
+  if (data.email.trim().toLowerCase() === "test@test.it" && data.password === "test") {
+    await setSession({
+      token: "preview-agency-token",
+      token_type: "Bearer",
+      expires_at: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
+      role: "agency",
+      scope: { agency_id: "preview-agency" },
+      agency: {
+        id: "preview-agency",
+        code: "AG-DEMO",
+        legal_name: "Agenzia Demo",
+        display_name: "Agenzia Demo",
+      },
+      user: { name: "Agenzia Demo", email: "test@test.it", locale: locale ?? "it" },
+    });
+    return NextResponse.json({ ok: true, role: "agency" });
+  }
 
   try {
     const result = await agencyLogin(data.email, data.password, locale);

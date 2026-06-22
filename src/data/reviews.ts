@@ -18,8 +18,8 @@ export interface PageReview {
   rating: number;
   /** Full review text, shown expanded. */
   text: string;
-  /** Source platform — drives the brand icon (only Google for now). */
-  source: "google";
+  /** Source platform — drives the brand badge (Google icon / Tripadvisor / on-platform). */
+  source: "google" | "tripadvisor" | "platform";
 }
 
 export const pageReviews: PageReview[] = [
@@ -112,5 +112,68 @@ export const pageReviews: PageReview[] = [
     rating: 5,
     source: "google",
     text: "Tour perfetto sotto ogni aspetto. Puntualità, professionalità e tanta passione. La guida ci ha fatto rivivere la Roma antica come se fossimo lì duemila anni fa. Esperienza che vale ogni euro speso, la consiglio a tutti.",
+  },
+];
+
+/**
+ * PLACEHOLDER (ui-ux): recensioni extra mostrate IN FONDO alla pagina, raccolte da
+ * più fonti (Google, Tripadvisor, in piattaforma). Numero e contenuti DA DECIDERE
+ * con Edoardo — qui un campione per fonte per validare il layout. Quando arriva
+ * l'API, sostituire con i dati reali per piattaforma.
+ */
+export const morePlatformReviews: PageReview[] = [
+  {
+    id: "mp-g1",
+    author: "Elena Costa",
+    tour: "Colosseo e Foro Romano: tour guidato",
+    publishedAt: "2026-05-22",
+    rating: 5,
+    source: "google",
+    text: "Prenotato dal cellulare in due minuti, conferma immediata. Guida puntuale e molto preparata. Esperienza top, la rifaremo sicuramente al prossimo viaggio a Roma.",
+  },
+  {
+    id: "mp-g2",
+    author: "Marta Bruno",
+    tour: "Musei Vaticani e Cappella Sistina",
+    publishedAt: "2026-04-18",
+    rating: 4,
+    source: "google",
+    text: "Tour ben organizzato e salta-fila davvero comodo. Solo un po' affollato nelle sale centrali, ma la guida è riuscita comunque a tenere il gruppo unito e attento.",
+  },
+  {
+    id: "mp-t1",
+    author: "Paolo Ferrari",
+    tour: "Tour serale del Colosseo by night",
+    publishedAt: "2026-05-05",
+    rating: 5,
+    source: "tripadvisor",
+    text: "Una delle esperienze più belle della nostra vacanza. Il Colosseo di sera è spettacolare e la guida ci ha tenuti incollati con storie e curiosità. Consigliatissimo.",
+  },
+  {
+    id: "mp-t2",
+    author: "Federica Riva",
+    tour: "Galleria Borghese: visita guidata salta fila",
+    publishedAt: "2026-03-29",
+    rating: 5,
+    source: "tripadvisor",
+    text: "Organizzazione impeccabile e guida appassionata di Bernini e Caravaggio. Tutto puntuale, prenotazione chiara e nessuna sorpresa sul prezzo. Cinque stelle meritate.",
+  },
+  {
+    id: "mp-p1",
+    author: "Stefano De Luca",
+    tour: "Colosseo, Arena e Sotterranei: tour esclusivo",
+    publishedAt: "2026-04-24",
+    rating: 5,
+    source: "platform",
+    text: "Accesso ai sotterranei davvero emozionante e gruppo piccolo. Supporto in chat rapidissimo quando ho dovuto spostare la data. Servizio di qualità dall'inizio alla fine.",
+  },
+  {
+    id: "mp-p2",
+    author: "Alessia Moretti",
+    tour: "Firenze: Uffizi e centro storico",
+    publishedAt: "2026-02-28",
+    rating: 4,
+    source: "platform",
+    text: "Bella giornata agli Uffizi con una guida competente e gentile. Avrei voluto un po' più di tempo libero alla fine, ma nel complesso un'esperienza che consiglio.",
   },
 ];

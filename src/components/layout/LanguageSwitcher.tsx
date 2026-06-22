@@ -82,7 +82,7 @@ export function LanguageSwitcher({
               alt=""
               width={16}
               height={10}
-              className={open ? "rotate-180 transition-transform" : "transition-transform"}
+              className={`transition-transform ${open ? "rotate-180" : ""}`}
             />
           </button>
         )

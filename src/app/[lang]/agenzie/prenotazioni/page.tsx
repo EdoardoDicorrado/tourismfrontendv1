@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { AccountLayout } from "@/components/account/AccountLayout";
 import { BookingList } from "@/components/account/bookings/BookingList";
-import { getBookings } from "@/lib/account/client";
+import { getAgencyBookingsMock } from "@/lib/account/mockBookings";
 import { requireRole } from "@/lib/account/session";
 import type { BookingTab } from "@/lib/account/types";
 import { isLocale } from "@/lib/i18n/config";
@@ -63,7 +63,8 @@ export default async function AgencyBookingsPage({
   const q = first(sp.q).trim();
   const page = parsePage(first(sp.page));
 
-  const result = await getBookings({ token: session.token, tab, q, page });
+  // PREVIEW: fake agency bookings (the storefront API isn't wired yet — see CLAUDE.md).
+  const result = getAgencyBookingsMock({ tab, q, page });
 
   return (
     <AccountLayout lang={lang} dict={dict} session={session} active="bookings">

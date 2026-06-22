@@ -27,8 +27,10 @@ export function AgencyLoginForm({
   dict: Dictionary["account"]["agencyLogin"];
 }) {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  // PREVIEW (ui-ux): pre-filled demo credentials the BFF accepts (test@test.it / test)
+  // so the agency experience can be shown end-to-end before the real auth API lands.
+  const [email, setEmail] = useState("test@test.it");
+  const [password, setPassword] = useState("test");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<LoginError>(null);
 
@@ -45,9 +47,10 @@ export function AgencyLoginForm({
       });
       const data = (await res.json()) as { ok?: boolean; error?: string };
       if (res.ok && data.ok) {
-        // Cookie already set by the BFF — navigate to the agency bookings list.
+        // Cookie already set by the BFF — land on the storefront, which the agency
+        // browses like a normal user with the "agency discount active" banner on top.
         // Don't reset `submitting`: we're leaving this view.
-        router.push(`/${lang}/agenzie/prenotazioni`);
+        router.push(`/${lang}`);
         router.refresh();
         return;
       }
