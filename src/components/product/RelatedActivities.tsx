@@ -32,7 +32,7 @@ export function RelatedActivities({
             sm (mx-0/px-0) but still flex/overflow — never a static grid. */}
         <CardSlider
           label={dict.common.nextCard}
-          className="no-scrollbar -mx-4 mt-6 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-px-4 px-4 pb-1 sm:mx-0 sm:px-0"
+          className="no-scrollbar -mx-4 mt-6 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-px-4 px-4 pb-1 sm:mx-0 sm:px-0 sm:scroll-px-0"
         >
           {related.map((p) => (
             <li key={p.id} className="w-[267px] shrink-0 snap-start">

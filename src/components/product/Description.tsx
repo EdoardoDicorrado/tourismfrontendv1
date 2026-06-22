@@ -20,7 +20,7 @@ export function Description({ text, dict }: { text: string; dict: Dictionary }) 
       divided={false}
       className="border-y border-cta"
       summary={
-        <h2 className="text-xl font-extrabold text-ink sm:text-2xl">{dict.product.descriptionTitle}</h2>
+        <h2 className="text-xl font-extrabold text-ink sm:text-2xl lg:text-3xl">{dict.product.descriptionTitle}</h2>
       }
     >
       <div className="flex flex-col gap-2">

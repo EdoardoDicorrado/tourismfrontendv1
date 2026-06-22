@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 
 import { PhonePrefixSelect } from "@/components/checkout/CountrySelects";
 import { Button, ButtonLink } from "@/components/ui/Button";
@@ -44,13 +45,13 @@ function Field({
   const filled = value.length > 0;
   return (
     <div
-      className={`group flex w-full flex-col gap-1 rounded-card border p-2 transition-colors focus-within:border-cta ${
+      className={`group flex w-full flex-col gap-1 rounded-card border p-2 transition-colors focus-within:border-cta lg:p-3 ${
         filled ? "border-cta" : "border-ink"
       }`}
     >
       <label
         htmlFor={id}
-        className={`text-xs font-bold transition-colors group-focus-within:text-cta ${
+        className={`text-xs font-bold transition-colors group-focus-within:text-cta lg:text-sm ${
           filled ? "text-cta" : "text-ink"
         }`}
       >
@@ -65,7 +66,7 @@ function Field({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full border-0 bg-transparent p-0 text-base font-medium leading-[22px] text-ink outline-none placeholder:text-ink/40"
+        className="w-full border-0 bg-transparent p-0 text-base font-medium leading-[22px] text-ink outline-none placeholder:text-ink/40 lg:text-lg"
       />
     </div>
   );
@@ -155,155 +156,182 @@ export function AgencyApplyWizard({ lang }: { lang: Locale }) {
   }
 
   return (
-    <div className="mx-auto max-w-[520px]">
-      <h1 className="text-2xl font-extrabold leading-tight text-ink">
+    // Desktop (Figma 605:2800/2939 "Modulo // Desktop"): il modulo si allarga a tutta
+    // la colonna (no cap 520px), titolo grande e form a 2 colonne (campi + immagine).
+    // ds-guard-ignore-next-line: max-w-[520px] = larghezza modulo mobile (grandfathered)
+    <div className="mx-auto max-w-[520px] lg:max-w-none">
+      <h1 className="text-2xl font-extrabold leading-tight text-ink lg:text-[33px] lg:font-bold">{/* ds-guard-ignore: titolo modulo Figma desktop 40px, fuori type-scale */}
         Candidatura – Step {step}
         <br />
         Agenzie di viaggio
       </h1>
-      <p className="mt-2 text-base font-medium text-ink/70">
+      <p className="mt-2 text-base font-medium text-ink/70 lg:text-lg">
         Compila tutti i campi con i dati richiesti.
       </p>
 
       {step === 1 ? (
-        <form onSubmit={submitStep1} className="mt-6 flex flex-col gap-4">
-          <p className="text-base font-bold text-ink">La tua agenzia</p>
-          <Field
-            id="agency-name"
-            label="Nome agenzia"
-            value={agencyName}
-            onChange={setAgencyName}
-            placeholder="Rossi Viaggi"
-            required
-            autoComplete="organization"
-          />
-          <Field
-            id="agency-vat"
-            label="Partita IVA"
-            value={vat}
-            onChange={setVat}
-            placeholder="IT05922611867"
-            required
-          />
-          <Field
-            id="agency-city"
-            label="Città"
-            value={city}
-            onChange={setCity}
-            placeholder="Milano"
-            required
-            autoComplete="address-level2"
-          />
-          <Button type="submit" variant="primary" size="lg" fullWidth className="mt-2">
-            Continua
-          </Button>
+        <form onSubmit={submitStep1} className="mt-6 lg:mt-8 lg:flex lg:items-stretch lg:gap-10">
+          <div className="flex flex-col gap-4 lg:flex-1">
+            <p className="text-base font-bold text-ink lg:text-lg">La tua agenzia</p>
+            <Field
+              id="agency-name"
+              label="Nome agenzia"
+              value={agencyName}
+              onChange={setAgencyName}
+              placeholder="Rossi Viaggi"
+              required
+              autoComplete="organization"
+            />
+            <Field
+              id="agency-vat"
+              label="Partita IVA"
+              value={vat}
+              onChange={setVat}
+              placeholder="IT05922611867"
+              required
+            />
+            <Field
+              id="agency-city"
+              label="Città"
+              value={city}
+              onChange={setCity}
+              placeholder="Milano"
+              required
+              autoComplete="address-level2"
+            />
+            <Button type="submit" variant="primary" size="lg" fullWidth className="mt-2 lg:w-auto lg:self-start">
+              Continua
+            </Button>
+          </div>
+          {/* Immagine decorativa del modulo: solo desktop (Figma 605:2828, rounded-16). */}
+          <div className="relative hidden overflow-hidden rounded-panel lg:block lg:flex-1">
+            <Image
+              src="/images/hero-agenzie-banner.jpg"
+              alt=""
+              fill
+              sizes="(min-width: 1024px) 45vw, 0px"
+              className="object-cover"
+            />
+          </div>
         </form>
       ) : (
-        <form onSubmit={submitStep2} className="mt-6 flex flex-col gap-4">
-          <p className="text-base font-bold text-ink">Il referente</p>
-          <Field
-            id="ref-first"
-            label="Nome"
-            value={firstName}
-            onChange={setFirstName}
-            placeholder="Mario"
-            required
-            autoComplete="given-name"
-          />
-          <Field
-            id="ref-last"
-            label="Cognome"
-            value={lastName}
-            onChange={setLastName}
-            placeholder="Rossi"
-            required
-            autoComplete="family-name"
-          />
+        <form onSubmit={submitStep2} className="mt-6 lg:mt-8 lg:flex lg:items-stretch lg:gap-10">
+          <div className="flex flex-col gap-4 lg:flex-1">
+            <p className="text-base font-bold text-ink lg:text-lg">Il referente</p>
+            <Field
+              id="ref-first"
+              label="Nome"
+              value={firstName}
+              onChange={setFirstName}
+              placeholder="Mario"
+              required
+              autoComplete="given-name"
+            />
+            <Field
+              id="ref-last"
+              label="Cognome"
+              value={lastName}
+              onChange={setLastName}
+              placeholder="Rossi"
+              required
+              autoComplete="family-name"
+            />
 
-          {/* Telefono con prefisso paese (riusa il selettore del checkout) */}
-          <div className="group flex w-full flex-col gap-1 rounded-card border border-ink p-2 transition-colors focus-within:border-cta">
-            <label htmlFor="ref-phone" className="text-xs font-bold text-ink group-focus-within:text-cta">
-              Telefono
-            </label>
-            <div className="flex items-center gap-3">
-              <PhonePrefixSelect
-                value={country}
-                onChange={setCountry}
-                lang={lang}
-                searchPlaceholder="Cerca paese o prefisso"
-                noResults="Nessun risultato"
-              />
-              <input
-                id="ref-phone"
-                type="tel"
-                inputMode="tel"
-                autoComplete="tel"
-                required
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="323 8383023"
-                className="w-full flex-1 border-0 bg-transparent p-0 text-base font-medium leading-[22px] text-ink outline-none placeholder:text-ink/40"
-              />
+            {/* Telefono con prefisso paese (riusa il selettore del checkout) */}
+            <div className="group flex w-full flex-col gap-1 rounded-card border border-ink p-2 transition-colors focus-within:border-cta lg:p-3">
+              <label htmlFor="ref-phone" className="text-xs font-bold text-ink group-focus-within:text-cta lg:text-sm">
+                Telefono
+              </label>
+              <div className="flex items-center gap-3">
+                <PhonePrefixSelect
+                  value={country}
+                  onChange={setCountry}
+                  lang={lang}
+                  searchPlaceholder="Cerca paese o prefisso"
+                  noResults="Nessun risultato"
+                />
+                <input
+                  id="ref-phone"
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  required
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="323 8383023"
+                  className="w-full flex-1 border-0 bg-transparent p-0 text-base font-medium leading-[22px] text-ink outline-none placeholder:text-ink/40 lg:text-lg"
+                />
+              </div>
             </div>
-          </div>
 
-          {/* Messaggio */}
-          <div
-            className={`group flex w-full flex-col gap-1 rounded-card border p-2 transition-colors focus-within:border-cta ${
-              message.length > 0 ? "border-cta" : "border-ink"
-            }`}
-          >
-            <label
-              htmlFor="ref-message"
-              className={`text-xs font-bold transition-colors group-focus-within:text-cta ${
-                message.length > 0 ? "text-cta" : "text-ink"
+            {/* Messaggio */}
+            <div
+              className={`group flex w-full flex-col gap-1 rounded-card border p-2 transition-colors focus-within:border-cta lg:p-3 ${
+                message.length > 0 ? "border-cta" : "border-ink"
               }`}
             >
-              Messaggio
+              <label
+                htmlFor="ref-message"
+                className={`text-xs font-bold transition-colors group-focus-within:text-cta lg:text-sm ${
+                  message.length > 0 ? "text-cta" : "text-ink"
+                }`}
+              >
+                Messaggio
+              </label>
+              <textarea
+                id="ref-message"
+                rows={3}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Raccontaci brevemente la tua agenzia o dici cosa ti aspetti dalla partnership…"
+                className="w-full resize-none border-0 bg-transparent p-0 text-base font-medium leading-[22px] text-ink outline-none placeholder:text-ink/40 lg:text-lg"
+              />
+            </div>
+
+            <p className="text-[11px] font-semibold uppercase leading-snug text-ink/50">
+              {PRIVACY_NOTE}
+            </p>
+
+            <label className="flex cursor-pointer items-start gap-3">
+              <input
+                type="checkbox"
+                required
+                checked={gdpr}
+                onChange={(e) => setGdpr(e.target.checked)}
+                className="peer sr-only"
+              />
+              <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-card border border-cta text-white peer-checked:bg-cta peer-focus-visible:ring-2 peer-focus-visible:ring-cta/40">
+                {gdpr && (
+                  <svg viewBox="0 0 16 16" className="h-4 w-4" fill="none" aria-hidden>
+                    <path
+                      d="M3.5 8.5l3 3 6-6"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                )}
+              </span>
+              <span className="text-sm text-ink">
+                Ho letto e accetto il trattamento dei dati personali (GDPR).
+              </span>
             </label>
-            <textarea
-              id="ref-message"
-              rows={3}
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Raccontaci brevemente la tua agenzia o dici cosa ti aspetti dalla partnership…"
-              className="w-full resize-none border-0 bg-transparent p-0 text-base font-medium leading-[22px] text-ink outline-none placeholder:text-ink/40"
+
+            <Button type="submit" variant="primary" size="lg" fullWidth className="mt-2 lg:w-auto lg:self-start">
+              Invia richiesta
+            </Button>
+          </div>
+          {/* Immagine decorativa del modulo: solo desktop (Figma 605:2828, rounded-16). */}
+          <div className="relative hidden overflow-hidden rounded-panel lg:block lg:flex-1">
+            <Image
+              src="/images/hero-agenzie-banner.jpg"
+              alt=""
+              fill
+              sizes="(min-width: 1024px) 45vw, 0px"
+              className="object-cover"
             />
           </div>
-
-          <p className="text-[11px] font-semibold uppercase leading-snug text-ink/50">
-            {PRIVACY_NOTE}
-          </p>
-
-          <label className="flex cursor-pointer items-start gap-3">
-            <input
-              type="checkbox"
-              required
-              checked={gdpr}
-              onChange={(e) => setGdpr(e.target.checked)}
-              className="peer sr-only"
-            />
-            <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-card border border-cta text-white peer-checked:bg-cta peer-focus-visible:ring-2 peer-focus-visible:ring-cta/40">
-              {gdpr && (
-                <svg viewBox="0 0 16 16" className="h-4 w-4" fill="none" aria-hidden>
-                  <path
-                    d="M3.5 8.5l3 3 6-6"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              )}
-            </span>
-            <span className="text-sm text-ink">
-              Ho letto e accetto il trattamento dei dati personali (GDPR).
-            </span>
-          </label>
-
-          <Button type="submit" variant="primary" size="lg" fullWidth className="mt-2">
-            Invia richiesta
-          </Button>
         </form>
       )}
     </div>

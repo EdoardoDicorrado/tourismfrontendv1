@@ -53,15 +53,31 @@ export const cityListings: Record<string, CityListing> = {
  * varying languages (not all English), so the default view is the full list and
  * the user opts into a language/duration filter explicitly.
  */
+// Quick-filter chips (riga scrollabile). Tutti gli id corrispondono a `Product.tags`
+// reali, così ogni chip filtra davvero. Quelli condivisi con i gruppi avanzati
+// (lingue/durata/ora/offerte) restano in sync con le checkbox del foglio (stesso
+// `active`). La label cade su `dict.filters.facets[id]` e in mancanza su
+// `dict.filters.options[id]` (vedi FilterBar.facetLabel), niente label duplicate.
 export const filterFacets: FilterFacet[] = [
-  { id: "english" },
-  { id: "short" },
-  { id: "italian" },
-  { id: "shuttle" },
   { id: "skip-line" },
   { id: "free-cancellation" },
+  { id: "special-offer" },
+  { id: "short" },
   { id: "half-day" },
   { id: "private" },
+  { id: "shuttle" },
+  { id: "english" },
+  { id: "italian" },
+  { id: "spanish" },
+  { id: "french" },
+  { id: "german" },
+  { id: "chinese" },
+  { id: "japanese" },
+  { id: "morning" },
+  { id: "afternoon" },
+  { id: "evening" },
+  { id: "dur-1-4h" },
+  { id: "dur-4h-1d" },
 ];
 
 export interface FilterOption {
@@ -133,7 +149,7 @@ const cardAvatars = [
   "/images/avatar-review-3.png",
 ];
 
-export const listingProducts: Product[] = [
+const rawListingProducts: Product[] = [
   {
     id: "musei-vaticani-storia-papa",
     city: "roma",
@@ -279,6 +295,31 @@ export const listingProducts: Product[] = [
     currency: "€",
   },
 ];
+
+/**
+ * ISO language per "<lingua>" facet tag → le card listing mostrano le bandierine
+ * (Figma 64:5089 / 221:4158) derivandole dai tag, senza duplicare il dato in ogni
+ * fixture. Coi tour reali `languages` arriva dall'API (vedi `lib/catalog/adapters`).
+ */
+const TAG_TO_LANG: Record<string, string> = {
+  english: "en",
+  italian: "it",
+  spanish: "es",
+  french: "fr",
+  german: "de",
+  portuguese: "pt",
+  russian: "ru",
+};
+
+export const listingProducts: Product[] = rawListingProducts.map((p) => ({
+  ...p,
+  languages:
+    p.languages ??
+    (p.tags ?? []).flatMap((t) => {
+      const iso = TAG_TO_LANG[t];
+      return iso ? [iso] : [];
+    }),
+}));
 
 export const attractions: Attraction[] = [
   {

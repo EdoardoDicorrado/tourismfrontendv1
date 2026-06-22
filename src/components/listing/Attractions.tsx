@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { CardSlider } from "@/components/ui/CardSlider";
 import { Container } from "@/components/ui/Container";
 import type { Locale } from "@/lib/i18n/config";
 import type { Attraction } from "@/data/listing";
@@ -27,33 +28,45 @@ export function Attractions({
   return (
     <section className="py-8 sm:py-12">
       <Container>
-        <h2 className="text-2xl font-extrabold text-ink sm:text-3xl">
+        <h2 className="text-2xl font-extrabold text-ink sm:text-3xl lg:text-3xl">
           {dict.attractions.title}
         </h2>
 
-        <ul className="no-scrollbar -mx-4 mt-6 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-px-4 px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
+        {/* Desktop (Edoardo): le attrazioni RESTANO uno slider con la freccia "next"
+            della home (CardSlider, `desktopArrow`), NON una griglia statica. Mobile
+            congelato: stesse classi base/sm, cambia solo il ramo lg (slider invece di grid). */}
+        <CardSlider
+          label={dict.common.nextCard}
+          desktopArrow
+          className="no-scrollbar -mx-4 mt-6 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-px-4 px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0 lg:flex-nowrap lg:gap-10 lg:overflow-x-auto lg:scroll-px-0"
+        >
           {attractions.map((a) => (
-            <li key={a.slug} className="shrink-0 snap-start">
+            <li key={a.slug} className="shrink-0 snap-start lg:w-[330px]">{/* ds-guard-ignore: card slider attrazione 330px = Figma 221:4839, fuori type-scale */}
               <Link
                 href={`/${lang}/attivita/${citta}/attrazione/${a.slug}`}
-                className="group flex w-[125px] flex-col items-start gap-2 focus-visible:outline-none"
+                className="group flex w-[125px] flex-col items-start gap-2 focus-visible:outline-none lg:w-full lg:gap-6"
               >
-                <div className="relative h-[100px] w-[125px] overflow-hidden rounded-[10px] border border-soft bg-white transition-colors group-hover:border-cta group-focus-visible:border-cta">
+                <div className="relative h-[100px] w-[125px] overflow-hidden rounded-[10px] border border-soft bg-white transition-colors group-hover:border-cta group-focus-visible:border-cta lg:aspect-[330/327] lg:h-auto lg:w-full">
                   <Image
                     src={a.image}
                     alt={a.name}
                     fill
-                    sizes="125px"
+                    sizes="(min-width: 1024px) 25vw, 125px"
                     className="object-cover"
                   />
                 </div>
-                <h3 className="w-full truncate text-base font-bold text-ink transition-colors group-hover:text-cta">
+                <h3 className="w-full truncate text-base font-bold text-ink transition-colors group-hover:text-cta lg:text-xl lg:font-extrabold">
                   {a.name}
                 </h3>
+                {/* Descrizione: solo-desktop (Figma 221:4839). Su mobile la card mostra
+                    solo il nome → resta nascosta, mobile congelato. */}
+                <p className="hidden w-full text-base text-ink/70 lg:line-clamp-3 lg:block">
+                  {a.description}
+                </p>
               </Link>
             </li>
           ))}
-        </ul>
+        </CardSlider>
       </Container>
     </section>
   );

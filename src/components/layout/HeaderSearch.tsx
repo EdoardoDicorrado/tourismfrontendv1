@@ -46,7 +46,7 @@ export function HeaderSearch({ lang, dict, destinations, attractions, products }
         aria-label={dict.search.button}
         className="flex h-11 w-11 items-center justify-center text-cta"
       >
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden className="lg:size-6">
           <circle cx="10.5" cy="10.5" r="7.5" stroke="currentColor" strokeWidth="2.2" />
           <path d="M16 16l5 5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
         </svg>

@@ -25,7 +25,7 @@ export function IncludedList({
       defaultOpen
       divided={false}
       className="border-b border-cta"
-      summary={<h2 className="text-xl font-extrabold text-ink sm:text-2xl">{includedTitle}</h2>}
+      summary={<h2 className="text-xl font-extrabold text-ink sm:text-2xl lg:text-3xl">{includedTitle}</h2>}
     >
       <div className="flex flex-col gap-4">
         <ul className="flex flex-col gap-1">

@@ -59,10 +59,10 @@ export function LanguageSwitcher({
             aria-expanded={open}
             aria-controls={id}
             disabled={isPending}
-            className="flex h-11 w-11 items-center justify-center gap-2 text-cta disabled:opacity-60 sm:w-auto sm:px-1"
+            className="flex h-11 w-11 items-center justify-center gap-2 text-cta disabled:opacity-60 sm:w-auto sm:px-1 lg:gap-2"
           >
-            <Image src="/images/icon-language.svg" alt="" width={24} height={24} unoptimized />
-            <span className="hidden text-sm font-semibold sm:inline">
+            <Image src="/images/icon-language.svg" alt="" width={24} height={24} unoptimized className="lg:size-6" />
+            <span className="hidden text-sm font-semibold sm:inline lg:text-sm">
               {LOCALE_SHORT[current]} / EUR
             </span>
           </button>
@@ -74,9 +74,9 @@ export function LanguageSwitcher({
             aria-expanded={open}
             aria-controls={id}
             disabled={isPending}
-            className="flex w-full items-center justify-between rounded-[10px] bg-white px-4 py-2.5 text-cta disabled:opacity-60"
+            className="flex w-full items-center justify-between rounded-card bg-white px-4 py-2.5 text-cta disabled:opacity-60 lg:p-4"
           >
-            <span className="font-semibold">{LOCALE_LABELS[current]}</span>
+            <span className="font-semibold lg:text-xl">{LOCALE_LABELS[current]}</span>
             <Image
               src="/images/icon-chevron-down.svg"
               alt=""

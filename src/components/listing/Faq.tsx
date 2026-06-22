@@ -23,9 +23,11 @@ export function Faq({ dict }: { dict: Dictionary }) {
   return (
     <section className="py-8 sm:py-12">
       <Container>
-        <h2 className="text-2xl font-bold text-ink sm:text-3xl">{dict.faq.title}</h2>
+        <h2 className="text-2xl font-bold text-ink sm:text-3xl lg:text-[33px]">{dict.faq.title}</h2>{/* ds-guard-ignore: titolo Figma desktop 40px→33 scala 0.83 container 1200 */}
 
-        <div className="mx-auto mt-6 max-w-[860px] divide-y divide-cta border-b border-cta">
+        {/* Desktop (Edoardo): le fisarmoniche riempiono il container (no 860px che
+            le fa sembrare più strette). Mobile/tablet: resta la larghezza di lettura. */}
+        <div className="mx-auto mt-6 max-w-[860px] divide-y divide-cta border-b border-cta lg:max-w-none">
           {faqs.map((f, i) => {
             const isOpen = open === i;
             const panelId = `${baseId}-${i}`;
@@ -38,7 +40,7 @@ export function Faq({ dict }: { dict: Dictionary }) {
                   aria-controls={panelId}
                   className="flex w-full items-center justify-between gap-4 py-5 text-left"
                 >
-                  <span className="text-base font-bold text-ink sm:text-lg">{f.question}</span>
+                  <span className="text-base font-bold text-ink sm:text-lg lg:text-xl">{f.question}</span>
                   <Image
                     src="/images/icon-chevron-faq.svg"
                     alt=""
@@ -60,7 +62,7 @@ export function Faq({ dict }: { dict: Dictionary }) {
                         reduceMotion ? { duration: 0 } : { duration: 0.3, ease: [0.4, 0, 0.2, 1] }
                       }
                     >
-                      <p className="pb-5 text-sm text-ink/80 sm:text-base">{f.answer}</p>
+                      <p className="pb-5 text-sm text-ink/80 sm:text-base lg:text-lg">{f.answer}</p>
                     </motion.div>
                   )}
                 </AnimatePresence>

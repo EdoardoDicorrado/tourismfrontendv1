@@ -16,12 +16,9 @@ export function SupportBanner({ dict }: { dict: Dictionary }) {
   return (
     <section className="border-b border-soft-grey py-3 sm:py-6">
       <Container>
-        <div className="overflow-clip rounded-[10px]">
-          <div className="relative flex h-[214px] items-center justify-center overflow-clip bg-cta">
-            <span
-              className="absolute h-[265px] w-[265px] rounded-full bg-white/10"
-              aria-hidden
-            />
+        <div className="overflow-clip rounded-card lg:flex lg:items-center lg:gap-10 lg:rounded-panel lg:bg-soft">
+          <div className="relative flex h-[214px] items-center justify-center overflow-clip bg-cta lg:h-[350px] lg:w-[418px] lg:shrink-0 lg:bg-transparent">{/* ds-guard-ignore: box illustrazione Figma desktop 418x350, nessun token */}
+            <span aria-hidden className="absolute h-[265px] w-[265px] rounded-full bg-white/10 lg:hidden" />{/* ds-guard-ignore: cerchio decorativo mobile 265px, nessun token */}
             <Image
               src="/images/support-illustration.svg"
               alt=""
@@ -31,14 +28,14 @@ export function SupportBanner({ dict }: { dict: Dictionary }) {
             />
           </div>
 
-          <div className="flex flex-col gap-4 bg-soft p-4">
-            <h2 className="text-2xl font-extrabold text-ink">{dict.support.title}</h2>
-            <p className="text-sm font-medium text-ink">
+          <div className="flex flex-col gap-4 bg-soft p-4 lg:flex-1 lg:bg-transparent lg:p-0">
+            <h2 className="text-2xl font-extrabold text-ink lg:text-3xl lg:font-bold">{dict.support.title}</h2>
+            <p className="text-sm font-medium text-ink lg:text-lg">
               {bodyBefore}
               <strong className="font-extrabold">{dict.support.hours}</strong>
               {bodyAfter}
             </p>
-            <Button type="button" fullWidth className="gap-2.5">
+            <Button type="button" fullWidth className="gap-2.5 lg:w-auto lg:self-start">
               {dict.support.cta}
               <Image src="/images/icon-chat-round-dots.svg" alt="" width={25} height={25} />
             </Button>

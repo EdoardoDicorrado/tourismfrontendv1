@@ -19,26 +19,32 @@ export function WhyWorkWithUs({ dict }: { dict: Dictionary }) {
   const [open, setOpen] = useState(true);
 
   return (
-    <section className="pb-4 pt-8">
-      <Container className="flex flex-col gap-4">
-        <h2 className="text-2xl font-extrabold text-ink">{t.title}</h2>
+    <section className="pb-4 pt-8 lg:py-16">
+      <Container className="flex flex-col gap-4 lg:gap-10">
+        {/* TOP — mobile: titolo, testo, immagine (stack). Desktop (Figma 606:493):
+            2 colonne testo SX / immagine DX, centrate. */}
+        <div className="flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:items-center lg:gap-12">
+          <div className="flex flex-col gap-4 lg:order-1">
+            <h2 className="text-2xl font-extrabold text-ink lg:text-[33px] lg:font-bold">{t.title}</h2>{/* ds-guard-ignore: titolo sezione Figma desktop 40px, fuori type-scale */}
 
-        <div className="flex flex-col gap-4 text-ink">
-          {t.body.map((paragraph, i) => (
-            <p key={paragraph} className={`text-base ${i === 0 ? "font-extrabold" : "font-medium"}`}>
-              {paragraph}
-            </p>
-          ))}
-        </div>
+            <div className="flex flex-col gap-4 text-ink">
+              {t.body.map((paragraph, i) => (
+                <p key={paragraph} className={`text-base ${i === 0 ? "font-extrabold" : "font-medium"} lg:text-lg`}>
+                  {paragraph}
+                </p>
+              ))}
+            </div>
+          </div>
 
-        <div className="relative h-[146px] w-full overflow-hidden rounded-panel">
-          <Image
-            src="/images/partner-viaggio-persone.jpg"
-            alt={t.imageAlt}
-            fill
-            sizes="100vw"
-            className="object-cover"
-          />
+          <div className="relative h-[146px] w-full overflow-hidden rounded-panel lg:order-2 lg:h-auto lg:aspect-[700/493]">{/* ds-guard-ignore: img why h-146 grandfathered + aspect Figma 700/493 */}
+            <Image
+              src="/images/partner-viaggio-persone.jpg"
+              alt={t.imageAlt}
+              fill
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              className="object-cover"
+            />
+          </div>
         </div>
 
         {/* "Cosa offriamo" accordion */}

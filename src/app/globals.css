@@ -55,6 +55,18 @@
   --text-2xs: 0.625rem;
   --text-2xs--line-height: 1rem;
 
+  /* Desktop display steps — Figma desktop headings sit BETWEEN Tailwind's scale
+   * (32px card titles, 40px section titles, 64px hero/stat numbers). Tokenised so
+   * consumers use `lg:text-headline/title/display` instead of arbitrary `text-[40px]`
+   * (ds-guard blocks the bracket form). Mobile keeps the existing scale — apply via `lg:`.
+   * ponytail: line-heights are sensible heading defaults — nudge to Figma if needed. */
+  --text-headline: 2rem; /* 32px — secondary/card desktop titles */
+  --text-headline--line-height: 2.5rem; /* 40px (1.25) */
+  --text-title: 2.5rem; /* 40px — desktop section titles ("40px = DS token") */
+  --text-title--line-height: 3rem; /* 48px (1.2) */
+  --text-display: 4rem; /* 64px — hero/stat big numbers (e.g. rating 4.7) */
+  --text-display--line-height: 4.25rem; /* 68px (~1.06) */
+
   /* Elevation — replaces ad-hoc shadow-* / arbitrary shadows. */
   --shadow-card: 0 1px 3px rgb(from var(--color-ink) r g b / 0.08);
   --shadow-popover: 0 8px 24px rgb(from var(--color-ink) r g b / 0.12);
@@ -99,6 +111,26 @@
 
   /* Layout — non-namespaced custom prop; consumers use max-w-[var(--container-site)]. */
   --container-site: 1200px; /* max content width of the site shell */
+
+  /* Desktop phase — the switch is Tailwind's `lg` (1024px); the Figma design canvas
+   * is 1280px but layouts flip to desktop at 1024. The JS side mirrors this in
+   * `useMediaQuery.useIsDesktop` — keep the two in sync.
+   * ponytail: --listing-sidebar default 17rem; tune to the Figma desktop listing. */
+  --listing-sidebar: 17rem; /* fixed filters column on the listing (lg+) */
+}
+
+/* Listing desktop shell — ONE source for the "sidebar filters + results" grid.
+ * Below lg it does NOTHING (children stack exactly as today — mobile stays
+ * identical); at lg+ it becomes a 2-col grid: fixed filters column
+ * (--listing-sidebar) + fluid results. ui-ux applies `listing-shell` to the
+ * wrapper and puts the filters panel first, results second. */
+@utility listing-shell {
+  @media (width >= 1024px) {
+    display: grid;
+    grid-template-columns: var(--listing-sidebar) 1fr;
+    gap: 2rem;
+    align-items: start;
+  }
 }
 
 /* Hide the scrollbar on horizontal sliders (TrustBar, Offers) while keeping scroll/swipe. */
@@ -118,6 +150,17 @@ body {
   background: var(--color-surface);
   color: var(--color-ink);
   font-family: var(--font-sans);
+}
+
+/* Tailwind v4 dropped the default `cursor: pointer` on <button>, so clickable
+ * icons/buttons stopped changing the cursor on hover. Restore it site-wide (one
+ * source) for every enabled button / role="button" — icon buttons included.
+ * Disabled stays default (IconButton also sets cursor-not-allowed). */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
 }
 
 /* ──────────────────────────────────────────────────────────────────────────

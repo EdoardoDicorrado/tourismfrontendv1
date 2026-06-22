@@ -10,6 +10,7 @@ import { reviewsSummary } from "@/data/home";
 import { morePlatformReviews, pageReviews } from "@/data/reviews";
 import { fill, isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
+import { buildMetadata } from "@/lib/seo/metadata";
 
 type Params = { lang: string };
 
@@ -21,10 +22,12 @@ export async function generateMetadata({
   const { lang } = await params;
   if (!isLocale(lang)) return {};
   const dict = await getDictionary(lang);
-  return {
+  return buildMetadata({
+    lang,
+    path: "/recensioni",
     title: dict.reviewsPage.meta.title,
     description: dict.reviewsPage.meta.description,
-  };
+  });
 }
 
 /**

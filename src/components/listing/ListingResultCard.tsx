@@ -56,29 +56,29 @@ export function ListingResultCard({
   return (
     <Link
       href={href}
-      className={`group flex items-stretch overflow-clip rounded-card bg-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta ${
-        onDark ? "" : "border border-soft hover:border-cta"
+      className={`group flex items-stretch overflow-clip rounded-card bg-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta lg:flex-col ${
+        onDark ? "" : "border border-soft hover:border-cta lg:border-stroke-2"
       }`}
     >
-      <div className="relative w-[150px] shrink-0 self-stretch">
+      <div className="relative w-[150px] shrink-0 self-stretch lg:aspect-[453/267] lg:w-full lg:self-auto">
         <Image
           src={product.image}
           alt={product.title}
           fill
-          sizes="150px"
+          sizes="(min-width: 1024px) 33vw, 150px"
           className="object-cover"
         />
         {product.badge && (
-          <span className="absolute left-3 top-3 whitespace-nowrap rounded-[5px] bg-badge px-2 py-1 text-sm font-extrabold leading-none text-white">
+          <span className="absolute left-3 top-3 whitespace-nowrap rounded-badge bg-badge px-2 py-1 text-sm font-extrabold leading-none text-white lg:left-4 lg:top-4 lg:text-base">
             {product.badge}
           </span>
         )}
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col gap-4 px-4 py-2">
-        <div className="flex flex-col gap-2">
+      <div className="flex min-w-0 flex-1 flex-col gap-4 px-4 py-2 lg:gap-4 lg:p-6">
+        <div className="flex flex-col gap-2 lg:gap-3">
           <div className="flex items-center gap-2.5">
-            <span className="min-w-0 flex-1 truncate text-xs font-semibold text-cta">
+            <span className="min-w-0 flex-1 truncate text-xs font-semibold text-cta lg:text-base">
               {product.category}
             </span>
             {languages.length > 0 && (
@@ -127,11 +127,11 @@ export function ListingResultCard({
             </Badge>
           )}
 
-          <h3 className="line-clamp-3 text-base font-bold leading-tight text-ink transition-colors group-hover:text-cta">
+          <h3 className="line-clamp-3 text-base font-bold leading-tight text-ink transition-colors group-hover:text-cta lg:text-xl lg:font-extrabold">
             {product.title}
           </h3>
 
-          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[10px] font-semibold text-ink">
+          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-2xs font-semibold text-ink lg:gap-x-2 lg:text-base">
             {product.meta.map((m, i) => (
               <span key={i} className="flex items-center gap-1.5">
                 {i > 0 && <span className="size-[5px] shrink-0 rounded-full bg-ink" />}
@@ -143,9 +143,9 @@ export function ListingResultCard({
 
         <div className="mt-auto flex flex-wrap items-end justify-between gap-x-2 gap-y-1">
           {showRating ? (
-            <span className="flex items-center gap-1 text-xl font-bold text-ink">
+            <span className="flex items-center gap-1 text-xl font-bold text-ink lg:text-xl lg:font-extrabold">
               {product.rating.toFixed(1)}
-              <Image src="/images/icon-star.svg" alt="" width={21} height={21} />
+              <Image src="/images/icon-star.svg" alt="" width={21} height={21} className="lg:h-7 lg:w-7" />
             </span>
           ) : (
             <span />
@@ -153,14 +153,20 @@ export function ListingResultCard({
           <span className="flex items-end gap-1">
             {product.oldPrice && (
               <>
-                <span className="text-[13px] text-ink">{dict.productCard.from}</span>
-                <span className="text-[13px] text-ink line-through">
+                <span className="text-[13px] text-ink lg:text-base">{dict.productCard.from}</span>{/* ds-guard-ignore-next-line: prezzo 13px mobile grandfathered (no token) */}
+                <span className="text-[13px] text-ink line-through lg:text-base">
                   {product.oldPrice}
                   {product.currency}
                 </span>
               </>
             )}
-            <span className="text-xl font-bold leading-none text-cta">
+            {/* Desktop (Figma): prezzo scontato (con oldPrice) = rosso badge, prezzo
+                pieno = blu cta. Mobile congelato → sempre cta. */}
+            <span
+              className={`text-xl font-bold leading-none text-cta lg:text-xl ${
+                product.oldPrice ? "lg:text-badge" : ""
+              }`}
+            >
               {product.priceFrom}
               {product.currency}
             </span>

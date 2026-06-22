@@ -126,9 +126,12 @@ export function ProductGallery({
     });
   }, [active, lightbox, reduceMotion]);
 
+  // Desktop (lg+): galleria a 2 col → strip miniature VERTICALE a sinistra
+  // (lg:order-1) + immagine principale a destra (lg:order-2). Mobile invariato:
+  // immagine sopra, strip orizzontale sotto.
   return (
-    <div className="w-full">
-      <div className="relative aspect-[361/400] w-full overflow-hidden rounded-panel sm:aspect-[16/9]">
+    <div className="w-full lg:flex lg:items-stretch lg:gap-3">
+      <div className="relative aspect-[361/400] w-full overflow-hidden rounded-panel sm:aspect-[16/9] lg:order-2 lg:aspect-[3/2] lg:w-auto lg:flex-1">
         {/* Immagine principale: drag orizzontale per scorrere lo swiper (cap 4, loop).
             Ogni foto è keyata su `active` così entra/esce con slide netto (solo x, no fade);
             reduced-motion → cambio istantaneo. */}
@@ -164,12 +167,13 @@ export function ProductGallery({
         </AnimatePresence>
 
         {/* Top overlay: back button (left) + "Mostra galleria" pill (right) */}
-        <div className="absolute inset-x-4 top-4 flex items-start justify-between gap-3">
+        <div className="absolute inset-x-4 top-4 flex items-start justify-between gap-3 lg:justify-end">
+          {/* "Torna indietro": solo mobile — su desktop resta la nav del sito (Edoardo). */}
           <button
             type="button"
             onClick={goBack}
             aria-label={dict.gallery.back}
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-ink shadow-md transition hover:bg-white/90 active:scale-95"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-ink shadow-md transition hover:bg-white/90 active:scale-95 lg:hidden"
           >
             <Chevron dir="left" />
           </button>
@@ -305,7 +309,7 @@ export function ProductGallery({
           auto-scroll-into-view. Indici 0..3 (swiperImages) così goTo(i) resta valido;
           le foto oltre il cap-4 restano visibili solo nella lightbox. */}
       {swiperCount > 1 && (
-        <div className="mt-2 flex gap-2">
+        <div className="mt-2 flex gap-2 lg:order-1 lg:mt-0 lg:w-44 lg:shrink-0 lg:flex-col">
           {swiperImages.map((img, i) => (
             <button
               key={img.src + i}
@@ -313,7 +317,7 @@ export function ProductGallery({
               onClick={() => goTo(i)}
               aria-label={fill(dict.gallery.showImage, { n: String(i + 1) })}
               aria-pressed={i === active}
-              className={`relative aspect-[4/3] flex-1 overflow-hidden rounded-card ring-2 transition ${
+              className={`relative aspect-[4/3] flex-1 overflow-hidden rounded-card ring-2 transition lg:aspect-auto lg:w-full lg:flex-1 ${
                 i === active ? "ring-cta" : "ring-transparent hover:ring-ink/20"
               }`}
             >

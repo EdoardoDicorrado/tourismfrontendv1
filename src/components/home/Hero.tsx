@@ -28,9 +28,9 @@ export function Hero({
   products: Product[];
 }) {
   return (
-    <section className="relative isolate flex min-h-[503px] flex-col justify-end overflow-hidden py-6">
+    <section className="relative isolate flex min-h-[503px] flex-col justify-end overflow-hidden py-6 lg:min-h-[605px] lg:justify-center lg:py-40">{/* ds-guard-ignore: altezza frame hero Figma desktop 605px, nessun token */}
       <Image
-        src="/images/hero-pisa.png"
+        src="/images/hero-home.jpg"
         alt=""
         fill
         priority
@@ -42,20 +42,22 @@ export function Hero({
         className="absolute inset-0 -z-10 bg-gradient-to-t from-black/45 via-black/15 to-transparent"
       />
 
-      <Container className="flex flex-col items-start gap-4">
-        <h1 className="text-[32px] font-bold leading-tight text-white sm:text-5xl">
+      <Container className="flex flex-col items-start gap-4 lg:items-center">
+        <h1 className="text-[32px] font-bold leading-tight text-white sm:text-5xl lg:whitespace-nowrap lg:text-center lg:text-[44px] lg:font-extrabold">{/* ds-guard-ignore: headline hero desktop 44px (mobile text-[32px] grandfathered) */}
           {dict.home.headline}
         </h1>
 
-        <HomeSearchBar
-          lang={lang}
-          dict={dict}
-          destinations={destinations}
-          attractions={attractions}
-          products={products}
-        />
+        <div className="w-full lg:w-[520px]">{/* ds-guard-ignore: larghezza search bar desktop ridotta (~1/3), nessun token */}
+          <HomeSearchBar
+            lang={lang}
+            dict={dict}
+            destinations={destinations}
+            attractions={attractions}
+            products={products}
+          />
+        </div>
 
-        <p className="flex items-start gap-4 text-sm font-medium text-soft">
+        <p className="flex items-start gap-4 text-sm font-medium text-soft lg:items-center lg:text-xl lg:text-white">
           {/* Figma node 1:763: soft-blue (#def3fb) ticket glyph, matching the
               social-proof text. Distinct asset from the TrustBar's #007ca2 icon. */}
           <Image

@@ -12,6 +12,7 @@ import { Header } from "@/components/layout/Header";
 import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { affiliatesCopy } from "@/lib/i18n/dictionaries/affiliates";
+import { buildMetadata } from "@/lib/seo/metadata";
 
 type Params = { lang: string };
 
@@ -23,7 +24,12 @@ export async function generateMetadata({
   const { lang } = await params;
   if (!isLocale(lang)) return {};
   const t = affiliatesCopy[lang];
-  return { title: t.meta.title, description: t.meta.description };
+  return buildMetadata({
+    lang,
+    path: "/partner/affiliati",
+    title: t.meta.title,
+    description: t.meta.description,
+  });
 }
 
 /**

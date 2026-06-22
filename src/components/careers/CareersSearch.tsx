@@ -16,6 +16,7 @@ export function CareersSearch({ dict }: { dict: Dictionary["careers"] }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const q = query.trim().toLowerCase();
   const filtered = q
@@ -50,16 +51,17 @@ export function CareersSearch({ dict }: { dict: Dictionary["careers"] }) {
   };
 
   return (
-    <section className="py-4">
+    <section className="py-4 lg:py-8">
       <Container>
         <div ref={boxRef} className="relative">
           <label htmlFor="careers-search" className="sr-only">
             {dict.search.label}
           </label>
-          <div className="flex h-11 items-center gap-2.5 rounded-full border border-stroke bg-white px-[17px]">
-            <Image src="/images/icon-search.svg" alt="" width={18} height={18} className="shrink-0" />
+          <div className="flex h-11 items-center gap-2.5 rounded-full border border-stroke bg-white px-[17px] lg:h-16 lg:gap-4 lg:pl-7 lg:pr-2">{/* ds-guard-ignore: pill px-17 grandfathered (mobile) */}
+            <Image src="/images/icon-search.svg" alt="" width={18} height={18} className="shrink-0 lg:size-6" />
             <input
               id="careers-search"
+              ref={inputRef}
               type="search"
               role="combobox"
               aria-expanded={open}
@@ -72,8 +74,20 @@ export function CareersSearch({ dict }: { dict: Dictionary["careers"] }) {
               }}
               onFocus={() => setOpen(true)}
               placeholder={dict.search.placeholder}
-              className="w-full bg-transparent text-base font-medium text-ink outline-none placeholder:text-stroke"
+              className="w-full bg-transparent text-base font-medium text-ink outline-none placeholder:text-stroke lg:text-lg"
             />
+            {/* Bottone "Cerca": solo desktop (Figma 605:1035). La ricerca è live, qui
+                apre/focalizza il campo. i18n preview "Cerca" → task marketing. */}
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(true);
+                inputRef.current?.focus();
+              }}
+              className="hidden shrink-0 rounded-full bg-cta px-7 py-3 text-base font-extrabold text-white transition-colors hover:bg-cta-hover active:bg-cta-active lg:inline-flex lg:items-center"
+            >
+              Cerca
+            </button>
           </div>
 
           {open && positions.length > 0 && (

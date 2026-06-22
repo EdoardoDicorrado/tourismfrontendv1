@@ -123,25 +123,25 @@ const offerBase = [
     id: "musei-vaticani-tour",
     city: "roma",
     slug: "tour-citta-arena-colosseo",
-    image: "/images/card-musei-vaticani.png",
+    image: "/images/card-musei-vaticani.jpg",
   },
   {
     id: "colosseo-salta-fila",
     city: "roma",
     slug: "tour-citta-arena-colosseo",
-    image: "/images/card-colosseo.png",
+    image: "/images/card-colosseo.jpg",
   },
   {
     id: "colosseo-foro-palatino",
     city: "roma",
     slug: "tour-citta-arena-colosseo",
-    image: "/images/card-colosseo.png",
+    image: "/images/card-colosseo.jpg",
   },
   {
     id: "colosseo-arena-sotterranei",
     city: "roma",
     slug: "tour-citta-arena-colosseo",
-    image: "/images/card-colosseo.png",
+    image: "/images/card-colosseo.jpg",
   },
 ] as const;
 
@@ -264,7 +264,7 @@ export const destinations: Destination[] = [
   {
     slug: "roma",
     name: "Roma",
-    image: "/images/card-colosseo.png",
+    image: "/images/card-colosseo.jpg",
     rating: 4.7,
     experiences: 16,
     description:
@@ -274,7 +274,7 @@ export const destinations: Destination[] = [
   {
     slug: "firenze",
     name: "Firenze",
-    image: "/images/dest-firenze.png",
+    image: "/images/card-firenze.jpg",
     rating: 4.7,
     experiences: 16,
     description:
@@ -284,7 +284,7 @@ export const destinations: Destination[] = [
   {
     slug: "torino",
     name: "Torino",
-    image: "/images/dest-torino-overlay.png",
+    image: "/images/card-torino.jpg",
     rating: 4.7,
     experiences: 16,
     description:

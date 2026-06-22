@@ -6,6 +6,7 @@ import { AnimatePresence, motion, useDragControls, useReducedMotion } from "fram
 
 import { duration, ease, spring } from "@/lib/motion/tokens";
 import { useFocusTrap } from "@/components/ui/useFocusTrap";
+import { useIsDesktop } from "@/components/ui/useMediaQuery";
 
 // Mount guard for portals: `false` on the server + first hydration render, `true`
 // after mount — without setting state in an effect (avoids the extra render the
@@ -27,6 +28,13 @@ const noopSubscribe = () => () => {};
  * portal so it's never clipped by an ancestor). Use for mobile pickers
  * (calendar, participants). `align`/`panelClassName` are ignored in sheet mode.
  *
+ * `responsive` (opt-in, desktop phase) = bottom-sheet below `lg` (1024px),
+ * anchored dropdown at `lg`+ — the mobile shape stays byte-identical to `sheet`,
+ * desktop swaps to the anchored branch (uses {@link useIsDesktop}). `align`/
+ * `animated`/`panelClassName` apply on the desktop (anchored) side. A bare `sheet`
+ * stays a sheet at every width; pass `responsive` instead when a picker should
+ * anchor on desktop.
+ *
  * All motion honours `prefers-reduced-motion` (plain opacity fade, no slide/scale).
  */
 export function Popover({
@@ -37,6 +45,7 @@ export function Popover({
   panelClassName = "",
   animated = false,
   sheet = false,
+  responsive = false,
   label,
   labelledBy,
 }: {
@@ -47,6 +56,7 @@ export function Popover({
   panelClassName?: string;
   animated?: boolean;
   sheet?: boolean;
+  responsive?: boolean;
   /** Accessible name for the dialog/sheet panel (sets `aria-label`). */
   label?: string;
   /** ID of an element that labels the dialog/sheet panel (sets `aria-labelledby`). */
@@ -57,6 +67,11 @@ export function Popover({
   const panelRef = useRef<HTMLDivElement>(null);
   const id = useId();
   const reduceMotion = useReducedMotion();
+  // Desktop phase: `responsive` is a sheet below lg, anchored at lg+. SSR/first
+  // paint = mobile (sheet), so it stays identical to a bare `sheet` until the
+  // desktop swap. A bare `sheet` is a sheet at every width.
+  const isDesktop = useIsDesktop();
+  const asSheet = sheet || (responsive && !isDesktop);
   // Drag-to-dismiss del bottom sheet: il grabber in alto avvia il drag via questi
   // controls, così la chiusura a trascinamento è affidabile anche quando il corpo
   // dello sheet è pieno di controlli (steppers, calendario) che mangerebbero il gesto.
@@ -72,13 +87,13 @@ export function Popover({
 
   // The sheet is a modal: scroll-lock + Escape + focus move-in/restore + Tab
   // trap all come from the shared hook (single source — see useFocusTrap).
-  useFocusTrap(sheet && open, panelRef, close);
+  useFocusTrap(asSheet && open, panelRef, close);
 
   // Anchored dropdown only: close on outside-click + Escape. (The sheet closes
   // via its backdrop / Esc-from-the-hook; its panel lives in a portal outside
   // `ref`, so the pointer check would misfire.)
   useEffect(() => {
-    if (!open || sheet) return;
+    if (!open || asSheet) return;
     function onPointer(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     }
@@ -91,9 +106,9 @@ export function Popover({
       document.removeEventListener("mousedown", onPointer);
       document.removeEventListener("keydown", onKey);
     };
-  }, [open, sheet]);
+  }, [open, asSheet]);
 
-  if (sheet) {
+  if (asSheet) {
     return (
       <div ref={ref} className={className}>
         {trigger({ open, toggle: () => setOpen((o) => !o), id })}

@@ -15,7 +15,7 @@ export function TextSection({ title, text }: { title: string; text: string }) {
       defaultOpen
       divided={false}
       className="border-b border-cta"
-      summary={<h2 className="text-xl font-extrabold text-ink sm:text-2xl">{title}</h2>}
+      summary={<h2 className="text-xl font-extrabold text-ink sm:text-2xl lg:text-3xl">{title}</h2>}
     >
       <p className="text-base text-ink/80">{text}</p>
     </Disclosure>

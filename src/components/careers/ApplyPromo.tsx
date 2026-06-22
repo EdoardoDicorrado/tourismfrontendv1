@@ -15,10 +15,12 @@ import type { Dictionary } from "@/lib/i18n/dictionaries";
 export function ApplyPromo({ lang, dict }: { lang: Locale; dict: Dictionary["careers"] }) {
   const t = dict.apply;
   return (
-    <section className="py-4">
+    <section className="py-4 lg:py-12">
       <Container>
-        <div className="overflow-hidden rounded-card">
-          <div className="relative flex h-[214px] items-end justify-center overflow-hidden bg-cta">
+        {/* Mobile: card verticale (banda illustrazione sopra, pannello sotto).
+            Desktop (Figma 605:1066): card ORIZZONTALE — illustrazione SX, testo DX. */}
+        <div className="overflow-hidden rounded-card lg:flex lg:items-stretch">
+          <div className="relative flex h-[214px] items-end justify-center overflow-hidden bg-cta lg:h-auto lg:w-1/2 lg:shrink-0">{/* ds-guard-ignore: banda illustrazione h-214 grandfathered (mobile) */}
             <Image
               src="/images/gecko-ellipse-bg.svg"
               alt=""
@@ -43,9 +45,9 @@ export function ApplyPromo({ lang, dict }: { lang: Locale; dict: Dictionary["car
               className="relative h-[206px] w-auto"
             />
           </div>
-          <div className="flex flex-col gap-4 bg-soft p-4">
-            <h2 className="text-2xl font-extrabold text-ink">{t.title}</h2>
-            <div className="flex flex-col gap-4 text-sm leading-[1.3] text-ink">
+          <div className="flex flex-col gap-4 bg-soft p-4 lg:w-1/2 lg:justify-center lg:gap-6 lg:p-12">
+            <h2 className="text-2xl font-extrabold text-ink lg:text-3xl">{t.title}</h2>
+            <div className="flex flex-col gap-4 text-sm leading-[1.3] text-ink lg:text-base">
               {t.body.map((paragraph) => (
                 <p key={paragraph}>
                   <Rich text={paragraph} />
@@ -54,7 +56,7 @@ export function ApplyPromo({ lang, dict }: { lang: Locale; dict: Dictionary["car
             </div>
             <Link
               href={`/${lang}/lavora-con-noi/candidatura`}
-              className="flex w-full items-center justify-center rounded-card bg-cta py-4 text-base font-bold text-white transition-colors hover:bg-cta-hover active:bg-cta-active"
+              className="flex w-full items-center justify-center rounded-card bg-cta py-4 text-base font-bold text-white transition-colors hover:bg-cta-hover active:bg-cta-active lg:w-auto lg:self-start lg:px-12"
             >
               {t.cta}
             </Link>

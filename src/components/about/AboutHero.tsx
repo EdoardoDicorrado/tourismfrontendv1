@@ -11,9 +11,9 @@ import type { Dictionary } from "@/lib/i18n/dictionaries";
 export function AboutHero({ dict }: { dict: Dictionary }) {
   const t = dict.about.hero;
   return (
-    <section className="relative isolate flex min-h-[415px] flex-col justify-end overflow-hidden border-b border-soft-grey">
+    <section className="relative isolate flex min-h-[415px] flex-col justify-end overflow-hidden border-b border-soft-grey lg:min-h-[605px]">{/* ds-guard-ignore: altezza hero Figma desktop 605px, nessun token */}
       <Image
-        src="/images/about-hero.png"
+        src="/images/about-hero.jpg"
         alt=""
         fill
         priority
@@ -25,12 +25,12 @@ export function AboutHero({ dict }: { dict: Dictionary }) {
         className="absolute inset-0 -z-10 bg-gradient-to-t from-[rgba(0,0,0,0.4)] from-[39.289%] to-transparent to-[52.386%]"
       />
 
-      <Container className="py-6">
-        <div className="flex flex-col gap-4">
-          <h1 className="text-[32px] font-bold leading-[normal] break-words text-white">
+      <Container className="py-6 lg:py-24">
+        <div className="flex flex-col gap-4 lg:items-center lg:gap-6">
+          <h1 className="text-headline font-bold leading-[normal] break-words text-white lg:whitespace-nowrap lg:text-center lg:text-display lg:font-extrabold">
             {t.title}
           </h1>
-          <div className="flex items-center gap-3" aria-label={t.socialLabel}>
+          <div className="flex items-center gap-3 lg:justify-center lg:gap-6" aria-label={t.socialLabel}>
             {socialLinks.map((s) => (
               <a
                 key={s.label}
@@ -39,7 +39,7 @@ export function AboutHero({ dict }: { dict: Dictionary }) {
                 className="opacity-90 transition-opacity hover:opacity-100"
               >
                 {/* Dimensioni intrinseche reali (la "f" di Facebook è 1:2) + h-6 w-auto: niente stretch. */}
-                <Image src={s.icon} alt="" width={s.w} height={s.h} className="h-6 w-auto" unoptimized />
+                <Image src={s.icon} alt="" width={s.w} height={s.h} className="h-6 w-auto lg:h-12" unoptimized />
               </a>
             ))}
           </div>

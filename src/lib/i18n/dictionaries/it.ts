@@ -98,6 +98,7 @@ export const it = {
       {
         title: "Termini e condizioni",
         links: [
+          { label: "Privacy policy", href: "/cookie-policy" },
           { label: "Cookie Policy", href: "/cookie-policy" },
           { label: "Reso e recessi", href: "/reso" },
         ],

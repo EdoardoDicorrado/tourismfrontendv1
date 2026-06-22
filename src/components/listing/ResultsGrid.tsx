@@ -37,7 +37,7 @@ export function ResultsGrid({
     <section className="pb-8 pt-3 sm:pb-10 sm:pt-4">
       <Container>
         <div className="flex items-center gap-2">
-          <h2 className="text-xs font-semibold text-cta">
+          <h2 className="text-xs font-semibold text-cta lg:text-sm">
             {fill(dict.results.found, { count: count.toLocaleString(lang) })}
           </h2>
           <Popover
@@ -64,7 +64,9 @@ export function ResultsGrid({
 
         {products.length > 0 ? (
           <>
-            <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+            {/* Gap desktop = Figma 221:4134: 40px orizzontale (gap-x-10) · 24px
+                verticale tra le righe (gap-y-6). */}
+            <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-x-10 lg:gap-y-6">
               {shown.map((p) => (
                 <ListingResultCard key={p.id} product={p} lang={lang} dict={dict} />
               ))}

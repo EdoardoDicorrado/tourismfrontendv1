@@ -71,11 +71,12 @@ export function BlogCategories({
   return (
     <section className="pb-12">
       <Container>
-        <h2 className="text-2xl font-extrabold text-ink">{dict.categoriesTitle}</h2>
+        <h2 className="text-2xl font-extrabold text-ink lg:text-4xl">{dict.categoriesTitle}</h2>
       </Container>
 
-      {/* Pills su UNA riga, scroll orizzontale (come i filtri del listing). Full-bleed. */}
-      <div className="no-scrollbar mt-4 flex gap-3 overflow-x-auto px-4 pb-1">
+      {/* Pills: mobile UNA riga scroll full-bleed (come i filtri listing); desktop nel
+          container, a capo, senza scroll. */}
+      <div className="no-scrollbar mt-4 flex gap-3 overflow-x-auto px-4 pb-1 lg:mx-auto lg:mt-6 lg:max-w-[var(--container-site)] lg:flex-wrap lg:overflow-visible lg:px-4">
         {categories.map((c) => (
           <button
             key={c.id}
@@ -167,20 +168,20 @@ export function BlogCategories({
         {filtered.length === 0 ? (
           <p className="rounded-card bg-soft px-5 py-4 text-base font-medium text-ink/80">{dict.empty}</p>
         ) : (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:gap-10">
             {filtered.map((a) => (
               <Link
                 key={a.slug}
                 href={`/${lang}/blog/${a.slug}`}
-                className="group flex h-[124px] items-stretch overflow-hidden rounded-card"
+                className="group flex h-[124px] items-stretch overflow-hidden rounded-card lg:h-[300px]"
               >
-                <span className="relative w-[101px] shrink-0 overflow-hidden bg-soft">
-                  <Image src={a.image} alt="" fill sizes="101px" className="object-cover" />
+                <span className="relative w-[101px] shrink-0 overflow-hidden bg-soft lg:w-[330px]">
+                  <Image src={a.image} alt="" fill sizes="(min-width: 1024px) 330px, 101px" className="object-cover" />
                 </span>
-                <span className="flex min-w-0 flex-1 flex-col justify-center gap-2 bg-soft p-4">
-                  <span className="text-xs font-semibold uppercase text-cta">{labelFor(a.categoryId)}</span>
-                  <span className="line-clamp-1 text-base font-extrabold leading-tight text-ink">{a.title}</span>
-                  <span className="line-clamp-1 text-xs font-medium text-ink/80">{a.excerpt}</span>
+                <span className="flex min-w-0 flex-1 flex-col justify-center gap-2 bg-soft p-4 lg:gap-3 lg:p-6">
+                  <span className="text-xs font-semibold uppercase text-cta lg:text-sm">{labelFor(a.categoryId)}</span>
+                  <span className="line-clamp-1 text-base font-extrabold leading-tight text-ink lg:line-clamp-2 lg:text-xl">{a.title}</span>
+                  <span className="line-clamp-1 text-xs font-medium text-ink/80 lg:line-clamp-2 lg:text-base">{a.excerpt}</span>
                   <span className="text-base font-extrabold text-cta group-hover:underline">
                     {dict.readMore}
                   </span>

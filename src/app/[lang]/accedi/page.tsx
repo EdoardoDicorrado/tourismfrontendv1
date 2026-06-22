@@ -1,8 +1,12 @@
+import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
 import { isLocale } from "@/lib/i18n/config";
 
 type Params = { lang: string };
+
+// Redirect-only entry: fuori dall'indice, ma segui i link (vedi audit SEO).
+export const metadata: Metadata = { robots: { index: false, follow: true } };
 
 /**
  * Legacy customer sign-in entry (`/[lang]/accedi`). The header "Accedi" link

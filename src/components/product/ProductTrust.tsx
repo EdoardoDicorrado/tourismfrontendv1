@@ -10,8 +10,9 @@ export function ProductTrust({ dict }: { dict: Dictionary }) {
       <h2 className="text-xl font-extrabold text-ink sm:text-2xl">{dict.product.trustTitle}</h2>
       {/* Mobile: full-bleed horizontal scroll-snap slider, first card inset 16px
           and the next peeking — identical to the homepage `TrustBar` (Figma
-          64:11867, w-[311px]). sm+: 3-up grid fallback (desktop is a later phase). */}
-      <ul className="-mx-4 flex snap-x snap-mandatory items-start gap-4 overflow-x-auto scroll-px-4 px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:grid sm:snap-none sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0 [&::-webkit-scrollbar]:hidden">
+          64:11867, card 311px). sm: 3-up grid. lg (colonna destra prodotto sotto il
+          BookingBox): STACK verticale (1 col) — Edoardo. */}
+      <ul className="-mx-4 flex snap-x snap-mandatory items-start gap-4 overflow-x-auto scroll-px-4 px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:grid sm:snap-none sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-1 [&::-webkit-scrollbar]:hidden">
         {trustFeatures.map((f) => (
           <li
             key={f.title}

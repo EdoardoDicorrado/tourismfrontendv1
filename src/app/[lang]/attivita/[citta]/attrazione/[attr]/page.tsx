@@ -4,6 +4,9 @@ import { notFound } from "next/navigation";
 import { fill, isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getListingAttractions, getListingProducts } from "@/lib/catalog";
+import { buildMetadata } from "@/lib/seo/metadata";
+import { breadcrumbLd } from "@/lib/seo/jsonld";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ListingHero } from "@/components/listing/ListingHero";
@@ -26,10 +29,12 @@ export async function generateMetadata({
   const dict = await getDictionary(lang);
   const attraction = (await getListingAttractions(lang)).find((a) => a.slug === attr);
   if (!attraction) return {};
-  return {
+  return buildMetadata({
+    lang,
+    path: `/attivita/${citta}/attrazione/${attr}`,
     title: fill(dict.listing.metaTitle, { city: attraction.name }),
     description: fill(dict.listing.metaDescription, { city: attraction.name }),
-  };
+  });
 }
 
 /**
@@ -67,8 +72,15 @@ export default async function AttractionListingPage({
     reviews: city.reviews,
   };
 
+  const crumbs = breadcrumbLd([
+    { name: "Home", path: `/${lang}` },
+    { name: city.name, path: `/${lang}/attivita/${citta}` },
+    { name: attraction.name, path: `/${lang}/attivita/${citta}/attrazione/${attr}` },
+  ]);
+
   return (
     <>
+      <JsonLd data={crumbs} />
       <Header lang={lang} dict={dict} />
       <main className="flex-1">
         <ListingFiltersProvider>

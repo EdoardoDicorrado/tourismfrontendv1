@@ -1,10 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import { Container } from "@/components/ui/Container";
 import { Popover } from "@/components/ui/Popover";
+import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
+import { useIsDesktop } from "@/components/ui/useMediaQuery";
 import { filterFacets, filterGroups, type FilterOption } from "@/data/listing";
 import { fill } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
@@ -76,7 +78,7 @@ function NavChevron({ left = false }: { left?: boolean }) {
   );
 }
 
-/** Pill facet toggle: active = CTA fill, inactive = soft fill (Figma 64:2909). */
+/** Pill facet toggle: active = CTA fill + ✕-to-clear, inactive = soft fill (Figma 64:2909 / 221:4690). */
 function Chip({ on, label, onClick }: { on: boolean; label: string; onClick: () => void }) {
   return (
     <button
@@ -85,11 +87,18 @@ function Chip({ on, label, onClick }: { on: boolean; label: string; onClick: () 
       aria-pressed={on}
       className={
         on
-          ? "shrink-0 rounded-full bg-cta px-4 py-2.5 text-sm font-semibold text-white transition-colors"
+          ? "flex shrink-0 items-center gap-1.5 rounded-full bg-cta py-2.5 pl-4 pr-2.5 text-sm font-semibold text-white transition-colors"
           : "shrink-0 rounded-full bg-soft px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:bg-[color-mix(in_oklab,var(--color-soft),var(--color-cta)_12%)]"
       }
     >
       {label}
+      {/* Attivo (Figma 221:4690): ✕ a destra per cancellare il filtro. Il click sul
+          chip lo toglie già (toggle); la ✕ è l'affordance visiva, aria-hidden. */}
+      {on && (
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden className="shrink-0">
+          <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      )}
     </button>
   );
 }
@@ -152,6 +161,12 @@ export function FilterBar({
 }) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
+  // Desktop (lg+): i filtri si aprono come MODALE centrato (Modal); mobile resta il
+  // bottom-sheet (Popover sheet). SSR/primo paint = mobile finché non scatta isDesktop.
+  const isDesktop = useIsDesktop();
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const filtersId = useId();
+
   // Quick-filter chips: GetYourGuide-style edge fades + scroll arrows. Track how
   // far the row is scrolled so the fade/arrow only show where there's more to see.
   const scrollerRef = useRef<HTMLDivElement>(null);
@@ -186,7 +201,12 @@ export function FilterBar({
   const scrollChips = (dir: 1 | -1) =>
     scrollerRef.current?.scrollBy({ left: dir * 180, behavior: "smooth" });
 
-  const facetLabel = (id: string) => dict.filters.facets[id as keyof FacetLabels] ?? id;
+  // Label chip: prima la label corta dedicata (facets), poi quella del gruppo
+  // avanzato (options) per gli id condivisi (lingue/durata/ora/offerte), infine l'id.
+  const facetLabel = (id: string) =>
+    dict.filters.facets[id as keyof FacetLabels] ??
+    dict.filters.options[id as keyof OptionLabels]?.label ??
+    id;
   const groupTitle = (id: string) => dict.filters.groups[id as keyof GroupTitles] ?? id;
   const optionMeta = (id: string) => dict.filters.options[id as keyof OptionLabels];
 
@@ -201,108 +221,146 @@ export function FilterBar({
   const visibleOptions = (groupId: string, options: FilterOption[], collapseAfter?: number) =>
     collapseAfter && !expanded.has(groupId) ? options.slice(0, collapseAfter) : options;
 
-  return (
-    <section className="sticky top-0 z-30 border-b border-soft-grey bg-white py-4">
-      <Container className="flex items-center gap-3">
-        <Popover
-          sheet
-          className="relative shrink-0"
-          trigger={({ open, toggle, id }) => (
-            <button
-              type="button"
-              onClick={toggle}
-              aria-haspopup="dialog"
-              aria-expanded={open}
-              aria-controls={id}
-              aria-label={dict.filters.button}
-              className={`flex h-10 items-center justify-center gap-1 rounded-full border border-cta transition-colors ${
-                active.size > 0 ? "bg-cta px-3 text-white" : "w-10 text-cta hover:bg-soft"
-              }`}
-            >
-              <SlidersIcon />
-              {active.size > 0 && (
-                <span className="text-base font-bold leading-none">+{active.size}</span>
-              )}
-            </button>
-          )}
-        >
-          {({ close }) => (
-            <div className="flex max-h-[88vh] flex-col rounded-t-[20px] bg-white">
-              {/* Header */}
-              <div className="shrink-0 border-b border-soft-grey px-4 pb-3 pt-3">
-                <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-stroke/60" aria-hidden />
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-extrabold text-ink">{dict.filters.button}</h2>
-                  <button
-                    type="button"
-                    onClick={close}
-                    aria-label={dict.filters.close}
-                    className="flex h-9 w-9 items-center justify-center rounded-full bg-soft text-ink transition-colors hover:bg-[color-mix(in_oklab,var(--color-soft),var(--color-cta)_12%)]"
-                  >
-                    <CloseIcon />
-                  </button>
-                </div>
-              </div>
+  // Trigger + content estratti così sono identici tra il bottom-sheet (mobile) e la
+  // modale centrata (desktop) — una sola fonte per il pannello filtri.
+  const triggerButton = ({
+    open,
+    toggle,
+    id,
+  }: {
+    open: boolean;
+    toggle: () => void;
+    id: string;
+  }) => (
+    <button
+      type="button"
+      onClick={toggle}
+      aria-haspopup="dialog"
+      aria-expanded={open}
+      aria-controls={id}
+      aria-label={dict.filters.button}
+      className={`flex h-10 items-center justify-center gap-1 rounded-full border border-cta transition-colors lg:gap-2 lg:px-3 ${
+        active.size > 0 ? "bg-cta px-3 text-white" : "w-10 text-cta hover:bg-soft lg:w-auto"
+      }`}
+    >
+      <SlidersIcon />
+      {/* Label "Filtri" solo desktop (Figma 221:2781): su mobile resta il bottone
+          tondo icona-only, intatto. */}
+      <span className="hidden text-base font-semibold leading-none lg:inline">
+        {dict.filters.button}
+      </span>
+      {active.size > 0 && <span className="text-base font-bold leading-none">+{active.size}</span>}
+    </button>
+  );
 
-              {/* Scrollable sections */}
-              <div className="min-h-0 flex-1 overflow-y-auto px-4">
-                {filterGroups.map((group) => {
-                  const opts = visibleOptions(group.id, group.options, group.collapseAfter);
-                  const canExpand =
-                    !!group.collapseAfter && group.options.length > group.collapseAfter;
+  const panel = ({ close, grid = false }: { close: () => void; grid?: boolean }) => (
+    // Niente bg/rounded qui: li fornisce l'host (Popover sheet o Modal center).
+    // grid (desktop modale) = gruppi in 4 colonne; mobile = lista verticale.
+    // ds-guard-ignore-next-line: max-h-[85vh] = altezza max pannello filtri (viewport), nessun token
+    <div className="flex max-h-[85vh] flex-col">
+      {/* Header */}
+      <div className="shrink-0 border-b border-soft-grey px-4 pb-3 pt-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-extrabold text-ink">{dict.filters.button}</h2>
+          <button
+            type="button"
+            onClick={close}
+            aria-label={dict.filters.close}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-soft text-ink transition-colors hover:bg-[color-mix(in_oklab,var(--color-soft),var(--color-cta)_12%)]"
+          >
+            <CloseIcon />
+          </button>
+        </div>
+      </div>
+
+      {/* Scrollable sections — vertical (sheet) or 4-col grid (desktop modale) */}
+      <div
+        className={
+          grid
+            ? "grid min-h-0 flex-1 grid-cols-4 content-start gap-x-8 gap-y-1 overflow-y-auto px-5 py-2"
+            : "min-h-0 flex-1 overflow-y-auto px-4"
+        }
+      >
+        {filterGroups.map((group) => {
+          const opts = visibleOptions(group.id, group.options, group.collapseAfter);
+          const canExpand = !!group.collapseAfter && group.options.length > group.collapseAfter;
+          return (
+            <section
+              key={group.id}
+              className={grid ? "py-3" : "border-t border-soft-grey py-4 first:border-t-0"}
+            >
+              <h3 className="mb-1 text-lg font-extrabold text-ink">{groupTitle(group.id)}</h3>
+              <div>
+                {opts.map((opt) => {
+                  const meta = optionMeta(opt.id);
                   return (
-                    <section
-                      key={group.id}
-                      className="border-t border-soft-grey py-4 first:border-t-0"
-                    >
-                      <h3 className="mb-1 text-lg font-extrabold text-ink">
-                        {groupTitle(group.id)}
-                      </h3>
-                      <div>
-                        {opts.map((opt) => {
-                          const meta = optionMeta(opt.id);
-                          return (
-                            <CheckRow
-                              key={opt.id}
-                              on={active.has(opt.id)}
-                              label={meta?.label ?? opt.id}
-                              hint={opt.hasHint ? meta?.hint : undefined}
-                              onClick={() => onToggle(opt.id)}
-                            />
-                          );
-                        })}
-                      </div>
-                      {canExpand && (
-                        <button
-                          type="button"
-                          onClick={() => toggleExpand(group.id)}
-                          className="mt-1 flex items-center gap-1 text-sm font-semibold text-ink hover:underline"
-                        >
-                          {expanded.has(group.id) ? dict.filters.showLess : dict.filters.showMore}
-                          <ChevronIcon up={expanded.has(group.id)} />
-                        </button>
-                      )}
-                    </section>
+                    <CheckRow
+                      key={opt.id}
+                      on={active.has(opt.id)}
+                      label={meta?.label ?? opt.id}
+                      hint={opt.hasHint ? meta?.hint : undefined}
+                      onClick={() => onToggle(opt.id)}
+                    />
                   );
                 })}
               </div>
-
-              {/* Sticky footer */}
-              <div className="flex shrink-0 items-center justify-between gap-3 border-t border-soft-grey bg-white px-4 py-3">
+              {canExpand && (
                 <button
                   type="button"
-                  onClick={onClear}
-                  className="text-base font-semibold text-ink underline underline-offset-2"
+                  onClick={() => toggleExpand(group.id)}
+                  className="mt-1 flex items-center gap-1 text-sm font-semibold text-ink hover:underline"
                 >
-                  {dict.filters.clearAll}
+                  {expanded.has(group.id) ? dict.filters.showLess : dict.filters.showMore}
+                  <ChevronIcon up={expanded.has(group.id)} />
                 </button>
-                <Button type="button" className="px-8" onClick={close}>
-                  {fill(dict.filters.viewResults, { count: String(resultCount) })}
-                </Button>
-              </div>
-            </div>
-          )}
-        </Popover>
+              )}
+            </section>
+          );
+        })}
+      </div>
+
+      {/* Sticky footer */}
+      <div className="flex shrink-0 items-center justify-between gap-3 border-t border-soft-grey bg-white px-4 py-3">
+        <button
+          type="button"
+          onClick={onClear}
+          className="text-base font-semibold text-ink underline underline-offset-2"
+        >
+          {dict.filters.clearAll}
+        </button>
+        <Button type="button" className="px-8" onClick={close}>
+          {fill(dict.filters.viewResults, { count: String(resultCount) })}
+        </Button>
+      </div>
+    </div>
+  );
+
+  return (
+    <section className="sticky top-0 z-30 border-b border-soft-grey bg-white py-4">
+      <Container className="flex items-center gap-3">
+        {isDesktop ? (
+          <div className="relative shrink-0">
+            {triggerButton({
+              open: filtersOpen,
+              toggle: () => setFiltersOpen((o) => !o),
+              id: filtersId,
+            })}
+            <Modal
+              open={filtersOpen}
+              onClose={() => setFiltersOpen(false)}
+              variant="center"
+              label={dict.filters.button}
+              // ds-guard-ignore-next-line: max-w-[960px] = larghezza modale filtri desktop (grid 4 col), nessun token
+              className="max-w-[960px]! overflow-hidden"
+            >
+              {panel({ close: () => setFiltersOpen(false), grid: true })}
+            </Modal>
+          </div>
+        ) : (
+          <Popover sheet className="relative shrink-0" trigger={triggerButton}>
+            {panel}
+          </Popover>
+        )}
 
         <div className="relative min-w-0 flex-1">
           {/* Left fade + scroll-back arrow (only once scrolled). */}

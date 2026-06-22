@@ -64,7 +64,7 @@ export function Modal({
   const drawer = variant === "drawer";
   const panelPos = drawer
     ? "right-0 top-0 h-full w-full max-w-sm rounded-l-sheet"
-    : "left-1/2 top-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-sheet";
+    : "left-1/2 top-1/2 w-full max-w-[min(28rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-sheet";
 
   // Enter/exit per variant; reduced-motion collapses to opacity only.
   const motionProps = reduceMotion

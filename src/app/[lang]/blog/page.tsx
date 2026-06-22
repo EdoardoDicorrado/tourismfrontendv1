@@ -8,9 +8,13 @@ import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { CardSlider } from "@/components/ui/CardSlider";
 import { Container } from "@/components/ui/Container";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { getArticles, getCategories, getFeaturedArticle } from "@/data/blog";
 import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
+import { absUrl } from "@/lib/seo/config";
+import { breadcrumbLd, itemListLd } from "@/lib/seo/jsonld";
+import { buildMetadata } from "@/lib/seo/metadata";
 
 type Params = { lang: string };
 
@@ -22,7 +26,12 @@ export async function generateMetadata({
   const { lang } = await params;
   if (!isLocale(lang)) return {};
   const dict = await getDictionary(lang);
-  return { title: dict.blog.meta.title, description: dict.blog.meta.description };
+  return buildMetadata({
+    lang,
+    path: "/blog",
+    title: dict.blog.meta.title,
+    description: dict.blog.meta.description,
+  });
 }
 
 /**
@@ -43,23 +52,37 @@ export default async function BlogPage({ params }: { params: Promise<Params> }) 
   const heroArticles = [featured, ...latest];
   const labelFor = (id: string) => categories.find((c) => c.id === id)?.label ?? id;
 
+  const articleUrls = articles.map((a) => absUrl(`/${lang}/blog/${a.slug}`));
+
   return (
     <>
+      <JsonLd
+        data={[
+          itemListLd(articleUrls),
+          breadcrumbLd([
+            { name: "Home", path: `/${lang}` },
+            { name: "Blog", path: `/${lang}/blog` },
+          ]),
+        ]}
+      />
       <Header lang={lang} dict={dict} />
       <main className="flex-1">
         <BlogHero lang={lang} dict={dict} articles={heroArticles} />
 
-        <section className="pt-8 pb-6">
+        <section className="pt-8 pb-6 lg:py-12">
           <Container>
-            <h2 className="text-2xl font-extrabold text-ink sm:text-3xl">{dict.blog.latest}</h2>
-            {/* Slider orizzontale come le altre pagine (Offers/RelatedActivities): ultimi
-                4 articoli, altezze UGUALI (li stretch + ArticleCard h-full), full-bleed mobile. */}
+            <h2 className="text-2xl font-extrabold text-ink sm:text-3xl lg:text-4xl">{dict.blog.latest}</h2>
+            {/* Mobile: slider 4 articoli (altezze uguali, full-bleed). Desktop (Figma
+                605:2005): griglia di 2 card grandi verticali; le altre 2 sono lg:hidden. */}
             <CardSlider
               label={dict.common.nextCard}
-              className="no-scrollbar -mx-4 mt-5 flex snap-x snap-mandatory items-stretch gap-4 overflow-x-auto scroll-px-4 px-4 pb-1 sm:mx-0 sm:px-0"
+              className="no-scrollbar -mx-4 mt-5 flex snap-x snap-mandatory items-stretch gap-4 overflow-x-auto scroll-px-4 px-4 pb-1 sm:mx-0 sm:px-0 lg:mt-6 lg:grid lg:grid-cols-2 lg:gap-10"
             >
-              {latest.map((a) => (
-                <li key={a.slug} className="w-[267px] shrink-0 snap-start">
+              {latest.map((a, i) => (
+                <li
+                  key={a.slug}
+                  className={`w-[267px] shrink-0 snap-start lg:w-auto ${i >= 2 ? "lg:hidden" : ""}`}
+                >
                   <ArticleCard
                     lang={lang}
                     article={a}

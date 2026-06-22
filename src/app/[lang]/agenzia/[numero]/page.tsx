@@ -1,6 +1,9 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { defaultLocale, isLocale } from "@/lib/i18n/config";
+import { getDictionary } from "@/lib/i18n/dictionaries";
+import { buildMetadata } from "@/lib/seo/metadata";
 
 /**
  * Agency invitation deep-link (e.g. `/agenzia/12345`, sent by email). Resolves the
@@ -12,6 +15,23 @@ import { defaultLocale, isLocale } from "@/lib/i18n/config";
  * Decision pending (ui-ux-3 #27): whether `?agency=` pre-populates the email field
  * or stays a pure deep-link. For now it's forwarded but unused by the login page.
  */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string; numero: string }>;
+}): Promise<Metadata> {
+  const { lang, numero } = await params;
+  if (!isLocale(lang)) return {};
+  const dict = await getDictionary(lang);
+  return buildMetadata({
+    lang,
+    path: `/agenzia/${numero}`,
+    title: dict.account.agencyLogin.title,
+    index: false,
+    follow: true,
+  });
+}
+
 export default async function AgencyDeepLink({
   params,
 }: {

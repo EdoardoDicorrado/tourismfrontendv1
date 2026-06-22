@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRef, useState } from "react";
 
 import { Flash } from "@/components/account/ui";
@@ -338,11 +339,50 @@ function FileField({
 }
 
 /**
+ * Stepper desktop (Figma "Modulo // Desktop" 606:505): due cerchi numerati con
+ * connettore — il cerchio dello step corrente/raggiunto è pieno (cta). Solo da lg in
+ * su; su mobile lo step resta nel titolo "Step N" (mobile congelato).
+ */
+function Stepper({ step }: { step: 1 | 2 }) {
+  const dot = (n: 1 | 2) =>
+    `flex size-16 shrink-0 items-center justify-center rounded-full text-lg font-bold ${
+      step >= n ? "bg-cta text-white" : "bg-soft text-cta"
+    }`;
+  return (
+    <div className="hidden items-center justify-center gap-3 lg:flex" aria-hidden>
+      <span className={dot(1)}>1</span>
+      <span className="h-0.5 w-24 bg-stroke-2" />
+      <span className={dot(2)}>2</span>
+    </div>
+  );
+}
+
+/**
+ * Immagine laterale del form — SOLO desktop (Figma step 1/2, colonna destra 700×551).
+ * `fill` su una cella grid che si stira all'altezza del form (items-stretch).
+ */
+function FormSideImage() {
+  return (
+    <div className="relative hidden overflow-hidden rounded-card lg:block">
+      <Image
+        src="/images/card-musei-vaticani.png"
+        alt=""
+        fill
+        sizes="(min-width: 1024px) 45vw, 0px"
+        className="object-cover"
+      />
+    </div>
+  );
+}
+
+/**
  * Multi-step "Lavora con noi" application form — pixel-perfect to Figma "Modulo //
  * Mobile" (447:1834 step 1 — personal data, 447:2014 step 2 — documents, 447:2191 —
- * "Candidatura inviata" confirmation). Submits multipart/form-data to the
- * `/api/careers/apply` BFF (validated stub until the careers API exists). React
- * Compiler is ON: every state write happens in an event handler, never an effect.
+ * "Candidatura inviata" confirmation) e "Modulo // Desktop" (605:1539/1700/1858:
+ * stepper in alto + 2 colonne form/immagine, conferma centrata). Submits
+ * multipart/form-data to the `/api/careers/apply` BFF (validated stub until the
+ * careers API exists). React Compiler is ON: every state write happens in an event
+ * handler, never an effect.
  */
 export function CareersApplicationForm({
   lang,
@@ -458,21 +498,26 @@ export function CareersApplicationForm({
   }
 
   return (
-    <section id="modulo" className="scroll-mt-8 py-4">
-      <Container className="flex flex-col gap-4">
+    <section id="modulo" className="scroll-mt-8 py-4 lg:py-12">
+      <Container className="flex flex-col gap-4 lg:gap-8">
+        <Stepper step={step} />
         <div className="flex flex-col gap-2 text-ink">
-          <h2 className="text-2xl font-extrabold leading-tight">
+          <h2 className="text-2xl font-extrabold leading-tight lg:text-3xl">
             {positionTitle
               ? fill(t.headingPosition, { position: positionTitle, n: String(step) })
               : fill(t.heading, { n: String(step) })}
             <br />
             {t.headingBrand}
-          </h2>
-          <p className="text-base">{step === 1 ? t.step1Subtitle : t.step2Subtitle}</p>
+          </h2>{/* ds-guard-ignore: titolo Figma desktop 40px→33 scala 0.83 container 1200 */}
+          <p className="text-base lg:text-lg">{step === 1 ? t.step1Subtitle : t.step2Subtitle}</p>
         </div>
 
         {step === 1 ? (
-          <form onSubmit={handleContinue} className="flex flex-col gap-4" noValidate>
+          <form onSubmit={handleContinue} className="flex flex-col gap-4 lg:gap-6" noValidate>
+            {/* Desktop: 2 colonne (campi a sx, immagine a dx). `contents` su mobile →
+                i wrapper spariscono e i campi restano nel flusso del form (congelato). */}
+            <div className="contents lg:grid lg:grid-cols-2 lg:items-stretch lg:gap-10">
+              <div className="contents lg:flex lg:flex-col lg:gap-4">
             <FloatingField
               id="cv-first-name"
               label={t.firstName}
@@ -559,13 +604,23 @@ export function CareersApplicationForm({
             />
 
             {error && <Flash variant="error">{error}</Flash>}
+              </div>
+              <FormSideImage />
+            </div>
 
-            <button type="submit" className={ctaButton}>
+            <button
+              type="submit"
+              className={`${ctaButton} lg:w-auto lg:self-start lg:px-10`}
+            >
               {t.continue}
             </button>
           </form>
         ) : (
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4 lg:gap-6" noValidate>
+            {/* Desktop: 2 colonne (upload+consensi a sx, immagine a dx). `contents` su
+                mobile → wrapper trasparenti, flusso del form congelato. */}
+            <div className="contents lg:grid lg:grid-cols-2 lg:items-stretch lg:gap-10">
+              <div className="contents lg:flex lg:flex-col lg:gap-4">
             <FileField
               id="cv-file"
               label={t.cv}
@@ -612,8 +667,15 @@ export function CareersApplicationForm({
             </label>
 
             {error && <Flash variant="error">{error}</Flash>}
+              </div>
+              <FormSideImage />
+            </div>
 
-            <button type="submit" disabled={submitting} className={ctaButton}>
+            <button
+              type="submit"
+              disabled={submitting}
+              className={`${ctaButton} lg:w-auto lg:self-start lg:px-10`}
+            >
               {submitting ? t.submitting : t.submit}
             </button>
             <button
@@ -623,7 +685,7 @@ export function CareersApplicationForm({
                 setStep(1);
               }}
               disabled={submitting}
-              className="text-sm font-semibold text-cta hover:underline disabled:opacity-60"
+              className="text-sm font-semibold text-cta hover:underline disabled:opacity-60 lg:self-start"
             >
               {t.back}
             </button>
@@ -638,8 +700,8 @@ export function CareersApplicationForm({
 function Confirmation({ lang, dict }: { lang: Locale; dict: Dictionary["careers"] }) {
   const t = dict.success;
   return (
-    <section id="modulo" className="scroll-mt-8 py-4">
-      <Container className="flex flex-col items-center gap-4">
+    <section id="modulo" className="scroll-mt-8 py-4 lg:py-20">
+      <Container className="flex flex-col items-center gap-4 lg:gap-6">
         <span className="flex size-[77px] shrink-0 items-center justify-center rounded-full bg-ink">
           <svg width="34" height="34" viewBox="0 0 24 24" fill="none" aria-hidden>
             <path
@@ -651,10 +713,10 @@ function Confirmation({ lang, dict }: { lang: Locale; dict: Dictionary["careers"
             />
           </svg>
         </span>
-        <h2 className="text-center text-2xl font-extrabold text-ink">{t.title}</h2>
-        <p className="text-center text-base text-ink">{t.subtitle}</p>
+        <h2 className="text-center text-2xl font-extrabold text-ink lg:text-3xl">{t.title}</h2>{/* ds-guard-ignore: titolo Figma desktop 40px→33 scala 0.83 container 1200 */}
+        <p className="text-center text-base text-ink lg:text-lg">{t.subtitle}</p>
 
-        <div className="flex w-full flex-col gap-4 rounded-card bg-soft p-4">
+        <div className="flex w-full flex-col gap-4 rounded-card bg-soft p-4 lg:max-w-3xl lg:gap-6 lg:p-6">
           <p className="text-sm text-ink">{t.cardText}</p>
           <a
             href={`/${lang}/chi-siamo`}

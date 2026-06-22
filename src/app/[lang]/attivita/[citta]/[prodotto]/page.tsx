@@ -10,9 +10,12 @@ import { ProductGallery } from "@/components/product/ProductGallery";
 import { ProductHeader } from "@/components/product/ProductHeader";
 import { InfoGenerali } from "@/components/product/InfoGenerali";
 import { BookingBox } from "@/components/product/BookingBox";
+import { BookingProvider } from "@/components/product/BookingContext";
+import { ProductOptions } from "@/components/product/ProductOptions";
 import { StickyBookingBar } from "@/components/product/StickyBookingBar";
 import { StickyBackBar } from "@/components/product/StickyBackBar";
 import { ProductTrust } from "@/components/product/ProductTrust";
+import { ShareButton } from "@/components/product/ShareButton";
 import { Description } from "@/components/product/Description";
 import { TextSection } from "@/components/product/TextSection";
 import { IncludedList } from "@/components/product/IncludedList";
@@ -25,6 +28,10 @@ import { products } from "@/data/product";
 import type { InfoRow, IncludedList as IncludedListData, MeetingPoint as MeetingPointData } from "@/data/product";
 import { getProductDetail } from "@/lib/catalog";
 import { getSession } from "@/lib/account/session";
+import { buildMetadata } from "@/lib/seo/metadata";
+import { absUrl } from "@/lib/seo/config";
+import { productLd, breadcrumbLd } from "@/lib/seo/jsonld";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { RecordRecentlyViewed } from "@/components/product/RecordRecentlyViewed";
 import type { Product } from "@/data/home";
 
@@ -71,10 +78,14 @@ export async function generateMetadata({
   if (!isLocale(lang)) return {};
   const product = await getProductDetail(citta, prodotto, lang);
   if (!product) return {};
-  return {
-    title: `${product.title} — TourisMotion`,
+  return buildMetadata({
+    lang,
+    path: `/attivita/${citta}/${prodotto}`,
+    title: product.title,
     description: product.shortDescription,
-  };
+    image: product.gallery[0]?.src,
+    type: "website",
+  });
 }
 
 export default async function ProductPage({ params }: { params: Promise<Params> }) {
@@ -108,76 +119,129 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
     currency: product.currency,
   };
 
+  // SEO structured data: Product (with offer + rating) and the breadcrumb trail.
+  const productImages = product.gallery.map((g) => (g.src.startsWith("/") ? absUrl(g.src) : g.src));
+  const productUrl = absUrl(`/${lang}/attivita/${citta}/${prodotto}`);
+  const ld = productLd({
+    name: product.title,
+    description: product.shortDescription,
+    images: productImages,
+    url: productUrl,
+    price: product.priceFrom,
+    currency: product.currency,
+    rating: product.rating,
+    reviewCount: product.reviews,
+  });
+  const crumbs = breadcrumbLd([
+    { name: "Home", path: `/${lang}` },
+    { name: product.cityName, path: `/${lang}/attivita/${citta}` },
+    { name: product.title, path: `/${lang}/attivita/${citta}/${prodotto}` },
+  ]);
+
   return (
     <>
+      <JsonLd data={[ld, crumbs]} />
       <Header lang={lang} dict={dict} />
       <RecordRecentlyViewed product={recentlyViewed} />
       <main className="flex-1">
-        {/* pb-0: niente padding sotto la Descrizione, così il separatore
-            Descrizione→Recensioni resta a 16px sopra/sotto (il respiro sotto lo dà
-            il pt di Reviews, senza raddoppiare col pb del Container). */}
-        <Container className="pt-6 pb-0">
-          <ProductGallery
-            images={product.gallery}
-            dict={dict}
-            fallbackHref={`/${lang}/attivita/${citta}`}
-          />
-          {/* Ancora per la barra "torna indietro" sticky: quando questo marker (fine
-              galleria) scrolla sopra il viewport, la barra appare. */}
-          <div id="gallery-end" aria-hidden className="h-0" />
-          <div className="mt-6">
-            <ProductHeader product={product} lang={lang} dict={dict} />
-          </div>
-
-          {/* Figma 64:9402 (mobile) order: Informazioni Generali → BookingBox →
-              Perché piace → Descrizione. DOM order already matches the mobile flow;
-              from lg the grid pulls the booking box into the sticky right column. */}
-          <div className="mt-8 flex flex-col gap-8 lg:grid lg:grid-cols-[1fr_380px] lg:items-start">
-            <div className="min-w-0 lg:col-start-1 lg:row-start-1">
+        {/* DESKTOP (lg+) — 2 colonne. SINISTRA: titolo+meta, galleria (thumb verticali),
+            descrizione breve, info generali, descrizione lunga, recensioni, editoriali,
+            FAQ. DESTRA: BookingBox (card bianca) + "Perché piace ai nostri clienti",
+            sticky fino allo slider "altre attività". Sotto lg il grid è INERTE (solo
+            classi lg:*) → tutto rende IDENTICO al mobile (CONGELATO, #86). Istanze
+            UNICHE (BookingBox/ProductTrust/Header/Gallery): l'ordine DOM tiene il
+            mobile; su desktop reorder via lg:order — niente id #prenota duplicato. */}
+        {/* BookingProvider: counts/data condivisi tra il BookingBox (colonna destra)
+            e le opzioni in colonna principale (ProductOptions, desktop). */}
+        <BookingProvider product={product}>
+        <div className="lg:mx-auto lg:grid lg:max-w-[var(--container-site)] lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start lg:gap-8">
+          {/* A — colonna SINISTRA, riga 1. Mobile (block): galleria → header → info.
+              Desktop (lg:flex + lg:order): header(1) → galleria(2) → descr.breve(3) →
+              info(4). Le mt-* mobile sono azzerate su desktop (lg:mt-0, spazio = gap-6). */}
+          <Container className="pt-6 pb-0 lg:col-start-1 lg:row-start-1 lg:min-w-0 lg:flex lg:flex-col lg:gap-6">
+            <div className="lg:order-2">
+              <ProductGallery
+                images={product.gallery}
+                dict={dict}
+                fallbackHref={`/${lang}/attivita/${citta}`}
+              />
+              {/* Ancora per la barra "torna indietro" sticky (mobile): quando questo
+                  marker (fine galleria) scrolla sopra il viewport, la barra appare. */}
+              <div id="gallery-end" aria-hidden className="h-0" />
+            </div>
+            <div className="mt-6 lg:order-1 lg:mt-0">
+              <ProductHeader product={product} lang={lang} dict={dict} />
+            </div>
+            {/* Descrizione breve: su DESKTOP sotto la galleria (Edoardo); su mobile è
+                dentro ProductHeader (qui hidden). */}
+            <p className="hidden text-base text-ink/80 lg:order-3 lg:block">
+              {product.shortDescription}
+            </p>
+            {/* Opzioni (Edoardo / Figma 221:8186): su DESKTOP nella colonna principale
+                SUBITO SOTTO la descrizione breve, non nel box a destra. Su mobile niente
+                qui — restano inline nel BookingBox (flow congelato). */}
+            <div className="hidden lg:order-4 lg:block">
+              <ProductOptions product={product} lang={lang} dict={dict} />
+            </div>
+            <div className="mt-8 lg:order-5 lg:mt-0">
               <InfoGenerali rows={product.info.length > 0 ? product.info : PLACEHOLDER_INFO} dict={dict} />
             </div>
+          </Container>
 
-            <aside className="min-w-0 lg:col-start-2 lg:row-start-1 lg:self-start lg:sticky lg:top-4">
-              <BookingBox product={product} lang={lang} dict={dict} isAgency={isAgency} />
-            </aside>
-
-            <div className="flex min-w-0 flex-col gap-4 lg:col-start-1 lg:row-start-2">
-              <ProductTrust dict={dict} />
-              <Description text={product.description || LOREM} dict={dict} />
+          {/* DESTRA — BookingBox (card bianca su lg) + "Perché piace ai nostri clienti".
+              UNICA istanza: mobile in flusso (box=4° posto, trust=5°), desktop colonna
+              sticky che copre entrambe le righe (row-span-2). px mobile per il gutter
+              del box + il full-bleed dello slider trust; lg:px-0 = card a filo colonna. */}
+          <aside className="mt-8 flex min-w-0 flex-col gap-8 px-4 sm:px-6 lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:mt-0 lg:gap-6 lg:self-start lg:px-0 lg:pt-6 lg:sticky lg:top-6">
+            {/* Condividi — solo desktop, in cima alla colonna destra in linea col
+                titolo (Edoardo). Su mobile non c'è (layout congelato). */}
+            <div className="hidden lg:flex lg:justify-end">
+              <ShareButton title={product.title} />
             </div>
+            <BookingBox product={product} lang={lang} dict={dict} isAgency={isAgency} />
+            <ProductTrust dict={dict} />
+          </aside>
+
+          {/* B — colonna SINISTRA, riga 2: descrizione lunga, recensioni, sezioni
+              editoriali, FAQ. mt-4 = ex gap-4 (trust → descrizione) su mobile. */}
+          <div className="mt-4 min-w-0 lg:col-start-1 lg:row-start-2 lg:mt-0">
+            <Container className="pb-0">
+              <Description text={product.description || LOREM} dict={dict} />
+            </Container>
+
+            {/* Recensioni: subito dopo la Descrizione (Figma). Il pt di Reviews dà il
+                respiro sopra (il Container sopra ha pb-0). `slider` = scorrevole
+                manualmente (freccia + drag della CardSlider), NESSUN auto-slide. */}
+            <Reviews lang={lang} dict={dict} slider />
+
+            {/* Sezioni editoriali: separatori teal (border-cta) tra le sezioni, con
+                16px di respiro sopra/sotto ogni linea (Figma 64:9402). Incluso/Escluso
+                = UNA sola sezione (Figma 64:10481), non due affiancate. Niente py sul
+                Container: la linea superiore la dà il border-t; il respiro lo danno il
+                pb di Reviews e il pt interno delle sezioni, senza raddoppi. */}
+            <Container>
+              <div className="flex flex-col border-t border-cta">
+                <TextSection title={dict.product.thingsToKnow} text={product.thingsToKnow || LOREM} />
+                <IncludedList
+                  included={product.included ?? placeholderList(dict.product.included)}
+                  notIncluded={product.notIncluded ?? placeholderList(dict.product.notIncluded)}
+                  includedTitle={dict.product.included}
+                  notIncludedTitle={dict.product.notIncluded}
+                />
+                {/* "Assistenza" — support accordion (Figma 64:10517): tra Incluso e Punto
+                    d'incontro, al posto del vecchio SupportBanner geco (che resta sulla home). */}
+                <ProductSupport dict={dict} />
+                <MeetingPoint data={product.meetingPoint ?? PLACEHOLDER_MEETING} dict={dict} />
+                <TextSection title={dict.product.accessibility} text={product.accessibility || LOREM} />
+              </div>
+            </Container>
+
+            <Faq dict={dict} />
           </div>
-        </Container>
+        </div>
+        </BookingProvider>
 
-        {/* Recensioni: a metà pagina, subito dopo la Descrizione (Figma). Full-bleed. */}
-        <Reviews lang={lang} dict={dict} />
-
-        {/* Sezioni editoriali: separatori teal (border-cta) tra le sezioni, con
-            16px di respiro sopra/sotto ogni linea (Figma 64:9402). Incluso/Escluso
-            = UNA sola sezione (Figma 64:10481), non due affiancate. */}
-        {/* Niente py sul Container: la linea SUPERIORE (Recensioni→Cose da sapere)
-            la dà il border-t qui sotto; il respiro sopra/sotto lo danno il pb di
-            Reviews e il pt interno delle sezioni, senza raddoppi. */}
-        <Container>
-          {/* gap-0: lo spazio (16px) attorno a ogni separatore lo dà il padding
-              interno delle sezioni (Disclosure py-4 / ProductSupport py-4) + il
-              border-t di apertura, così il ritmo resta uniforme come in Figma. */}
-          <div className="flex flex-col border-t border-cta">
-            <TextSection title={dict.product.thingsToKnow} text={product.thingsToKnow || LOREM} />
-            <IncludedList
-              included={product.included ?? placeholderList(dict.product.included)}
-              notIncluded={product.notIncluded ?? placeholderList(dict.product.notIncluded)}
-              includedTitle={dict.product.included}
-              notIncludedTitle={dict.product.notIncluded}
-            />
-            {/* "Assistenza" — support accordion (Figma 64:10517): tra Incluso e Punto
-                d'incontro, al posto del vecchio SupportBanner geco (che resta sulla home). */}
-            <ProductSupport dict={dict} />
-            <MeetingPoint data={product.meetingPoint ?? PLACEHOLDER_MEETING} dict={dict} />
-            <TextSection title={dict.product.accessibility} text={product.accessibility || LOREM} />
-          </div>
-        </Container>
-
-        <Faq dict={dict} />
+        {/* FINE blocco 2 colonne: "Altre attività su {città}" = slider full-width. */}
         <RelatedActivities cityName={product.cityName} lang={lang} dict={dict} />
         <div className="h-28 lg:hidden" aria-hidden />
       </main>

@@ -12,7 +12,7 @@ function Chevron({ open }: { open: boolean }) {
       viewBox="0 0 24 24"
       fill="none"
       aria-hidden
-      className={`shrink-0 transition-transform duration-300 ${open ? "rotate-180" : ""}`}
+      className={`shrink-0 transition-transform duration-300 lg:hidden ${open ? "rotate-180" : ""}`}
     >
       <path
         d="M6 9l6 6 6-6"
@@ -31,14 +31,21 @@ function Chevron({ open }: { open: boolean }) {
  * fluidly via framer-motion — native <details> hides its content on close, which
  * can't be animated reliably across browsers. Open by default (was <details open>).
  * Honours `prefers-reduced-motion` (falls back to a plain opacity fade, no height).
+ *
+ * Desktop (lg+): NOT collapsible — the chevron hides and the toggle is inert, so
+ * every column stays expanded as a static footer column (Figma desktop 221:3229).
+ * ponytail: stays-open relies on `defaultOpen`; a section a mobile user collapsed
+ * before resizing up to lg keeps that state — acceptable edge, not worth forcing.
  */
 export function FooterSection({
   title,
   defaultOpen = true,
+  className = "",
   children,
 }: {
   title: string;
   defaultOpen?: boolean;
+  className?: string;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -46,13 +53,13 @@ export function FooterSection({
   const id = useId();
 
   return (
-    <div>
+    <div className={className}>
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-controls={id}
-        className="flex w-full cursor-pointer items-center justify-between border-b border-white pb-2 text-left"
+        className="flex w-full cursor-pointer items-center justify-between border-b border-white pb-2 text-left lg:cursor-default lg:pointer-events-none"
       >
         <span className="text-xl font-extrabold">{title}</span>
         <Chevron open={open} />

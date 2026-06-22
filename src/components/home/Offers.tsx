@@ -35,14 +35,16 @@ export function Offers({
   const activeName = cities.find((c) => c.slug === activeCity)?.name ?? activeCity;
 
   return (
-    <section className="py-3 sm:py-12">
+    <section className="py-3 sm:py-12 lg:py-6">
       <Container>
-        <h2 className="text-2xl font-extrabold text-ink">{dict.offers.title}</h2>
+        <h2 className="text-2xl font-extrabold text-ink lg:text-3xl lg:font-bold">{dict.offers.title}</h2>
 
         {/* Full-bleed like the card slider below (-mx-4 + px-4) so the last tab
             (Torino/Bologna) scrolls fully to the screen edge instead of being
             clipped by the Container padding, and tabs align with the cards. */}
-        <div className="no-scrollbar -mx-4 mt-5 flex gap-6 overflow-x-auto px-4">
+        {/* Traccia tab desktop (Edoardo): più chiara → stroke-2 (#aed5e3) invece di
+            stroke (#91a0b7). Mobile non ha questa traccia (solo lg). */}
+        <div className="no-scrollbar -mx-4 mt-5 flex gap-6 overflow-x-auto px-4 lg:mx-0 lg:gap-10 lg:overflow-visible lg:border-b-2 lg:border-stroke-2 lg:px-0">
           {cities.map((city) => {
             const active = city.slug === activeCity;
             return (
@@ -51,7 +53,7 @@ export function Offers({
                 type="button"
                 onClick={() => setActiveCity(city.slug)}
                 aria-pressed={active}
-                className={`flex shrink-0 items-center gap-4 border-b-2 py-2 text-xl font-extrabold text-ink transition-colors ${
+                className={`flex shrink-0 items-center gap-4 border-b-2 py-2 text-xl font-extrabold text-ink transition-colors lg:py-4 lg:text-xl lg:font-semibold lg:-mb-0.5 ${
                   active ? "border-cta" : "border-transparent hover:text-cta"
                 }`}
               >
@@ -61,7 +63,7 @@ export function Offers({
                     alt=""
                     width={36}
                     height={36}
-                    className="rounded-full object-cover"
+                    className="rounded-full object-cover lg:size-7"
                   />
                 )}
                 {city.name}
@@ -72,15 +74,17 @@ export function Offers({
 
         {shown.length > 0 ? (
           <>
+            {/* Desktop (Edoardo): NON griglia ma slider come mobile — 3 card per
+                vista, scroll con la freccia. `lg:flex` riapre lo scroll orizzontale
+                (override di `sm:grid`); card a 1/3 della larghezza meno i gap (2×40).
+                Mobile + tablet (sm) intatti. */}
             <CardSlider
               label={dict.common.nextCard}
-              className="no-scrollbar -mx-4 mt-6 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-px-4 px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-4"
+              desktopArrow
+              className="no-scrollbar -mx-4 mt-6 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-px-4 px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 sm:pb-0 lg:flex lg:overflow-x-auto lg:pb-1 lg:gap-10"
             >
               {shown.map((product) => (
-                <li
-                  key={product.id}
-                  className="w-[267px] shrink-0 snap-start sm:w-auto"
-                >
+                <li key={product.id} className="w-[267px] shrink-0 snap-start sm:w-auto lg:w-[calc((100%-80px)/3)] lg:shrink-0">{/* ds-guard-ignore: card slider mobile 267px, nessun token */}
                   <ProductCard product={product} lang={lang} dict={dict} />
                 </li>
               ))}

@@ -19,19 +19,19 @@ export function OpenPositions({ lang, dict }: { lang: Locale; dict: Dictionary["
     `/${lang}/lavora-con-noi/candidatura${id ? `?posizione=${id}` : ""}`;
 
   return (
-    <section id="posizioni-aperte" className="scroll-mt-4 py-4">
-      <Container className="flex flex-col gap-4">
-        <h2 className="text-2xl font-extrabold text-ink">{t.title}</h2>
+    <section id="posizioni-aperte" className="scroll-mt-4 py-4 lg:py-12">
+      <Container className="flex flex-col gap-4 lg:gap-8">
+        <h2 className="text-2xl font-extrabold text-ink lg:text-[33px] lg:font-bold">{t.title}</h2>{/* ds-guard-ignore: titolo sezione Figma desktop 40px, fuori type-scale */}
 
         {!hasPositions ? (
           <div className="rounded-card bg-soft p-4 text-base font-semibold text-ink">{t.empty}</div>
         ) : (
-          <ul className="flex flex-col gap-4">
+          <ul className="flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:gap-6">
             {t.items.map((position) => (
               <li
                 key={position.id}
                 id={`position-${position.id}`}
-                className="flex scroll-mt-4 flex-col gap-2 rounded-card bg-soft p-4"
+                className="flex scroll-mt-4 flex-col gap-2 rounded-card bg-soft p-4 lg:p-6"
               >
                 <p className="text-xs font-semibold uppercase text-cta">{position.category}</p>
                 <p className="text-base font-extrabold text-ink">{position.title}</p>

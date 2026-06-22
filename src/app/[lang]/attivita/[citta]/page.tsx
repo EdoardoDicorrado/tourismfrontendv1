@@ -4,6 +4,10 @@ import { notFound } from "next/navigation";
 import { fill, isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getListingAttractions, getListingProducts } from "@/lib/catalog";
+import { buildMetadata } from "@/lib/seo/metadata";
+import { absUrl } from "@/lib/seo/config";
+import { breadcrumbLd, itemListLd } from "@/lib/seo/jsonld";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ListingHero } from "@/components/listing/ListingHero";
@@ -31,10 +35,12 @@ export async function generateMetadata({
   const city = cityListings[citta];
   if (!isLocale(lang) || !city) return {};
   const dict = await getDictionary(lang);
-  return {
+  return buildMetadata({
+    lang,
+    path: `/attivita/${citta}`,
     title: fill(dict.listing.metaTitle, { city: city.name }),
     description: fill(dict.listing.metaDescription, { city: city.name }),
-  };
+  });
 }
 
 export default async function ListingPage({ params }: { params: Promise<Params> }) {
@@ -48,22 +54,45 @@ export default async function ListingPage({ params }: { params: Promise<Params> 
     getListingAttractions(lang),
   ]);
 
+  const productUrls = products
+    .filter((p) => p.slug)
+    .map((p) => absUrl(`/${lang}/attivita/${citta}/${p.slug}`));
+  const crumbs = breadcrumbLd([
+    { name: "Home", path: `/${lang}` },
+    { name: city.name, path: `/${lang}/attivita/${citta}` },
+  ]);
+
   return (
     <>
+      <JsonLd data={[itemListLd(productUrls), crumbs]} />
       <Header lang={lang} dict={dict} />
-      <main className="flex-1">
+      {/* Desktop (Figma 221:2766): le Recensioni salgono SOPRA Attrazioni + FAQ.
+          Si riordina SOLO da lg in su con flex `order`; i wrapper sono
+          `display:contents` su mobile (nessun box, ordine = DOM) così il mobile
+          resta congelato e identico. */}
+      <main className="flex-1 lg:flex lg:flex-col">
         <ListingFiltersProvider>
           <ListingHero city={city} lang={lang} dict={dict} />
           <ListingResults lang={lang} dict={dict} products={products} />
         </ListingFiltersProvider>
-        <Attractions lang={lang} citta={citta} dict={dict} attractions={attractions} />
-        <Faq dict={dict} />
-        <Reviews
-          lang={lang}
-          dict={dict}
-          title={fill(dict.reviews.listingTitle, { city: city.name })}
-        />
-        <SupportBanner dict={dict} />
+        <div className="contents lg:block lg:order-2">
+          <Attractions lang={lang} citta={citta} dict={dict} attractions={attractions} />
+        </div>
+        <div className="contents lg:block lg:order-3">
+          <Faq dict={dict} />
+        </div>
+        <div className="contents lg:block lg:order-1">
+          <Reviews
+            lang={lang}
+            dict={dict}
+            title={fill(dict.reviews.listingTitle, { city: city.name })}
+            slider
+            loopTo={9}
+          />
+        </div>
+        <div className="contents lg:block lg:order-4">
+          <SupportBanner dict={dict} />
+        </div>
       </main>
       <Footer lang={lang} dict={dict} />
     </>

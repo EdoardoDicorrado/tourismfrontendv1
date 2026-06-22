@@ -16,7 +16,7 @@ export function MeetingPoint({ data, dict }: { data: MeetingPointData; dict: Dic
       defaultOpen
       divided={false}
       className="border-b border-cta"
-      summary={<h2 className="text-xl font-extrabold text-ink sm:text-2xl">{dict.product.meetingPoint}</h2>}
+      summary={<h2 className="text-xl font-extrabold text-ink sm:text-2xl lg:text-3xl">{dict.product.meetingPoint}</h2>}
     >
       <div className="flex flex-col gap-3">
         <p className="text-base text-ink/80">{data.text}</p>

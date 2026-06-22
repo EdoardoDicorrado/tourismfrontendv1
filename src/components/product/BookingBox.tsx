@@ -22,6 +22,7 @@ import { formatDateLong, formatMoney } from "@/lib/format";
 import { AGENCY_DISCOUNT_PERCENT, agencyPrice } from "@/lib/account/agency-pricing";
 import { fill, type Locale } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
+import { useBooking } from "@/components/product/BookingContext";
 
 /** Earliest bookable day (mock "today" — matches CLAUDE.md currentDate). */
 const TODAY_ISO = "2026-06-08";
@@ -92,22 +93,13 @@ export function BookingBox({
     discountPercent: product.calendar.discountPercent,
   };
 
-  const initial = Object.fromEntries(
-    product.participants.map((p) => [p.key, p.min]),
-  ) as Counts;
-
-  const [counts, setCounts] = useState<Counts>(initial);
-  const [date, setDate] = useState<string | null>(null);
+  // counts/date sono CONDIVISI via context: su desktop le opzioni vivono nella
+  // colonna principale (ProductOptions) e devono riflettere la selezione del box.
+  const { counts, date, setCount, setDate } = useBooking();
   const [step, setStep] = useState<"select" | "options">("select");
   const reduceMotion = useReducedMotion();
   // Inizio del blocco opzioni: target dello scroll dopo "Verifica disponibilità".
   const optionsRef = useRef<HTMLDivElement>(null);
-
-  const setCount = (key: ParticipantType["key"], delta: number) =>
-    setCounts((prev) => {
-      const min = product.participants.find((p) => p.key === key)?.min ?? 0;
-      return { ...prev, [key]: Math.max(min, prev[key] + delta) };
-    });
 
   function verify() {
     // Fall back to a known-available day so we never default to a sold-out date.
@@ -123,6 +115,9 @@ export function BookingBox({
     if (step !== "options") return;
     const el = optionsRef.current;
     if (!el) return;
+    // Su DESKTOP le opzioni inline sono nascoste (lg:hidden) — vivono nella colonna
+    // principale (ProductOptions). offsetParent === null = nascosto → niente anchor/lock.
+    if (el.offsetParent === null) return;
     el.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
     if (reduceMotion) return;
 
@@ -144,7 +139,9 @@ export function BookingBox({
 
   return (
     <div className="flex flex-col gap-4">
-      <div id="prenota" className="scroll-mt-24 rounded-panel bg-soft p-5 sm:p-6">
+      {/* Mobile: pannello soft azzurro. Desktop (lg+, colonna destra): CARD BIANCA
+          con bordo + ombra leggera (richiesta Edoardo). Solo additivo lg:*. */}
+      <div id="prenota" className="scroll-mt-24 rounded-panel bg-soft p-5 sm:p-6 lg:border lg:border-soft-grey lg:bg-white lg:shadow-sm">
         {isAgency ? (
           // Agenzia loggata: badge "Sconto X% agenzia", prezzo pubblico barrato, prezzo
           // agenzia grande in rosso. Centrato quando NON c'è un altro badge sconto;
@@ -263,7 +260,9 @@ export function BookingBox({
           ref={optionsRef}
           // scroll-mt-24: l'anchor lascia ~96px sopra → il conteggio non finisce
           // sotto l'header sticky e resta sempre visibile.
-          className="flex scroll-mt-24 flex-col gap-8"
+          // lg:hidden → su DESKTOP le opzioni stanno nella colonna principale
+          // (ProductOptions), non qui sotto il box; il flow inline resta solo mobile.
+          className="flex scroll-mt-24 flex-col gap-8 lg:hidden"
           variants={optionsContainer}
           initial="hidden"
           animate="show"
@@ -290,7 +289,7 @@ export function BookingBox({
   );
 }
 
-function OptionCard({
+export function OptionCard({
   option,
   counts,
   participants,

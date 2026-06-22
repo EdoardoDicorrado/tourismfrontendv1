@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import { fill, isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
+import { buildMetadata } from "@/lib/seo/metadata";
 import { formatDateLong } from "@/lib/format";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -38,7 +39,13 @@ export async function generateMetadata({
   const { lang } = await params;
   if (!isLocale(lang)) return {};
   const dict = await getDictionary(lang);
-  return { title: `${dict.search.button} — TourisMotion` };
+  return buildMetadata({
+    lang,
+    path: "/cerca",
+    title: dict.search.button,
+    index: false,
+    follow: true,
+  });
 }
 
 /**

@@ -8,6 +8,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useHydrated } from "@/lib/useHydrated";
 
 import { SearchOverlay } from "@/components/search/SearchOverlay";
+import { HomeSearchDesktop } from "@/components/search/HomeSearchDesktop";
 import { onOpenSearch } from "@/lib/search/searchSignal";
 import type { Destination, Product } from "@/data/home";
 import type { Attraction } from "@/data/listing";
@@ -23,12 +24,28 @@ type Props = {
 };
 
 /**
- * Home hero search trigger. Looks like the Figma rounded pill (icon + placeholder,
- * no button) but is a single button. Tapping it opens the full-screen
- * {@link SearchOverlay}; the pill shares a `layoutId` with the overlay's search
- * field, so it smoothly flies up to the top while the overlay fades in.
+ * Home hero search. Two distinct interaction models by viewport:
+ * - MOBILE: rounded pill that morphs (shared `layoutId`) up into the full-screen
+ *   {@link SearchOverlay}.
+ * - DESKTOP (lg+): the bar stays put — no morph, no full-screen — and opens an
+ *   anchored dropdown with the same content ({@link HomeSearchDesktop}).
  */
-export function HomeSearchBar({ lang, dict, destinations, attractions, products }: Props) {
+export function HomeSearchBar(props: Props) {
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const update = () => setIsDesktop(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  return isDesktop ? <HomeSearchDesktop {...props} /> : <HomeSearchMobile {...props} />;
+}
+
+/** Mobile pill → full-screen overlay with the shared-`layoutId` morph. */
+function HomeSearchMobile({ lang, dict, destinations, attractions, products }: Props) {
   const [open, setOpen] = useState(false);
   // Durante il morph-back (la pill che rivola in posizione, ~0.7s) blocchiamo ogni
   // interazione, coerente col lock d'apertura: niente tap finché l'animazione non finisce.
@@ -78,16 +95,18 @@ export function HomeSearchBar({ lang, dict, destinations, attractions, products 
         style={{ pointerEvents: open ? "none" : "auto" }}
         className="flex h-11 w-full items-center gap-2.5 rounded-full border border-stroke bg-white px-4 text-left shadow-lg"
       >
-        <Image
-          src="/images/icon-search.svg"
-          alt=""
-          width={18}
-          height={18}
-          className="shrink-0"
-          unoptimized
-        />
-        <span className="truncate text-base font-medium text-stroke">
-          {dict.search.homePlaceholder}
+        <span className="flex min-w-0 items-center gap-2.5">
+          <Image
+            src="/images/icon-search.svg"
+            alt=""
+            width={18}
+            height={18}
+            className="shrink-0"
+            unoptimized
+          />
+          <span className="truncate text-base font-medium text-stroke">
+            {dict.search.homePlaceholder}
+          </span>
         </span>
       </motion.button>
 

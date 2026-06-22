@@ -18,7 +18,7 @@ export function TrustBar() {
   return (
     <section className="py-3 sm:py-6">
       <Container>
-        <ul className="no-scrollbar -mx-4 flex snap-x snap-mandatory items-start gap-4 overflow-x-auto scroll-px-4 px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0">
+        <ul className="no-scrollbar -mx-4 flex snap-x snap-mandatory items-start gap-4 overflow-x-auto scroll-px-4 px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0 lg:gap-6">
           {trustFeatures.map((f) => (
             <li
               key={f.title}
@@ -29,11 +29,11 @@ export function TrustBar() {
                 alt=""
                 width={f.iconWidth}
                 height={f.iconHeight}
-                className="shrink-0"
+                className="shrink-0 lg:size-10"
               />
               <div className="flex min-w-0 flex-1 flex-col justify-center gap-2 leading-normal text-ink [word-break:break-word]">
-                <h3 className="whitespace-nowrap text-base font-semibold">{f.title}</h3>
-                <p className="text-sm font-medium">{f.text}</p>
+                <h3 className="whitespace-nowrap text-base font-semibold lg:text-xl">{f.title}</h3>
+                <p className="text-sm font-medium lg:text-base">{f.text}</p>
               </div>
             </li>
           ))}

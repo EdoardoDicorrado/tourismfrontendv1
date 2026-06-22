@@ -49,13 +49,13 @@ export function AccountMenu({
         className="flex h-11 w-11 items-center justify-center gap-2 text-cta sm:w-auto sm:px-1"
       >
         {loggedIn ? (
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden className="lg:size-6">
             <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           </svg>
         ) : (
-          <Image src="/images/icon-avatar.svg" alt="" width={24} height={24} unoptimized />
+          <Image src="/images/icon-avatar.svg" alt="" width={24} height={24} unoptimized className="lg:size-6" />
         )}
-        <span className="hidden max-w-[8rem] truncate text-sm font-semibold sm:inline">
+        <span className="hidden max-w-32 truncate text-sm font-semibold sm:inline lg:text-sm">
           {name ? name.split(/\s+/)[0] : dict.header.login}
         </span>
       </button>

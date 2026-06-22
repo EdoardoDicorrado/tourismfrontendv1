@@ -54,7 +54,7 @@ export function ProductCard({
   return (
     <Link
       href={href}
-      className="group flex h-full flex-col overflow-clip rounded-[10px] border border-soft bg-white transition-colors hover:border-cta focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta"
+      className="group flex h-full flex-col overflow-clip rounded-[10px] border border-soft bg-white transition-colors hover:border-cta focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cta lg:border-stroke-2"
     >
       <div className="relative aspect-[267/228] w-full">
         <Image
@@ -70,10 +70,10 @@ export function ProductCard({
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col gap-4 p-4">
-        <div className="flex flex-col gap-2">
+      <div className="flex flex-1 flex-col gap-4 p-4 lg:gap-3 lg:p-5">
+        <div className="flex flex-col gap-2 lg:gap-2">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-semibold text-cta">{product.category}</span>
+            <span className="text-xs font-semibold text-cta lg:text-base">{product.category}</span>
             {languages.length > 0 ? (
               <div className="flex items-center gap-2" aria-label={languages.join(", ")}>
                 {visibleLanguages.map((code) => {
@@ -124,17 +124,17 @@ export function ProductCard({
             )}
           </div>
 
-          <h3 className="line-clamp-2 text-base font-extrabold leading-tight text-ink transition-colors group-hover:text-cta">
+          <h3 className="line-clamp-2 text-base font-extrabold leading-tight text-ink transition-colors group-hover:text-cta lg:text-xl">
             {product.title}
           </h3>
 
-          <p className="text-xs font-semibold text-ink">{product.meta.join(" · ")}</p>
+          <p className="text-xs font-semibold text-ink lg:text-base">{product.meta.join(" · ")}</p>
         </div>
 
         <div className="mt-auto flex items-end justify-between gap-2">
           {showRating ? (
-            <span className="flex items-center gap-1 text-xl font-extrabold text-ink">
-              <Image src="/images/icon-star.svg" alt="" width={21} height={21} />
+            <span className="flex items-center gap-1 text-xl font-extrabold text-ink lg:text-xl">
+              <Image src="/images/icon-star.svg" alt="" width={21} height={21} className="lg:size-5" />
               {product.rating.toFixed(1)}
             </span>
           ) : (
@@ -143,14 +143,14 @@ export function ProductCard({
           <span className="flex items-end gap-1">
             {product.oldPrice && (
               <>
-                <span className="text-xs font-semibold text-ink">{dict.productCard.from}</span>
-                <span className="text-xs font-semibold text-ink line-through">
+                <span className="text-xs font-semibold text-ink lg:text-base">{dict.productCard.from}</span>
+                <span className="text-xs font-semibold text-ink line-through lg:text-base">
                   {product.oldPrice}
                   {product.currency}
                 </span>
               </>
             )}
-            <span className="text-xl font-bold leading-none text-badge">
+            <span className="text-xl font-bold leading-none text-badge lg:text-xl">
               {product.priceFrom}
               {product.currency}
             </span>

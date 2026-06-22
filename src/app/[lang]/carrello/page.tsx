@@ -17,7 +17,7 @@ export async function generateMetadata({
   const { lang } = await params;
   if (!isLocale(lang)) return {};
   const dict = await getDictionary(lang);
-  return { title: `${dict.cart.title} — TourisMotion` };
+  return { title: `${dict.cart.title} — TourisMotion`, robots: { index: false, follow: false } };
 }
 
 export default async function CartPage({ params }: { params: Promise<Params> }) {

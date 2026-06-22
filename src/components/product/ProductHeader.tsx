@@ -40,78 +40,111 @@ export function ProductHeader({
   const visibleLanguages = languages.slice(0, MAX_FLAGS);
   const extraLanguages = languages.length - visibleLanguages.length;
 
+  // Pezzi riusati in DUE layout: righe mobile (lg:hidden) e riga unica desktop
+  // (hidden lg:flex sotto il titolo). Stesso markup → niente divergenze.
+  const flagsInner =
+    languages.length > 0 ? (
+      <>
+        {visibleLanguages.map((code) => {
+          const flag = LANG_FLAG[code];
+          return flag ? (
+            <Image
+              key={code}
+              src={flag}
+              alt=""
+              title={code.toUpperCase()}
+              width={18}
+              height={18}
+              className="h-[18px] w-[18px] rounded-full ring-1 ring-black/10"
+              unoptimized
+            />
+          ) : (
+            <span key={code} title={code.toUpperCase()} className="text-xs font-semibold text-ink">
+              {code.toUpperCase()}
+            </span>
+          );
+        })}
+        {extraLanguages > 0 && (
+          <span
+            title={languages.slice(MAX_FLAGS).join(", ").toUpperCase()}
+            className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-soft px-1 text-[10px] font-extrabold leading-none text-ink ring-1 ring-black/10"
+          >
+            +{extraLanguages}
+          </span>
+        )}
+      </>
+    ) : null;
+
+  const toursDoneEl = showToursDone ? (
+    <span className="flex items-center gap-2 text-sm font-medium text-ink">
+      <Image src="/images/icon-walking-ink.svg" alt="" width={22} height={22} unoptimized />
+      {fill(dict.product.toursDone, { count: product.toursCount })}
+    </span>
+  ) : null;
+
+  const ratingEl = showRating ? (
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="text-lg font-bold text-ink lg:text-xl">{product.rating.toFixed(1)}</span>
+      <Image
+        src="/images/rating-stars-large.svg"
+        alt={fill(dict.common.ratingAlt, { rating: product.rating.toFixed(1) })}
+        width={120}
+        height={23}
+      />
+      <span className="text-sm text-cta">
+        <strong className="font-bold">{product.reviews.toLocaleString(lang)}</strong>{" "}
+        {dict.common.reviews}
+      </span>
+    </div>
+  ) : null;
+
   return (
     <div className="flex flex-col gap-3">
+      {/* META TOP — MOBILE: tour effettuati + lingue. Su desktop confluiscono nella
+          riga unica sotto il titolo (qui lg:hidden) → mobile CONGELATO. */}
       {(showToursDone || languages.length > 0) && (
-        <div className="flex items-center gap-3">
-          {showToursDone && (
-            <span className="flex items-center gap-2 text-sm font-medium text-ink">
-              <Image src="/images/icon-walking-ink.svg" alt="" width={22} height={22} unoptimized />
-              {fill(dict.product.toursDone, { count: product.toursCount })}
-            </span>
-          )}
+        <div className="flex items-center gap-3 lg:hidden">
+          {toursDoneEl}
           {languages.length > 0 && (
             <div
               className={`flex shrink-0 items-center gap-2.5${showToursDone ? " ml-auto" : ""}`}
               aria-label={languages.join(", ")}
             >
-              {visibleLanguages.map((code) => {
-                const flag = LANG_FLAG[code];
-                return flag ? (
-                  <Image
-                    key={code}
-                    src={flag}
-                    alt=""
-                    title={code.toUpperCase()}
-                    width={18}
-                    height={18}
-                    className="h-[18px] w-[18px] rounded-full ring-1 ring-black/10"
-                    unoptimized
-                  />
-                ) : (
-                  <span
-                    key={code}
-                    title={code.toUpperCase()}
-                    className="text-xs font-semibold text-ink"
-                  >
-                    {code.toUpperCase()}
-                  </span>
-                );
-              })}
-              {extraLanguages > 0 && (
-                <span
-                  title={languages.slice(MAX_FLAGS).join(", ").toUpperCase()}
-                  className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-soft px-1 text-[10px] font-extrabold leading-none text-ink ring-1 ring-black/10"
-                >
-                  +{extraLanguages}
-                </span>
-              )}
+              {flagsInner}
             </div>
           )}
         </div>
       )}
 
-      <h1 className="text-2xl font-extrabold leading-tight text-ink sm:text-3xl lg:text-4xl">
+      {/* TITOLO — condiviso. Su desktop è il PRIMO elemento (le righe mobile sopra
+          sono lg:hidden, collassano). */}
+      <h1 className="text-2xl font-extrabold leading-tight text-ink sm:text-3xl lg:text-3xl">
         {product.title}
       </h1>
 
-      {showRating && (
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-lg font-bold text-ink">{product.rating.toFixed(1)}</span>
-          <Image
-            src="/images/rating-stars-large.svg"
-            alt={fill(dict.common.ratingAlt, { rating: product.rating.toFixed(1) })}
-            width={120}
-            height={23}
-          />
-          <span className="text-sm text-cta">
-            <strong className="font-bold">{product.reviews.toLocaleString(lang)}</strong>{" "}
-            {dict.common.reviews}
-          </span>
-        </div>
-      )}
+      {/* RATING — MOBILE (riga a sé). */}
+      {ratingEl && <div className="lg:hidden">{ratingEl}</div>}
 
-      <p className="text-base text-ink/80">{product.shortDescription}</p>
+      {/* META ROW — DESKTOP: badge (se c'è) + rating + tour effettuati + lingue, UNA
+          riga sotto il titolo (Edoardo). */}
+      <div className="hidden lg:flex lg:flex-wrap lg:items-center lg:gap-4">
+        {/* Badge urgenza: PREVIEW sempre visibile (fallback dict.sticky.urgency =
+            "Si esaurisce in fretta") finché il backend non manda product.badge
+            dinamico — Edoardo. Quando l'API è viva basta togliere il fallback. */}
+        <span className="rounded-badge bg-badge px-2 py-1 text-xs font-extrabold text-white">
+          {product.badge || dict.sticky.urgency}
+        </span>
+        {ratingEl}
+        {toursDoneEl}
+        {languages.length > 0 && (
+          <div className="flex shrink-0 items-center gap-2.5" aria-label={languages.join(", ")}>
+            {flagsInner}
+          </div>
+        )}
+      </div>
+
+      {/* DESCRIZIONE BREVE — MOBILE. Su desktop è mostrata DOPO la galleria (in page.tsx). */}
+      <p className="text-base text-ink/80 lg:hidden">{product.shortDescription}</p>
     </div>
   );
 }

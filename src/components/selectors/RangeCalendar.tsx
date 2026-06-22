@@ -51,6 +51,7 @@ export function RangeCalendar({
   labels,
   confirmLabel,
   title,
+  grabber = true,
 }: {
   startYear: number;
   startMonth: number; // 0-11, earliest navigable month
@@ -66,6 +67,9 @@ export function RangeCalendar({
   labels: Dictionary["booking"]["calendar"];
   confirmLabel: string;
   title: string;
+  /** Drag-handle grabber in the header — show on the bottom-sheet, hide on the
+   *  desktop anchored dropdown (no drag-to-dismiss there). */
+  grabber?: boolean;
 }) {
   const [view, setView] = useState({ year: startYear, month: startMonth });
   const month = buildMonth(view.year, view.month, pricing, minIso);
@@ -99,7 +103,9 @@ export function RangeCalendar({
       {/* Header — same chrome as the filters sheet: grabber handle + soft round
           close (so the two listing sheets share one top treatment). */}
       <div className="shrink-0 border-b border-soft-grey px-4 pb-3 pt-3">
-        <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-stroke/60" aria-hidden />
+        {grabber && (
+          <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-stroke/60" aria-hidden />
+        )}
         <div className="flex items-center justify-between gap-4">
           <h2 className="text-xl font-extrabold text-cta">{title}</h2>
           <button

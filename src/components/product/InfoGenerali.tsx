@@ -7,7 +7,7 @@ import type { Dictionary } from "@/lib/i18n/dictionaries";
 export function InfoGenerali({ rows, dict }: { rows: InfoRow[]; dict: Dictionary }) {
   return (
     <section className="flex flex-col gap-4">
-      <h2 className="text-xl font-extrabold text-ink sm:text-2xl">{dict.product.infoTitle}</h2>
+      <h2 className="text-xl font-extrabold text-ink sm:text-2xl lg:text-3xl">{dict.product.infoTitle}</h2>
       <ul className="flex flex-col gap-4">
         {rows.map((row) => (
           <li key={row.title} className="flex items-start gap-2">

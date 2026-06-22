@@ -47,7 +47,7 @@ export function BlogHero({
 
   return (
     <section
-      className="relative isolate flex min-h-[489px] flex-col justify-end overflow-hidden border-b border-soft-grey"
+      className="relative isolate flex min-h-[489px] flex-col justify-end overflow-hidden border-b border-soft-grey lg:min-h-[605px]"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocusCapture={() => setPaused(true)}
@@ -73,12 +73,17 @@ export function BlogHero({
         className="absolute inset-0 -z-10 bg-gradient-to-t from-black/75 via-black/40 to-black/10"
       />
 
-      <Container className="pb-7 pt-16">
-        <div className="mx-auto flex max-w-[600px] flex-col items-center gap-6 text-center">
-          <h1 className="text-3xl font-extrabold leading-tight text-white drop-shadow-sm sm:text-4xl">
+      <Container className="pb-7 pt-16 lg:pb-12 lg:pt-32">
+        <div className="mx-auto flex max-w-[600px] flex-col items-center gap-6 text-center lg:max-w-[760px] lg:gap-8">
+          <h1 className="text-3xl font-extrabold leading-tight text-white drop-shadow-sm sm:text-4xl lg:text-5xl">
             {article.title}
           </h1>
-          <ButtonLink href={`/${lang}/blog/${article.slug}`} size="lg" fullWidth>
+          <ButtonLink
+            href={`/${lang}/blog/${article.slug}`}
+            size="lg"
+            fullWidth
+            className="lg:w-auto lg:self-center lg:px-12"
+          >
             {dict.blog.hero.cta}
           </ButtonLink>
           {count > 1 && (

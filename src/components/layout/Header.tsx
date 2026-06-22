@@ -33,11 +33,12 @@ async function getAgencyMenuData(): Promise<AgencyMenuData | null> {
 }
 
 /**
- * Site header — logo, language, search, cart and login. Figma node 64:5538 (HEADER).
- * 60px tall (44px icon tap-targets + 8px padding), a 96×22 logo, and the actions in
- * Figma order (globe → search → cart → avatar) with an 8px gap. Text labels stay
- * icon-only on mobile (matching Figma) and appear from `sm` up. The search trigger
+ * Site header — logo, language, search, cart and login. Figma mobile node 64:5538,
+ * desktop node 221:3191 (HEADER, 90px tall). Mobile: 44px bar (h-11), 96×22 logo,
+ * actions icon-only with an 8px gap. Desktop (lg+): taller 90px bar with a 24px gap.
+ * Text labels appear from `sm` up. The search trigger
  * ({@link HeaderSearch}) shows only on internal pages (hidden on the home hero).
+ * Desktop's centered search-bar-in-header variant is deferred to ui-ux (layout).
  */
 export async function Header({ lang, dict }: { lang: Locale; dict: Dictionary }) {
   // Search catalog feeding the header overlay (same sources as the home hero):
@@ -52,7 +53,9 @@ export async function Header({ lang, dict }: { lang: Locale; dict: Dictionary })
 
   return (
     <header className="border-b border-soft-grey bg-white">
-      <Container className="flex h-11 items-center justify-between">
+      {/* Header desktop ridotto ~1/3 (Edoardo: la barra 1:1 90px era troppo grande):
+          barra 60px (h-15), logo 112px (w-28), icone/label rimpicciolite nei sub. */}
+      <Container className="flex h-11 items-center justify-between lg:h-15">
         <Link href={`/${lang}`} aria-label={dict.header.home}>
           <Image
             src="/images/logo-tourismotion.png"
@@ -60,10 +63,11 @@ export async function Header({ lang, dict }: { lang: Locale; dict: Dictionary })
             width={96}
             height={22}
             priority
+            className="lg:h-auto lg:w-28"
           />
         </Link>
 
-        <nav className="flex items-center gap-2 text-cta">
+        <nav className="flex items-center gap-2 text-cta lg:gap-4">
           <LanguageSwitcher current={lang} variant="header" />
 
           <HeaderSearch

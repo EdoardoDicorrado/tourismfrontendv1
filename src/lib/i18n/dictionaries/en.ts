@@ -95,6 +95,7 @@ export const en: Dictionary = {
       {
         title: "Terms & conditions",
         links: [
+          { label: "Privacy policy", href: "/cookie-policy" },
           { label: "Cookie Policy", href: "/cookie-policy" },
           { label: "Returns & refunds", href: "/reso" },
         ],

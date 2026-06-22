@@ -9,6 +9,7 @@ import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
+import { buildMetadata } from "@/lib/seo/metadata";
 
 type Params = { lang: string };
 
@@ -20,7 +21,12 @@ export async function generateMetadata({
   const { lang } = await params;
   if (!isLocale(lang)) return {};
   const dict = await getDictionary(lang);
-  return { title: dict.about.meta.title, description: dict.about.meta.description };
+  return buildMetadata({
+    lang,
+    path: "/chi-siamo",
+    title: dict.about.meta.title,
+    description: dict.about.meta.description,
+  });
 }
 
 /**
